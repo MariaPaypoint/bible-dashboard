@@ -1,12 +1,9 @@
 <script setup>
-import InputText from 'primevue/inputtext';
+import MyBlock from './Components/BaseLayout.vue';
 </script>
 
 <template>
-  <h1 class="text-3xl font-bold underline">
-    Hello world!
-  </h1>
-  <InputText />
+    <MyBlock />
 </template>
 
 <style scoped>

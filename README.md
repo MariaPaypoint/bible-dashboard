@@ -1,29 +1,66 @@
-# app
+# Example Dashboard 
 
-This template should help get you started developing with Vue 3 in Vite.
+A starter project for quickly creating modern dashboards and admin panels using Vue 3, PrimeVue, and Tailwind CSS.
 
-## Recommended IDE Setup
+![Example Dashboard](public/dashboard-preview-light.png)
+![Example Dashboard](public/dashboard-preview-dark.png)
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+## 🚀 Features
 
-## Customize configuration
+- 📎 Modern UI based on [PrimeVue](https://primevue.org/)
+- 🎨 Customizable components with light and dark theme support
+- 📱 Responsive design for desktop and mobile devices
+- 🧩 Ready-to-use layout templates and components
+- 🔄 Smooth animations and transitions
+- 🛠️ Tailwind CSS integration for flexible styling
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+## 🛠️ Tech Stack
 
-## Project Setup
+- **Vue 3** - progressive JavaScript framework
+- **Vite** - fast build tool
+- **Tailwind CSS 3** - utility-first CSS framework
+- **Inter** - modern font
+- **PrimeVue 4** - UI component library
+- **PrimeIcons** - icon set
 
-```sh
+## 🔧 Development Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/MariaPaypoint/example-dashboard.git
+cd example-dashboard
+
+# Install dependencies
 npm install
-```
 
-### Compile and Hot-Reload for Development
-
-```sh
+# Start development server
 npm run dev
 ```
 
-### Compile and Minify for Production
+## 📦 Production Build
 
-```sh
+```bash
 npm run build
 ```
+
+Built files will be placed in the `dist` directory.
+
+## 🧩 Project Structure
+
+```
+├── public/                # Static files
+├── src/
+│   ├── assets/            # Styles and resources
+│   ├── components/        # Vue components
+│   │   └── BaseLayout.vue # Dashboard skeleton (menu and general layout)
+│   ├── App.vue            # Root component
+│   └── main.js            # Entry point
+├── index.html             # HTML template
+└── tailwind.config.js     # Tailwind CSS configuration
+```
+
+## 📚 Documentation
+
+- [Vue 3](https://v3.vuejs.org/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [PrimeVue](https://primevue.org/)
