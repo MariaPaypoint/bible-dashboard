@@ -11,10 +11,36 @@
                         :options="availableVoices" 
                         optionLabel="displayName"
                         optionValue="code"
+                        :optionDisabled="isVoiceDisabled"
                         placeholder="Select voice"
                         class="w-full"
                         @change="onVoiceChange"
-                    />
+                    >
+                        <template #option="slotProps">
+                            <div class="flex items-center justify-between w-full">
+                                <span :class="{ 'opacity-50': slotProps.option.anomalies_count === 0 }">
+                                    {{ slotProps.option.displayName }}
+                                </span>
+                                <Tag 
+                                    :value="slotProps.option.anomalies_count" 
+                                    :severity="slotProps.option.anomalies_count === 0 ? 'secondary' : 'info'"
+                                    class="ml-2"
+                                />
+                            </div>
+                        </template>
+                        <template #value="slotProps">
+                            <div class="flex items-center justify-between w-full" v-if="slotProps.value">
+                                <span>
+                                    {{ getSelectedVoiceDisplayName(slotProps.value) }}
+                                </span>
+                                <Tag 
+                                    :value="getSelectedVoiceAnomaliesCount(slotProps.value)" 
+                                    :severity="getSelectedVoiceAnomaliesCount(slotProps.value) === 0 ? 'secondary' : 'info'"
+                                    class="ml-2"
+                                />
+                            </div>
+                        </template>
+                    </Select>
                 </div>
                 <div class="flex-1 min-w-0" style="flex: 1;">
                     <label for="bookFilter" class="block text-sm font-medium mb-1">Filter by book:</label>
@@ -30,7 +56,36 @@
                         :loading="booksState.loading"
                         @change="onBookChange"
                         showClear
-                    />
+                    >
+                        <template #option="slotProps">
+                            <div class="flex items-center justify-between w-full">
+                                <span :class="{ 'opacity-50': slotProps.option.anomalies_count === 0 }">
+                                    {{ slotProps.option.label }}
+                                </span>
+                                <Tag 
+                                    v-if="selectedVoice"
+                                    :value="slotProps.option.anomalies_count" 
+                                    :severity="slotProps.option.anomalies_count === 0 ? 'secondary' : 'info'"
+                                    class="ml-2"
+                                />
+                            </div>
+                        </template>
+                        <template #value="slotProps">
+                            <div class="flex items-center justify-between w-full" v-if="slotProps.value && selectedVoice">
+                                <span>
+                                    {{ getSelectedBookDisplayName(slotProps.value) }}
+                                </span>
+                                <Tag 
+                                    :value="getSelectedBookAnomaliesCount(slotProps.value)" 
+                                    :severity="getSelectedBookAnomaliesCount(slotProps.value) === 0 ? 'secondary' : 'info'"
+                                    class="ml-2"
+                                />
+                            </div>
+                            <span v-else-if="slotProps.value">
+                                {{ getSelectedBookDisplayName(slotProps.value) }}
+                            </span>
+                        </template>
+                    </Select>
                 </div>
                 <div class="flex-1 min-w-0" style="flex: 1;">
                     <label for="anomalyTypeFilter" class="block text-sm font-medium mb-1">Filter by anomaly type:</label>
@@ -185,14 +240,43 @@ const anomalyTypeOptions = ref([
 const availableVoices = computed(() => {
   return voices.value.map(voice => ({
     ...voice,
-    displayName: `${voice.name} (${voice.translation.name} - ${voice.translation.language})`
+    displayName: `${voice.name} (${voice.translation.name} - ${voice.translation.language})`,
+    anomalies_count: voice.anomalies_count || 0
   }))
 })
+
+// Function to disable voices with zero anomalies
+const isVoiceDisabled = (voice: any) => {
+  return voice.anomalies_count === 0
+}
+
+// Functions for selected voice display
+const getSelectedVoiceDisplayName = (voiceCode: number): string => {
+  const voice = voices.value.find(v => v.code === voiceCode)
+  return voice ? `${voice.name} (${voice.translation.name} - ${voice.translation.language})` : ''
+}
+
+const getSelectedVoiceAnomaliesCount = (voiceCode: number): number => {
+  const voice = voices.value.find(v => v.code === voiceCode)
+  return voice ? voice.anomalies_count || 0 : 0
+}
+
+// Functions for selected book display
+const getSelectedBookDisplayName = (bookNumber: number): string => {
+  const book = books.value.find(b => b.book_number === bookNumber)
+  return book ? `${book.name} (${book.book_number})` : ''
+}
+
+const getSelectedBookAnomaliesCount = (bookNumber: number): number => {
+  const book = books.value.find(b => b.book_number === bookNumber)
+  return book ? book.anomalies_count || 0 : 0
+}
 
 const bookOptions = computed(() => {
   return books.value.map((book) => ({
     label: `${book.name} (${book.book_number})`,
-    value: book.book_number
+    value: book.book_number,
+    anomalies_count: book.anomalies_count || 0
   }))
 })
 
@@ -206,8 +290,8 @@ const onVoiceChange = async () => {
     // Get translation code from selected voice
     const selectedVoiceData = availableVoices.value.find(v => v.code === selectedVoice.value)
     if (selectedVoiceData) {
-      // Load books for the translation
-      await fetchBooks(selectedVoiceData.translation.code)
+      // Load books for the translation with voice_code to get anomalies count
+      await fetchBooks(selectedVoiceData.translation.code, selectedVoice.value)
     }
     
     await fetchAnomalies(selectedVoice.value, {

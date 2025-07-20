@@ -231,10 +231,12 @@ export function useBooks() {
   const { state, handleApiCall } = useApi()
   const books = ref<BookModel[]>([])
   const selectedTranslationCode = ref<number | null>(null)
+  const selectedVoiceCode = ref<number | null>(null)
 
-  const fetchBooks = async (translationCode: number) => {
+  const fetchBooks = async (translationCode: number, voiceCode?: number) => {
     selectedTranslationCode.value = translationCode
-    const result = await handleApiCall(() => apiService.getTranslationBooks(translationCode))
+    selectedVoiceCode.value = voiceCode || null
+    const result = await handleApiCall(() => apiService.getTranslationBooks(translationCode, voiceCode))
     if (result) {
       books.value = result
     }
@@ -243,12 +245,14 @@ export function useBooks() {
   const clearBooks = () => {
     books.value = []
     selectedTranslationCode.value = null
+    selectedVoiceCode.value = null
   }
 
   return {
     state,
     books,
     selectedTranslationCode,
+    selectedVoiceCode,
     fetchBooks,
     clearBooks
   }

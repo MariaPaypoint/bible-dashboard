@@ -6,6 +6,7 @@ export interface VoiceModel {
   description: string | null
   is_music: boolean
   active: boolean
+  anomalies_count: number
 }
 
 // Translation model from API
@@ -33,6 +34,7 @@ export interface BookModel {
   name: string
   alias: string
   chapters_count: number
+  anomalies_count?: number
 }
 
 // Voice anomaly model from API

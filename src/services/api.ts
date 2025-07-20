@@ -62,8 +62,9 @@ class ApiService {
   }
 
   // Books endpoint
-  async getTranslationBooks(translationCode: number): Promise<BookModel[]> {
-    const response = await this.api.get<BookModel[]>(`/translations/${translationCode}/books`)
+  async getTranslationBooks(translationCode: number, voiceCode?: number): Promise<BookModel[]> {
+    const params = voiceCode ? { voice_code: voiceCode } : {}
+    const response = await this.api.get<BookModel[]>(`/translations/${translationCode}/books`, { params })
     return response.data
   }
 
