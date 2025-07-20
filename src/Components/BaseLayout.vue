@@ -1,7 +1,7 @@
 <template>
-    <div class="min-h-screen flex relative lg:static bg-surface-50 dark:bg-surface-950">
+    <div class="h-screen flex relative lg:static bg-surface-50 dark:bg-surface-950">
         <div id="app-sidebar-13"
-            class="w-[280px] bg-surface-50 dark:bg-surface-950 h-screen hidden lg:block flex-shrink-0 absolute lg:static left-0 top-0 z-10 select-none shadow-lg lg:shadow-none">
+            class="w-[280px] bg-surface-50 dark:bg-surface-950 h-screen hidden lg:block flex-shrink-0 absolute lg:fixed left-0 top-0 z-10 select-none shadow-lg lg:shadow-none">
             <div class="flex flex-col h-full lg:py-8">
                 <div class="flex items-center justify-start px-4 py-4">
                     <div class="flex items-center gap-4">
@@ -245,36 +245,49 @@
             </div>
         </div>
 
-        <div class="min-h-screen flex flex-col flex-auto bg-surface-50 dark:bg-surface-950 p-5 md:p-8 lg:pl-2">
+        <div class="h-screen flex flex-col flex-auto bg-surface-50 dark:bg-surface-950 p-5 md:p-8 lg:pl-2 lg:ml-[280px] overflow-hidden">
             <div
-                class="bg-surface-0 dark:bg-surface-900 flex flex-col flex-auto rounded-xl p-8 shadow-md border border-surface-200 dark:border-surface-700">
-                <div class="flex justify-between items-center mb-8 gap-2 md:gap-8 w-full">
-                    <div class="flex items-center gap-4 md:gap-8">
-                        <a v-styleclass="{
-                            selector: '#app-sidebar-13',
-                            enterFromClass: 'hidden',
-                            enterActiveClass: 'animate-fadeinleft',
-                            leaveToClass: 'hidden',
-                            leaveActiveClass: 'animate-fadeoutleft',
-                            hideOnOutsideClick: true
-                        }" class="cursor-pointer block lg:hidden text-surface-700 dark:text-surface-100">
-                            <i class="pi pi-bars !text-xl !leading-none" />
-                        </a>
+                class="bg-surface-0 dark:bg-surface-900 flex flex-col flex-auto rounded-xl shadow-md border border-surface-200 dark:border-surface-700 overflow-hidden">
+                <!-- Main Content Area - full height scrollable -->
+                <div class="flex-auto overflow-y-auto p-8">
+                    <!-- Mobile menu and controls - inside scrollable area -->
+                    <div class="flex justify-between items-center mb-8 lg:hidden">
                         <div class="flex items-center gap-3">
                             <span class="text-2xl">👋</span>
                             <h1 class="text-xl font-semibold text-surface-900 dark:text-surface-0">Welcome!</h1>
                         </div>
+                        <div class="flex items-center gap-2">
+                            <a v-styleclass="{
+                                selector: '#app-sidebar-13',
+                                enterFromClass: 'hidden',
+                                enterActiveClass: 'animate-fadeinleft',
+                                leaveToClass: 'hidden',
+                                leaveActiveClass: 'animate-fadeoutleft',
+                                hideOnOutsideClick: true
+                            }" class="cursor-pointer text-surface-700 dark:text-surface-100">
+                                <i class="pi pi-bars !text-xl !leading-none" />
+                            </a>
+                            <button @click="toggleDarkMode()"
+                                class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors duration-200">
+                                <i class="pi text-surface-700 dark:text-surface-300" style="font-size: 1.4rem"
+                                    :class="{ 'pi-sun': isDarkMode, 'pi-moon': !isDarkMode }" />
+                            </button>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-8">
+                    
+                    <!-- Desktop header - inside scrollable area -->
+                    <div class="hidden lg:flex justify-between items-center mb-8">
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl">👋</span>
+                            <h1 class="text-xl font-semibold text-surface-900 dark:text-surface-0">Welcome!</h1>
+                        </div>
                         <button @click="toggleDarkMode()"
                             class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors duration-200">
                             <i class="pi text-surface-700 dark:text-surface-300" style="font-size: 1.4rem"
                                 :class="{ 'pi-sun': isDarkMode, 'pi-moon': !isDarkMode }" />
                         </button>
                     </div>
-                </div>
-                <!-- Main Content Area -->
-                <div class="flex-auto">
+                    
                     <Welcome v-if="activeComponent === 'welcome'" @navigate="setActiveComponent" />
                     <BibleVoices v-else-if="activeComponent === 'bible_voices'" />
                     <BibleAnomalies v-else-if="activeComponent === 'bible_anomalies'" />
