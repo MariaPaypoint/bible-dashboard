@@ -284,20 +284,21 @@
     </div>
 </template>
 
-<script setup>
-import Badge from 'primevue/badge';
-import IconField from 'primevue/iconfield';
-import InputIcon from 'primevue/inputicon';
-import InputText from 'primevue/inputtext';
-import { ref, onMounted } from 'vue';
+<script setup lang="ts">
+import Badge from 'primevue/badge'
+import IconField from 'primevue/iconfield'
+import InputIcon from 'primevue/inputicon'
+import InputText from 'primevue/inputtext'
+import { ref, onMounted } from 'vue'
+import type { ActiveComponent } from '../types/components'
 
 // Import components
-import Welcome from './Welcome.vue';
-import BibleList from './BibleList.vue';
-import BibleErrors from './BibleErrors.vue';
+import Welcome from './Welcome.vue'
+import BibleList from './BibleList.vue'
+import BibleErrors from './BibleErrors.vue'
 
-const isDarkMode = ref(false);
-const activeComponent = ref('welcome');
+const isDarkMode = ref<boolean>(false)
+const activeComponent = ref<ActiveComponent>('welcome')
 
 onMounted(() => {
     // Проверяем системные настройки темы
@@ -322,13 +323,13 @@ onMounted(() => {
     });
 });
 
-function toggleDarkMode() {
-    document.documentElement.classList.toggle('dark');
+function toggleDarkMode(): void {
+    document.documentElement.classList.toggle('dark')
     // Обновляем состояние для иконки
-    isDarkMode.value = document.documentElement.classList.contains('dark');
+    isDarkMode.value = document.documentElement.classList.contains('dark')
 }
 
-function setActiveComponent(component) {
-    activeComponent.value = component;
+function setActiveComponent(component: ActiveComponent): void {
+    activeComponent.value = component
 }
 </script>

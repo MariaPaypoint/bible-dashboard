@@ -31,6 +31,6 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 // No specific logic needed for welcome component
 </script>

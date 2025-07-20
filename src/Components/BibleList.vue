@@ -33,15 +33,16 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
+import type { BibleItem, StatusSeverity } from '../types/components'
 
 // Sample data for demonstration
-const bibles = ref([
+const bibles = ref<BibleItem[]>([
     {
         id: 1,
         name: 'King James Version',
@@ -128,17 +129,17 @@ const bibles = ref([
     }
 ])
 
-const loadBibles = () => {
+const loadBibles = (): void => {
     // Here you would typically load data from an API
     console.log('Loading bibles...')
 }
 
-const viewBible = (bible) => {
+const viewBible = (bible: BibleItem): void => {
     console.log('Viewing bible:', bible)
     // Here you would implement the view logic
 }
 
-const getStatusSeverity = (status) => {
+const getStatusSeverity = (status: BibleItem['status']): StatusSeverity => {
     switch (status) {
         case 'Active':
             return 'success'

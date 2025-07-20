@@ -38,15 +38,16 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
+import type { BibleErrorItem, ErrorTypeSeverity } from '../types/components'
 
 // Sample error data
-const errors = ref([
+const errors = ref<BibleErrorItem[]>([
     {
         id: 1,
         bibleId: 9,
@@ -65,12 +66,12 @@ const errors = ref([
     }
 ])
 
-const loadErrors = () => {
+const loadErrors = (): void => {
     // Here you would typically load error data from an API
     console.log('Loading errors...')
 }
 
-const getErrorSeverity = (errorType) => {
+const getErrorSeverity = (errorType: BibleErrorItem['errorType']): ErrorTypeSeverity => {
     switch (errorType) {
         case 'Parse Error':
             return 'danger'
@@ -85,7 +86,7 @@ const getErrorSeverity = (errorType) => {
     }
 }
 
-const formatDate = (date) => {
+const formatDate = (date: Date): string => {
     return new Intl.DateTimeFormat('en-US', {
         year: 'numeric',
         month: 'short',

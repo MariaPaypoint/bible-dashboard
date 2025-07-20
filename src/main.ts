@@ -1,11 +1,11 @@
-import { createApp } from 'vue';
-import PrimeVue from 'primevue/config';
-import Aura from '@primevue/themes/aura';
-import StyleClass from 'primevue/styleclass';
-import 'primeicons/primeicons.css';
-import App from './App.vue';
-import './assets/main.css';
-import { definePreset } from '@primevue/themes';
+import { createApp } from 'vue'
+import PrimeVue from 'primevue/config'
+import Aura from '@primevue/themes/aura'
+import StyleClass from 'primevue/styleclass'
+import 'primeicons/primeicons.css'
+import App from './App.vue'
+import './assets/main.css'
+import { definePreset } from '@primevue/themes'
 
 const MyPreset = definePreset(Aura, {
     semantic: {
@@ -23,9 +23,9 @@ const MyPreset = definePreset(Aura, {
             950: '{amber.950}'
         }
     }
-});
+})
 
-const app = createApp(App);
+const app = createApp(App)
 app.use(PrimeVue, {
     theme: {
         preset: MyPreset,
@@ -33,8 +33,7 @@ app.use(PrimeVue, {
             darkModeSelector: '.dark',
         }
     }
-});
-app.directive('styleclass', StyleClass);
+})
+app.directive('styleclass', StyleClass)
 
-
-app.mount('#app');
+app.mount('#app')
