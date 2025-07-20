@@ -1,11 +1,11 @@
 <template>
     <div class="w-full">
         <!-- Voice Selection and Filters -->
-        <div class="mb-4 p-4 border rounded-lg bg-gray-50">
+        <div class="mb-4 p-4 border rounded-lg bg-gray-50 dark:bg-surface-800 dark:border-surface-700">
             <div class="flex items-center gap-3">
                 <div class="flex-1 min-w-0" style="flex: 2;">
                     <label for="voiceSelect" class="block text-sm font-medium mb-1">Select voice to view anomalies:</label>
-                    <Dropdown 
+                    <Select 
                         id="voiceSelect"
                         v-model="selectedVoice" 
                         :options="availableVoices" 
@@ -13,13 +13,12 @@
                         optionValue="code"
                         placeholder="Select voice"
                         class="w-full"
-                        :loading="voicesState.loading"
                         @change="onVoiceChange"
                     />
                 </div>
                 <div class="flex-1 min-w-0" style="flex: 1;">
                     <label for="bookFilter" class="block text-sm font-medium mb-1">Filter by book:</label>
-                    <Dropdown 
+                    <Select 
                         id="bookFilter"
                         v-model="selectedBookNumber" 
                         :options="bookOptions" 
@@ -35,7 +34,7 @@
                 </div>
                 <div class="flex-1 min-w-0" style="flex: 1;">
                     <label for="anomalyTypeFilter" class="block text-sm font-medium mb-1">Filter by anomaly type:</label>
-                    <Dropdown 
+                    <Select 
                         id="anomalyTypeFilter"
                         v-model="selectedAnomalyType" 
                         :options="anomalyTypeOptions" 
@@ -144,7 +143,7 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
-import Dropdown from 'primevue/dropdown'
+import Select from 'primevue/select'
 import type { DataTableSortEvent } from 'primevue/datatable'
 import type { VoiceAnomalyModel, BookModel } from '../types/api'
 import { useVoiceAnomalies, useTranslations, useBooks, type VoiceWithTranslation } from '../composables/useApi'
@@ -320,23 +319,24 @@ const getRatioClass = (ratio: number): string => {
 
 const getRatioSeverity = (ratio: number): string => {
   if (ratio > 10) {
-    return 'danger' // Red for values above 10
+    return 'danger' // Red for values above 10 - high contrast
   } else if (ratio > 3) {
-    return 'warn' // Orange for values above 3 up to 10
+    return 'warn' // Orange for values above 3 up to 10 - medium contrast
   }
-  return 'secondary' // Gray/neutral for values up to 3 (closest to yellow in PrimeVue)
+  return 'info' // Blue for values up to 3 - better contrast than gray in dark theme
 }
 
 const getInfoTooltip = (anomaly: VoiceAnomalyModel): string => {
-  const duration = anomaly.duration ? `Duration: ${anomaly.duration.toFixed(2)}s` : 'Duration: N/A'
-  const speed = anomaly.speed ? `Speed: ${anomaly.speed.toFixed(2)}` : 'Speed: N/A'
-  const position = anomaly.position_in_verse !== undefined ? `Position: ${anomaly.position_in_verse}` : 'Position: N/A'
-  
-  return [
-    duration,
-    speed,
-    position
-  ].join('\n')
+  const parts = []
+  parts.push(`Duration: ${anomaly.duration.toFixed(3)}s`)
+  parts.push(`Speed: ${anomaly.speed.toFixed(2)}`)
+  if (anomaly.position_in_verse) {
+    parts.push(`Position in verse: ${anomaly.position_in_verse}`)
+  }
+  if (anomaly.position_from_end) {
+    parts.push(`Position from end: ${anomaly.position_from_end}`)
+  }
+  return parts.join('\n')
 }
 
 // Initialize data on mount

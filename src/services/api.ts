@@ -27,7 +27,7 @@ class ApiService {
     // Request interceptor
     this.api.interceptors.request.use(
       (config) => {
-        console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`)
+        // API Request logging removed
         return config
       },
       (error) => {
@@ -39,7 +39,7 @@ class ApiService {
     // Response interceptor
     this.api.interceptors.response.use(
       (response: AxiosResponse) => {
-        console.log(`API Response: ${response.status} ${response.config.url}`)
+        // API Response logging removed
         return response
       },
       (error) => {

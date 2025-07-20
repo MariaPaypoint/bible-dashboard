@@ -24,11 +24,11 @@
                     </span>
                 </template>
                 <template #filter="{filterModel, filterCallback}">
-                    <Dropdown :modelValue="filterModel ? filterModel.value : null" 
+                    <Select :modelValue="filterModel ? filterModel.value : null" 
                               @update:modelValue="(value: string) => { if (filterModel) { filterModel.value = value; filterCallback(); } }"
-                              :options="languageOptions" optionLabel="label" optionValue="value"
-                              placeholder="Select Language" class="p-column-filter" :showClear="true">
-                    </Dropdown>
+                              :options="languageOptions" optionLabel="label" optionValue="value" 
+                              placeholder="All languages" class="p-column-filter" :showClear="true">
+                    </Select>
                 </template>
             </Column>
             <Column field="translation.name" header="Translation" sortable style="width: 20%" :showFilterMenu="false" :filterFunction="filterByTranslation">
@@ -47,11 +47,11 @@
                     </div>
                 </template>
                 <template #filter="{filterModel, filterCallback}">
-                    <Dropdown :modelValue="filterModel ? filterModel.value : null" 
+                    <Select :modelValue="filterModel ? filterModel.value : null" 
                               @update:modelValue="(value: string) => { if (filterModel) { filterModel.value = value; filterCallback(); } }"
                               :options="translationOptions" optionLabel="label" optionValue="value"
                               placeholder="Select Translation" class="p-column-filter" :showClear="true">
-                    </Dropdown>
+                    </Select>
                 </template>
             </Column>
             <Column header="Voice Code/Alias" sortable style="width: 20%" :showFilterMenu="false" :sortFunction="sortByCodeAlias">
@@ -109,7 +109,7 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
-import Dropdown from 'primevue/dropdown'
+import Select from 'primevue/select'
 import InputText from 'primevue/inputtext'
 import SelectButton from 'primevue/selectbutton'
 // Define FilterMatchMode manually since import path varies by PrimeVue version
@@ -169,7 +169,7 @@ const sortByCodeAlias = (event: any) => {
 
 const loadVoices = async (): Promise<void> => {
     const onlyActiveParam = onlyActive.value ? 1 : 0
-    console.log('Loading voices and languages...', { only_active: onlyActiveParam })
+    // Loading voices and languages
     await Promise.all([
         fetchTranslations({ only_active: onlyActiveParam }),
         fetchLanguages()
@@ -177,7 +177,7 @@ const loadVoices = async (): Promise<void> => {
 }
 
 const viewVoice = (voice: VoiceWithTranslation): void => {
-    console.log('Viewing voice:', voice)
+    // Viewing voice
     // TODO: Implement voice view functionality
 }
 
