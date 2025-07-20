@@ -5,9 +5,9 @@
             <div class="flex flex-col h-full lg:py-8">
                 <div class="flex items-center justify-start px-4 py-4">
                     <div class="flex items-center gap-4">
-                        <img src="@/assets/logo.svg" alt="Logo" width="32" height="32" class="flex-shrink-0" />
+                        <img src="@/assets/logo.png" alt="Logo" width="32" height="32" class="flex-shrink-0" />
                         <span
-                            class="text-lg font-semibold leading-tight text-surface-900 dark:text-surface-0">Example Dashboard</span>
+                            class="text-lg font-semibold leading-tight text-surface-900 dark:text-surface-0">Bible Forced Alignments</span>
                     </div>
                 </div>
                 <div class="flex-1 overflow-y-auto p-2 flex flex-col gap-4">
@@ -21,30 +21,51 @@
                                 leaveActiveClass: 'animate-slideup'
                             }"
                                 class="flex items-center cursor-pointer p-3 gap-4 rounded-md text-surface-900 dark:text-surface-0 hover:bg-surface-100 dark:hover:bg-surface-800 border border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700 transition-colors duration-150">
-                                <span class="font-semibold text-base leading-tight">Main</span>
+                                <span class="font-semibold text-base leading-tight">Bibles</span>
                                 <i
                                     class="pi pi-chevron-down !text-sm !leading-none text-surface-500 dark:text-surface-400 ml-auto" />
                             </div>
                             <ul class="list-none p-0 m-0 overflow-hidden flex flex-col gap-1">
                                 <li>
-                                    <a
-                                        class="flex items-center cursor-pointer p-3 gap-2 rounded-lg text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors duration-150 hover:text-surface-900 dark:hover:text-surface-50 border border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700 group">
+                                    <a @click="setActiveComponent('bible_list')"
+                                        :class="[
+                                            'flex items-center cursor-pointer p-3 gap-2 rounded-lg transition-colors duration-150 border group',
+                                            activeComponent === 'bible_list' 
+                                                ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 border-primary-200 dark:border-primary-800' 
+                                                : 'text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 hover:text-surface-900 dark:hover:text-surface-50 border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700'
+                                        ]">
                                         <i
-                                            class="pi pi-users !text-base !leading-none text-surface-500 dark:text-surface-400 group-hover:text-surface-900 dark:group-hover:text-surface-50" />
-                                        <span class="font-medium text-base leading-tight">Users</span>
+                                            :class="[
+                                                'pi pi-list !text-base !leading-none',
+                                                activeComponent === 'bible_list'
+                                                    ? 'text-primary-600 dark:text-primary-400'
+                                                    : 'text-surface-500 dark:text-surface-400 group-hover:text-surface-900 dark:group-hover:text-surface-50'
+                                            ]" />
+                                        <span class="font-medium text-base leading-tight">List</span>
                                     </a>
                                 </li>
                                 <li>
-                                    <a
-                                        class="flex items-center cursor-pointer p-3 gap-2 rounded-lg text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors duration-150 hover:text-surface-900 dark:hover:text-surface-50 border border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700 group">
+                                    <a @click="setActiveComponent('bible_errors')"
+                                        :class="[
+                                            'flex items-center cursor-pointer p-3 gap-2 rounded-lg transition-colors duration-150 border group',
+                                            activeComponent === 'bible_errors' 
+                                                ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 border-primary-200 dark:border-primary-800' 
+                                                : 'text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 hover:text-surface-900 dark:hover:text-surface-50 border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700'
+                                        ]">
                                         <i
-                                            class="pi pi-bookmark !text-base !leading-none text-surface-500 dark:text-surface-400 group-hover:text-surface-900 dark:group-hover:text-surface-50" />
-                                        <span class="font-medium text-base leading-tight">Bookmarks</span>
+                                            :class="[
+                                                'pi pi-exclamation-triangle !text-base !leading-none',
+                                                activeComponent === 'bible_errors'
+                                                    ? 'text-primary-600 dark:text-primary-400'
+                                                    : 'text-surface-500 dark:text-surface-400 group-hover:text-surface-900 dark:group-hover:text-surface-50'
+                                            ]" />
+                                        <span class="font-medium text-base leading-tight">Errors</span>
                                         <Badge value="2" severity="contrast"
                                             class="ml-auto !h-5 !min-w-5 !text-xs !font-bold !leading-tight !rounded-xl" />
                                     </a>
                                 </li>
-                                <li>
+                                
+                                <!-- <li>
                                     <a
                                         class="flex items-center cursor-pointer p-3 gap-2 rounded-lg text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors duration-150 hover:text-surface-900 dark:hover:text-surface-50 border border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700 group">
                                         <i
@@ -126,10 +147,11 @@
                                         </li>
                                     </ul>
                                 </li>
+                            -->
                             </ul>
                         </li>
                     </ul>
-
+                    <!-- 
                     <div class="h-px bg-surface-200 dark:bg-surface-700" />
 
                     <ul class="list-none p-0 m-0 flex flex-col gap-1">
@@ -195,9 +217,9 @@
                                     <a
                                         class="flex items-center cursor-pointer p-3 gap-2 rounded-lg text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors duration-150 hover:text-surface-900 dark:hover:text-surface-50 border border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700 group">
                                         <span
-                                            class="flex items-center justify-center p-1 bg-cyan-100 dark:bg-cyan-900 border border-cyan-200 dark:border-cyan-800 rounded-md">
+                                            class="flex items-center justify-center p-1 bg-primary-100 dark:bg-primary-900 border border-primary-200 dark:border-primary-800 rounded-md">
                                             <i
-                                                class="pi pi-shield !text-xs !leading-none text-cyan-600 dark:text-cyan-300" />
+                                                class="pi pi-shield !text-xs !leading-none text-primary-600 dark:text-primary-300" />
                                         </span>
                                         <span class="font-medium text-base leading-tight">Security System</span>
                                     </a>
@@ -205,6 +227,7 @@
                             </ul>
                         </li>
                     </ul>
+                    -->
                 </div>
 
                 <div class="p-2">
@@ -250,8 +273,12 @@
                         </button>
                     </div>
                 </div>
-                <div
-                    class="border border-cyan-400/30 dark:border-cyan-950 bg-cyan-50/50 dark:bg-cyan-950/20 flex-auto rounded-xl" />
+                <!-- Main Content Area -->
+                <div class="flex-auto">
+                    <Welcome v-if="activeComponent === 'welcome'" />
+                    <BibleList v-else-if="activeComponent === 'bible_list'" />
+                    <BibleErrors v-else-if="activeComponent === 'bible_errors'" />
+                </div>
             </div>
         </div>
     </div>
@@ -264,7 +291,13 @@ import InputIcon from 'primevue/inputicon';
 import InputText from 'primevue/inputtext';
 import { ref, onMounted } from 'vue';
 
+// Import components
+import Welcome from './Welcome.vue';
+import BibleList from './BibleList.vue';
+import BibleErrors from './BibleErrors.vue';
+
 const isDarkMode = ref(false);
+const activeComponent = ref('welcome');
 
 onMounted(() => {
     // Проверяем системные настройки темы
@@ -293,5 +326,9 @@ function toggleDarkMode() {
     document.documentElement.classList.toggle('dark');
     // Обновляем состояние для иконки
     isDarkMode.value = document.documentElement.classList.contains('dark');
+}
+
+function setActiveComponent(component) {
+    activeComponent.value = component;
 }
 </script>
