@@ -119,7 +119,7 @@
             tableStyle="min-width: 50rem" 
             paginator 
             :rows="pageSize" 
-            :rowsPerPageOptions="[10, 25, 50, 100]"
+            :rowsPerPageOptions="[15, 50, 100]"
             :totalRecords="totalCount"
             :lazy="true"
             stripedRows
@@ -139,7 +139,7 @@
                 </div>
             </template>
             
-            <Column field="code" header="Code" sortable style="width: 8%"></Column>
+            <Column field="code" header="Code" style="width: 8%"></Column>
             <Column field="book_number" header="Reference" sortable style="width: 20%">
                 <template #body="slotProps">
                     <span class="text-sm font-medium">{{ formatReference(slotProps.data) }}</span>

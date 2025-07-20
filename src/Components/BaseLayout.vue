@@ -36,7 +36,7 @@
                                         ]">
                                         <i
                                             :class="[
-                                                'pi pi-list !text-base !leading-none',
+                                                'pi pi-headphones !text-base !leading-none',
                                                 activeComponent === 'bible_voices'
                                                     ? 'text-primary-600 dark:text-primary-400'
                                                     : 'text-surface-500 dark:text-surface-400 group-hover:text-surface-900 dark:group-hover:text-surface-50'
@@ -253,8 +253,8 @@
                     <!-- Mobile menu and controls - inside scrollable area -->
                     <div class="flex justify-between items-center mb-8 lg:hidden">
                         <div class="flex items-center gap-3">
-                            <span class="text-2xl">👋</span>
-                            <h1 class="text-xl font-semibold text-surface-900 dark:text-surface-0">Welcome!</h1>
+                            <span class="text-2xl">{{ pageTitle.icon }}</span>
+                            <h1 class="text-xl font-semibold text-surface-900 dark:text-surface-0">{{ pageTitle.title }}</h1>
                         </div>
                         <div class="flex items-center gap-2">
                             <a v-styleclass="{
@@ -278,8 +278,8 @@
                     <!-- Desktop header - inside scrollable area -->
                     <div class="hidden lg:flex justify-between items-center mb-8">
                         <div class="flex items-center gap-3">
-                            <span class="text-2xl">👋</span>
-                            <h1 class="text-xl font-semibold text-surface-900 dark:text-surface-0">Welcome!</h1>
+                            <span class="text-2xl">{{ pageTitle.icon }}</span>
+                            <h1 class="text-xl font-semibold text-surface-900 dark:text-surface-0">{{ pageTitle.title }}</h1>
                         </div>
                         <button @click="toggleDarkMode()"
                             class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors duration-200">
@@ -304,7 +304,7 @@ import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
 import InputText from 'primevue/inputtext'
 import Toast from 'primevue/toast'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import type { ActiveComponent } from '../types/components'
 
 // Import components
@@ -314,6 +314,20 @@ import BibleAnomalies from './BibleAnomalies.vue'
 
 const isDarkMode = ref<boolean>(false)
 const activeComponent = ref<ActiveComponent>('welcome')
+
+// Dynamic page title based on active component
+const pageTitle = computed(() => {
+  switch (activeComponent.value) {
+    case 'welcome':
+      return { icon: '👋', title: 'Welcome!' }
+    case 'bible_voices':
+      return { icon: '🎧', title: 'Voices' }
+    case 'bible_anomalies':
+      return { icon: '⚠️', title: 'Anomalies' }
+    default:
+      return { icon: '👋', title: 'Welcome!' }
+  }
+})
 
 onMounted(() => {
     // Проверяем системные настройки темы

@@ -118,7 +118,7 @@ export function useVoiceAnomalies() {
   const anomalies = ref<VoiceAnomalyModel[]>([])
   const totalCount = ref(0)
   const currentPage = ref(1)
-  const pageSize = ref(50)
+  const pageSize = ref(15)
   const selectedVoiceCode = ref<number | null>(null)
   const selectedAnomalyType = ref<string | null>(null)
   const selectedBookNumber = ref<number | null>(null)

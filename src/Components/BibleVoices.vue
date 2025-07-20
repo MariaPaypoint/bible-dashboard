@@ -1,7 +1,7 @@
 <template>
     <div class="w-full">
-        <DataTable :value="voices" tableStyle="min-width: 50rem" paginator :rows="10" 
-                   :rowsPerPageOptions="[5, 10, 20, 50]" stripedRows
+        <DataTable :value="filteredVoices" tableStyle="min-width: 50rem" paginator :rows="15" 
+                   :rowsPerPageOptions="[15, 50, 100]" stripedRows
                    filterDisplay="row" v-model:filters="filters">
             <template #header>
                 <div class="flex flex-wrap items-center justify-between gap-2">
@@ -62,9 +62,8 @@
                         <span>{{ slotProps.data.alias }}</span>
                     </div>
                 </template>
-                <template #filter="{filterModel, filterCallback}">
-                    <InputText :modelValue="filterModel ? filterModel.value : null" 
-                               @update:modelValue="(value: string) => { if (filterModel) { filterModel.value = value; filterCallback(); } }"
+                <template #filter>
+                    <InputText v-model="codeAliasFilter" 
                                placeholder="Search code/alias..." class="p-column-filter" />
                 </template>
             </Column>
@@ -134,6 +133,23 @@ const toast = useToast()
 // Only active filter state
 const onlyActive = ref<boolean>(false)
 
+// Code/Alias filter state
+const codeAliasFilter = ref<string>('')
+
+// Filtered voices based on code/alias search
+const filteredVoices = computed(() => {
+    if (!codeAliasFilter.value) {
+        return voices.value
+    }
+    
+    const filterLower = codeAliasFilter.value.toLowerCase()
+    return voices.value.filter(voice => {
+        const code = String(voice.code || '').toLowerCase()
+        const alias = String(voice.alias || '').toLowerCase()
+        return code.includes(filterLower) || alias.includes(filterLower)
+    })
+})
+
 // Initialize filters for proper filtering functionality
 const filters = ref({
     'translation.language': { value: null, matchMode: FilterMatchMode.EQUALS },
@@ -151,6 +167,14 @@ const filterByLanguage = (value: any, filter: string) => {
 const filterByTranslation = (value: any, filter: string) => {
     if (!filter) return true
     return value?.translation?.name === filter
+}
+
+const filterByCodeAlias = (value: any, filter: string) => {
+    if (!filter) return true
+    const filterLower = filter.toLowerCase()
+    const code = String(value?.code || '').toLowerCase()
+    const alias = String(value?.alias || '').toLowerCase()
+    return code.includes(filterLower) || alias.includes(filterLower)
 }
 
 // Custom sort function for combined Code/Alias column
