@@ -18,10 +18,17 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
-    },
+    }
   },
   server: {
     host: true,
-    port: 5173
+    port: 5173,
+    proxy: {
+      '/api': {
+        target: 'http://replica-vm-maria:8000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, '')
+      }
+    }
   }
 })

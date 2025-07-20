@@ -1,22 +1,62 @@
+// Voice model from API
+export interface VoiceModel {
+  code: number
+  alias: string
+  name: string
+  description: string | null
+  is_music: boolean
+  active: boolean
+}
+
+// Translation model from API
+export interface TranslationModel {
+  code: number
+  alias: string
+  name: string
+  description: string | null
+  language: string
+  voices: VoiceModel[]
+  active: boolean
+}
+
+// Language model from API
+export interface LanguageModel {
+  alias: string
+  name_en: string
+  name_national: string
+}
+
+// Book model from API
+export interface BookModel {
+  code: number
+  book_number: number
+  name: string
+  alias: string
+  chapters_count: number
+}
+
+// Voice anomaly model from API
+export interface VoiceAnomalyModel {
+  code: number
+  voice: number
+  translation: number
+  book_number: number
+  chapter_number: number
+  verse_number: number | null
+  anomaly_type: string
+  word: string
+  position_in_verse: number | null
+  position_from_end: number | null
+  duration: number
+  speed: number
+  ratio: number
+}
+
 // API response types
 export interface ApiResponse<T> {
   data: T
   success: boolean
   message?: string
-}
-
-// Bible related types
-export interface Bible {
-  id: string
-  name: string
-  language: string
-  version: string
-  status: 'active' | 'inactive' | 'processing' | 'error'
-  created_at: string
-  updated_at: string
-  books_count?: number
-  chapters_count?: number
-  verses_count?: number
 }
 
 export interface BibleError {
@@ -31,12 +71,18 @@ export interface BibleError {
 }
 
 // API endpoints types
-export interface BibleListParams {
+export interface TranslationListParams {
+  language?: string
+  only_active?: number // 0 or 1
+}
+
+export interface VoiceAnomalyListParams {
   page?: number
   limit?: number
-  status?: Bible['status']
-  language?: string
-  search?: string
+  anomaly_type?: string
+  book_number?: number
+  sort_by?: 'address' | 'type' | 'ratio'
+  sort_order?: 'asc' | 'desc'
 }
 
 export interface ErrorListParams {
@@ -45,6 +91,12 @@ export interface ErrorListParams {
   error_type?: BibleError['error_type']
   resolved?: boolean
   bible_id?: string
+}
+
+// Voice anomalies response
+export interface VoiceAnomaliesResponse {
+  items: VoiceAnomalyModel[]
+  total_count: number
 }
 
 // Pagination response

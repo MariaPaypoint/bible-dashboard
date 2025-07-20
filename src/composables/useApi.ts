@@ -1,6 +1,18 @@
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { apiService } from '../services/api'
-import type { Bible, BibleError, BibleListParams, ErrorListParams, PaginatedResponse } from '../types/api'
+import type { TranslationModel, LanguageModel, BookModel, TranslationListParams, VoiceModel, VoiceAnomalyModel, VoiceAnomalyListParams } from '../types/api'
+
+// Extended voice model with translation info
+export interface VoiceWithTranslation extends VoiceModel {
+  translation: {
+    code: number
+    alias: string
+    name: string
+    description: string | null
+    language: string
+    active: boolean
+  }
+}
 
 export interface ApiState {
   loading: boolean
@@ -35,102 +47,197 @@ export function useApi() {
   }
 }
 
-export function useBibles() {
+export function useTranslations() {
   const { state, handleApiCall } = useApi()
-  const bibles = ref<Bible[]>([])
-  const totalBibles = ref(0)
-  const currentPage = ref(1)
-  const totalPages = ref(0)
-
-  const fetchBibles = async (params?: BibleListParams) => {
-    const result = await handleApiCall(() => apiService.getBibles(params))
+  const translations = ref<TranslationModel[]>([])
+  
+  // Flatten translations into voices list
+  const voices = computed<VoiceWithTranslation[]>(() => {
+    return translations.value.flatMap(translation => 
+      translation.voices.map(voice => ({
+        ...voice,
+        translation: {
+          code: translation.code,
+          alias: translation.alias,
+          name: translation.name,
+          description: translation.description,
+          language: translation.language,
+          active: translation.active
+        }
+      }))
+    )
+  })
+  
+  const fetchTranslations = async (params?: TranslationListParams) => {
+    const result = await handleApiCall(() => apiService.getTranslations(params))
     if (result) {
-      bibles.value = result.items
-      totalBibles.value = result.total
-      currentPage.value = result.page
-      totalPages.value = result.pages
+      translations.value = result
     }
-  }
-
-  const fetchBible = async (id: string) => {
-    return await handleApiCall(() => apiService.getBible(id))
-  }
-
-  const createBible = async (bible: Omit<Bible, 'id' | 'created_at' | 'updated_at'>) => {
-    const result = await handleApiCall(() => apiService.createBible(bible))
-    if (result) {
-      await fetchBibles() // Refresh list
-    }
-    return result
-  }
-
-  const updateBible = async (id: string, bible: Partial<Bible>) => {
-    const result = await handleApiCall(() => apiService.updateBible(id, bible))
-    if (result) {
-      await fetchBibles() // Refresh list
-    }
-    return result
-  }
-
-  const deleteBible = async (id: string) => {
-    const result = await handleApiCall(() => apiService.deleteBible(id))
-    if (result !== null) {
-      await fetchBibles() // Refresh list
-    }
-    return result
   }
 
   return {
     state,
-    bibles,
-    totalBibles,
-    currentPage,
-    totalPages,
-    fetchBibles,
-    fetchBible,
-    createBible,
-    updateBible,
-    deleteBible
+    translations,
+    voices,
+    fetchTranslations
   }
 }
 
-export function useBibleErrors() {
+export function useLanguages() {
   const { state, handleApiCall } = useApi()
-  const errors = ref<BibleError[]>([])
-  const totalErrors = ref(0)
-  const currentPage = ref(1)
-  const totalPages = ref(0)
+  const languages = ref<LanguageModel[]>([])
 
-  const fetchErrors = async (params?: ErrorListParams) => {
-    const result = await handleApiCall(() => apiService.getErrors(params))
+  const fetchLanguages = async () => {
+    const result = await handleApiCall(() => apiService.getLanguages())
     if (result) {
-      errors.value = result.items
-      totalErrors.value = result.total
-      currentPage.value = result.page
-      totalPages.value = result.pages
+      languages.value = result
     }
-  }
-
-  const fetchError = async (id: string) => {
-    return await handleApiCall(() => apiService.getError(id))
-  }
-
-  const resolveError = async (id: string) => {
-    const result = await handleApiCall(() => apiService.resolveError(id))
-    if (result) {
-      await fetchErrors() // Refresh list
-    }
-    return result
   }
 
   return {
     state,
-    errors,
-    totalErrors,
+    languages,
+    fetchLanguages
+  }
+}
+
+export function useVoiceAnomalies() {
+  const { state, handleApiCall } = useApi()
+  const anomalies = ref<VoiceAnomalyModel[]>([])
+  const totalCount = ref(0)
+  const currentPage = ref(1)
+  const pageSize = ref(50)
+  const selectedVoiceCode = ref<number | null>(null)
+  const selectedAnomalyType = ref<string | null>(null)
+  const selectedBookNumber = ref<number | null>(null)
+  const selectedSortBy = ref<'address' | 'type' | 'ratio'>('ratio')
+  const selectedSortOrder = ref<'asc' | 'desc'>('desc')
+
+  const fetchAnomalies = async (voiceCode: number, params?: VoiceAnomalyListParams) => {
+    selectedVoiceCode.value = voiceCode
+    const result = await handleApiCall(() => apiService.getVoiceAnomalies(voiceCode, params))
+    if (result) {
+      anomalies.value = result.items
+      totalCount.value = result.total_count
+    }
+  }
+
+  const loadPage = async (page: number) => {
+    if (selectedVoiceCode.value) {
+      currentPage.value = page
+      await fetchAnomalies(selectedVoiceCode.value, {
+        page: currentPage.value,
+        limit: pageSize.value,
+        anomaly_type: selectedAnomalyType.value || undefined,
+        book_number: selectedBookNumber.value || undefined,
+        sort_by: selectedSortBy.value,
+        sort_order: selectedSortOrder.value
+      })
+    }
+  }
+
+  const refreshAnomalies = async () => {
+    if (selectedVoiceCode.value) {
+      await fetchAnomalies(selectedVoiceCode.value, {
+        page: currentPage.value,
+        limit: pageSize.value,
+        anomaly_type: selectedAnomalyType.value || undefined,
+        book_number: selectedBookNumber.value || undefined,
+        sort_by: selectedSortBy.value,
+        sort_order: selectedSortOrder.value
+      })
+    }
+  }
+
+  const setAnomalyTypeFilter = async (anomalyType: string | null) => {
+    selectedAnomalyType.value = anomalyType
+    currentPage.value = 1 // Reset to first page when filtering
+    if (selectedVoiceCode.value) {
+      await fetchAnomalies(selectedVoiceCode.value, {
+        page: 1,
+        limit: pageSize.value,
+        anomaly_type: anomalyType || undefined,
+        book_number: selectedBookNumber.value || undefined,
+        sort_by: selectedSortBy.value,
+        sort_order: selectedSortOrder.value
+      })
+    }
+  }
+
+  const setBookFilter = async (bookNumber: number | null) => {
+    selectedBookNumber.value = bookNumber
+    currentPage.value = 1 // Reset to first page when filtering
+    if (selectedVoiceCode.value) {
+      await fetchAnomalies(selectedVoiceCode.value, {
+        page: 1,
+        limit: pageSize.value,
+        anomaly_type: selectedAnomalyType.value || undefined,
+        book_number: bookNumber || undefined,
+        sort_by: selectedSortBy.value,
+        sort_order: selectedSortOrder.value
+      })
+    }
+  }
+
+  const setSortBy = async (sortBy: 'address' | 'type' | 'ratio', sortOrder: 'asc' | 'desc' = 'asc') => {
+    selectedSortBy.value = sortBy
+    selectedSortOrder.value = sortOrder
+    currentPage.value = 1 // Reset to first page when sorting changes
+    if (selectedVoiceCode.value) {
+      await fetchAnomalies(selectedVoiceCode.value, {
+        page: 1,
+        limit: pageSize.value,
+        anomaly_type: selectedAnomalyType.value || undefined,
+        book_number: selectedBookNumber.value || undefined,
+        sort_by: sortBy,
+        sort_order: sortOrder
+      })
+    }
+  }
+
+  return {
+    state,
+    anomalies,
+    totalCount,
     currentPage,
-    totalPages,
-    fetchErrors,
-    fetchError,
-    resolveError
+    pageSize,
+    selectedVoiceCode,
+    selectedAnomalyType,
+    selectedBookNumber,
+    selectedSortBy,
+    selectedSortOrder,
+    fetchAnomalies,
+    loadPage,
+    refreshAnomalies,
+    setAnomalyTypeFilter,
+    setBookFilter,
+    setSortBy
+  }
+}
+
+export function useBooks() {
+  const { state, handleApiCall } = useApi()
+  const books = ref<BookModel[]>([])
+  const selectedTranslationCode = ref<number | null>(null)
+
+  const fetchBooks = async (translationCode: number) => {
+    selectedTranslationCode.value = translationCode
+    const result = await handleApiCall(() => apiService.getTranslationBooks(translationCode))
+    if (result) {
+      books.value = result
+    }
+  }
+
+  const clearBooks = () => {
+    books.value = []
+    selectedTranslationCode.value = null
+  }
+
+  return {
+    state,
+    books,
+    selectedTranslationCode,
+    fetchBooks,
+    clearBooks
   }
 }

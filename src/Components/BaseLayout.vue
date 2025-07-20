@@ -27,39 +27,39 @@
                             </div>
                             <ul class="list-none p-0 m-0 overflow-hidden flex flex-col gap-1">
                                 <li>
-                                    <a @click="setActiveComponent('bible_list')"
+                                    <a @click="setActiveComponent('bible_voices')"
                                         :class="[
                                             'flex items-center cursor-pointer p-3 gap-2 rounded-lg transition-colors duration-150 border group',
-                                            activeComponent === 'bible_list' 
+                                            activeComponent === 'bible_voices' 
                                                 ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 border-primary-200 dark:border-primary-800' 
                                                 : 'text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 hover:text-surface-900 dark:hover:text-surface-50 border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700'
                                         ]">
                                         <i
                                             :class="[
                                                 'pi pi-list !text-base !leading-none',
-                                                activeComponent === 'bible_list'
+                                                activeComponent === 'bible_voices'
                                                     ? 'text-primary-600 dark:text-primary-400'
                                                     : 'text-surface-500 dark:text-surface-400 group-hover:text-surface-900 dark:group-hover:text-surface-50'
                                             ]" />
-                                        <span class="font-medium text-base leading-tight">List</span>
+                                        <span class="font-medium text-base leading-tight">Voices</span>
                                     </a>
                                 </li>
                                 <li>
-                                    <a @click="setActiveComponent('bible_errors')"
+                                    <a @click="setActiveComponent('bible_anomalies')"
                                         :class="[
                                             'flex items-center cursor-pointer p-3 gap-2 rounded-lg transition-colors duration-150 border group',
-                                            activeComponent === 'bible_errors' 
+                                            activeComponent === 'bible_anomalies' 
                                                 ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 border-primary-200 dark:border-primary-800' 
                                                 : 'text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 hover:text-surface-900 dark:hover:text-surface-50 border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700'
                                         ]">
                                         <i
                                             :class="[
                                                 'pi pi-exclamation-triangle !text-base !leading-none',
-                                                activeComponent === 'bible_errors'
+                                                activeComponent === 'bible_anomalies'
                                                     ? 'text-primary-600 dark:text-primary-400'
                                                     : 'text-surface-500 dark:text-surface-400 group-hover:text-surface-900 dark:group-hover:text-surface-50'
                                             ]" />
-                                        <span class="font-medium text-base leading-tight">Errors</span>
+                                        <span class="font-medium text-base leading-tight">Anomalies</span>
                                         <Badge value="2" severity="contrast"
                                             class="ml-auto !h-5 !min-w-5 !text-xs !font-bold !leading-tight !rounded-xl" />
                                     </a>
@@ -276,8 +276,8 @@
                 <!-- Main Content Area -->
                 <div class="flex-auto">
                     <Welcome v-if="activeComponent === 'welcome'" />
-                    <BibleList v-else-if="activeComponent === 'bible_list'" />
-                    <BibleErrors v-else-if="activeComponent === 'bible_errors'" />
+                    <BibleVoices v-else-if="activeComponent === 'bible_voices'" />
+                    <BibleAnomalies v-else-if="activeComponent === 'bible_anomalies'" />
                 </div>
             </div>
         </div>
@@ -294,8 +294,8 @@ import type { ActiveComponent } from '../types/components'
 
 // Import components
 import Welcome from './Welcome.vue'
-import BibleList from './BibleList.vue'
-import BibleErrors from './BibleErrors.vue'
+import BibleVoices from './BibleVoices.vue'
+import BibleAnomalies from './BibleAnomalies.vue'
 
 const isDarkMode = ref<boolean>(false)
 const activeComponent = ref<ActiveComponent>('welcome')

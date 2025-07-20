@@ -1,9 +1,13 @@
 import axios, { type AxiosInstance, type AxiosResponse } from 'axios'
 import type { 
-  ApiResponse, 
-  Bible, 
+  TranslationModel,
+  LanguageModel,
+  BookModel,
+  TranslationListParams,
+  VoiceAnomalyModel,
+  VoiceAnomalyListParams,
+  VoiceAnomaliesResponse,
   BibleError, 
-  BibleListParams, 
   ErrorListParams, 
   PaginatedResponse 
 } from '../types/api'
@@ -11,7 +15,7 @@ import type {
 class ApiService {
   private api: AxiosInstance
 
-  constructor(baseURL: string = 'http://localhost:8000') {
+  constructor(baseURL: string = '/api') {
     this.api = axios.create({
       baseURL,
       timeout: 10000,
@@ -45,45 +49,28 @@ class ApiService {
     )
   }
 
-  // Bible endpoints
-  async getBibles(params?: BibleListParams): Promise<PaginatedResponse<Bible>> {
-    const response = await this.api.get<PaginatedResponse<Bible>>('/bibles', { params })
+  // Translation endpoints
+  async getTranslations(params?: TranslationListParams): Promise<TranslationModel[]> {
+    const response = await this.api.get<TranslationModel[]>('/translations', { params })
     return response.data
   }
 
-  async getBible(id: string): Promise<Bible> {
-    const response = await this.api.get<ApiResponse<Bible>>(`/bibles/${id}`)
-    return response.data.data
-  }
-
-  async createBible(bible: Omit<Bible, 'id' | 'created_at' | 'updated_at'>): Promise<Bible> {
-    const response = await this.api.post<ApiResponse<Bible>>('/bibles', bible)
-    return response.data.data
-  }
-
-  async updateBible(id: string, bible: Partial<Bible>): Promise<Bible> {
-    const response = await this.api.put<ApiResponse<Bible>>(`/bibles/${id}`, bible)
-    return response.data.data
-  }
-
-  async deleteBible(id: string): Promise<void> {
-    await this.api.delete(`/bibles/${id}`)
-  }
-
-  // Error endpoints
-  async getErrors(params?: ErrorListParams): Promise<PaginatedResponse<BibleError>> {
-    const response = await this.api.get<PaginatedResponse<BibleError>>('/errors', { params })
+  // Languages endpoint
+  async getLanguages(): Promise<LanguageModel[]> {
+    const response = await this.api.get<LanguageModel[]>('/languages')
     return response.data
   }
 
-  async getError(id: string): Promise<BibleError> {
-    const response = await this.api.get<ApiResponse<BibleError>>(`/errors/${id}`)
-    return response.data.data
+  // Books endpoint
+  async getTranslationBooks(translationCode: number): Promise<BookModel[]> {
+    const response = await this.api.get<BookModel[]>(`/translations/${translationCode}/books`)
+    return response.data
   }
 
-  async resolveError(id: string): Promise<BibleError> {
-    const response = await this.api.patch<ApiResponse<BibleError>>(`/errors/${id}/resolve`)
-    return response.data.data
+  // Voice anomalies endpoint
+  async getVoiceAnomalies(voiceCode: number, params?: VoiceAnomalyListParams): Promise<VoiceAnomaliesResponse> {
+    const response = await this.api.get<VoiceAnomaliesResponse>(`/voices/${voiceCode}/anomalies`, { params })
+    return response.data
   }
 
   // Health check
