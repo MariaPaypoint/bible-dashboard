@@ -275,13 +275,14 @@
                 </div>
                 <!-- Main Content Area -->
                 <div class="flex-auto">
-                    <Welcome v-if="activeComponent === 'welcome'" />
+                    <Welcome v-if="activeComponent === 'welcome'" @navigate="setActiveComponent" />
                     <BibleVoices v-else-if="activeComponent === 'bible_voices'" />
                     <BibleAnomalies v-else-if="activeComponent === 'bible_anomalies'" />
                 </div>
             </div>
         </div>
     </div>
+    <Toast />
 </template>
 
 <script setup lang="ts">
@@ -289,6 +290,7 @@ import Badge from 'primevue/badge'
 import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
 import InputText from 'primevue/inputtext'
+import Toast from 'primevue/toast'
 import { ref, onMounted } from 'vue'
 import type { ActiveComponent } from '../types/components'
 

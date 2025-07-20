@@ -75,11 +75,23 @@ export function useTranslations() {
     }
   }
 
+  const updateVoiceActive = (voiceCode: number, active: boolean) => {
+    // Find and update the voice in the original translations data
+    for (const translation of translations.value) {
+      const voice = translation.voices.find(v => v.code === voiceCode)
+      if (voice) {
+        voice.active = active
+        break
+      }
+    }
+  }
+
   return {
     state,
     translations,
     voices,
-    fetchTranslations
+    fetchTranslations,
+    updateVoiceActive
   }
 }
 

@@ -73,6 +73,12 @@ class ApiService {
     return response.data
   }
 
+  // Update voice endpoint
+  async updateVoice(voiceCode: number, data: { active: boolean }): Promise<any> {
+    const response = await this.api.put(`/voices/${voiceCode}`, data)
+    return response.data
+  }
+
   // Health check
   async healthCheck(): Promise<{ status: string; timestamp: string }> {
     const response = await this.api.get<{ status: string; timestamp: string }>('/health')

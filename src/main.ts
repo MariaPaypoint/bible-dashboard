@@ -3,6 +3,7 @@ import PrimeVue from 'primevue/config'
 import Aura from '@primevue/themes/aura'
 import StyleClass from 'primevue/styleclass'
 import Tooltip from 'primevue/tooltip'
+import ToastService from 'primevue/toastservice'
 import 'primeicons/primeicons.css'
 import App from './App.vue'
 import './assets/main.css'
@@ -35,6 +36,7 @@ app.use(PrimeVue, {
         }
     }
 })
+app.use(ToastService)
 app.directive('styleclass', StyleClass)
 app.directive('tooltip', Tooltip)
 

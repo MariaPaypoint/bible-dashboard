@@ -87,12 +87,14 @@
                          :style="{...getInactiveStyles(slotProps.data.active), ...getLoadingStyles()}" />
                 </template>
             </Column>
-            <Column header="Actions" style="width: 5%">
+            <Column header="Actions" style="width: 10%">
                 <template #body="slotProps">
-                    <Button icon="pi pi-eye" rounded text @click="viewVoice(slotProps.data)" 
-                            title="View Voice Details" 
-                            :style="{...getInactiveStyles(slotProps.data.active), ...getLoadingStyles()}"
-                            :disabled="state.loading" />
+                    <div class="flex items-center justify-center">
+                        <ToggleSwitch :model-value="slotProps.data.active" 
+                                    @update:model-value="() => toggleVoiceActive(slotProps.data)"
+                                    :disabled="state.loading"
+                                    class="scale-75" />
+                    </div>
                 </template>
             </Column>
             
@@ -104,7 +106,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, nextTick } from 'vue'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
@@ -112,6 +114,7 @@ import Tag from 'primevue/tag'
 import Select from 'primevue/select'
 import InputText from 'primevue/inputtext'
 import SelectButton from 'primevue/selectbutton'
+import ToggleSwitch from 'primevue/toggleswitch'
 // Define FilterMatchMode manually since import path varies by PrimeVue version
 const FilterMatchMode = {
     EQUALS: 'equals',
@@ -121,9 +124,12 @@ const FilterMatchMode = {
 import { useTranslations, useLanguages } from '../composables/useApi'
 import type { VoiceWithTranslation } from '../composables/useApi'
 import type { LanguageModel } from '../types/api'
+import apiService from '../services/api'
+import { useToast } from 'primevue/usetoast'
 
-const { state, voices, fetchTranslations } = useTranslations()
+const { state, voices, fetchTranslations, updateVoiceActive } = useTranslations()
 const { languages, fetchLanguages } = useLanguages()
+const toast = useToast()
 
 // Only active filter state
 const onlyActive = ref<boolean>(false)
@@ -179,6 +185,41 @@ const loadVoices = async (): Promise<void> => {
 const viewVoice = (voice: VoiceWithTranslation): void => {
     // Viewing voice
     // TODO: Implement voice view functionality
+    console.log('View voice:', voice)
+}
+
+const toggleVoiceActive = async (voice: VoiceWithTranslation): Promise<void> => {
+    const originalActive = voice.active
+    const newActive = !originalActive
+    
+    try {
+        // Update voice active status via API
+        await apiService.updateVoice(voice.code, { active: newActive })
+        
+        // Update the voice in original data to trigger reactivity
+        updateVoiceActive(voice.code, newActive)
+        
+        // Show success toast
+        toast.add({
+            severity: 'success',
+            summary: 'Success',
+            detail: `Voice ${voice.alias} has been ${newActive ? 'activated' : 'deactivated'}`,
+            life: 3000
+        })
+    } catch (error) {
+        console.error('Error updating voice active status:', error)
+        
+        // Revert the change in original data if API call fails
+        updateVoiceActive(voice.code, originalActive)
+        
+        // Show error toast
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: `Failed to update voice ${voice.alias}. Please try again.`,
+            life: 5000
+        })
+    }
 }
 
 const getLanguageDisplayName = (languageCode: string): string => {

@@ -12,19 +12,21 @@
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl">
-            <div class="bg-surface-100 dark:bg-surface-800 p-6 rounded-lg">
-                <i class="pi pi-list text-2xl text-cyan-500 mb-3"></i>
-                <h3 class="text-xl font-semibold mb-2 text-surface-900 dark:text-surface-0">Bible List</h3>
+            <div @click="navigateToVoices" 
+                 class="bg-surface-100 dark:bg-surface-800 p-6 rounded-lg cursor-pointer transition-all duration-200 hover:bg-surface-200 dark:hover:bg-surface-700 hover:shadow-lg">
+                <i class="pi pi-volume-up text-2xl text-cyan-500 mb-3"></i>
+                <h3 class="text-xl font-semibold mb-2 text-surface-900 dark:text-surface-0">Voices</h3>
                 <p class="text-surface-600 dark:text-surface-400">
-                    View and manage all available Bible translations and versions.
+                    Manage Bible voice recordings and their active status.
                 </p>
             </div>
             
-            <div class="bg-surface-100 dark:bg-surface-800 p-6 rounded-lg">
+            <div @click="navigateToAnomalies" 
+                 class="bg-surface-100 dark:bg-surface-800 p-6 rounded-lg cursor-pointer transition-all duration-200 hover:bg-surface-200 dark:hover:bg-surface-700 hover:shadow-lg">
                 <i class="pi pi-exclamation-triangle text-2xl text-orange-500 mb-3"></i>
-                <h3 class="text-xl font-semibold mb-2 text-surface-900 dark:text-surface-0">Error Monitoring</h3>
+                <h3 class="text-xl font-semibold mb-2 text-surface-900 dark:text-surface-0">Anomalies</h3>
                 <p class="text-surface-600 dark:text-surface-400">
-                    Track and resolve processing errors in your Bible alignments.
+                    Analyze and monitor voice anomalies in Bible recordings.
                 </p>
             </div>
         </div>
@@ -32,5 +34,18 @@
 </template>
 
 <script setup lang="ts">
-// No specific logic needed for welcome component
+import type { ActiveComponent } from '../types/components'
+
+// Define emit for component navigation
+const emit = defineEmits<{
+  navigate: [component: ActiveComponent]
+}>()
+
+const navigateToVoices = () => {
+  emit('navigate', 'bible_voices')
+}
+
+const navigateToAnomalies = () => {
+  emit('navigate', 'bible_anomalies')
+}
 </script>
