@@ -1,5 +1,5 @@
 <template>
-    <div class="flex flex-col items-center justify-center h-full text-center p-8">
+    <div class="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] text-center p-8">
         <div class="mb-8">
             <i class="pi pi-book text-6xl text-cyan-500 mb-4"></i>
             <h2 class="text-3xl font-bold text-surface-900 dark:text-surface-0 mb-4">

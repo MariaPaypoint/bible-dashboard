@@ -64,8 +64,46 @@
                                             class="ml-auto !h-5 !min-w-5 !text-xs !font-bold !leading-tight !rounded-xl" />
                                     </a>
                                 </li>
-                                
-                                <!-- <li>
+                            </ul>
+                        </li>
+                    </ul>
+                    
+                    <!-- Theme Toggle - Mobile Only -->
+                    <div class="h-px bg-surface-200 dark:bg-surface-700 lg:hidden" />
+                    <ul class="list-none p-0 m-0 flex flex-col gap-1 lg:hidden">
+                        <li>
+                            <a @click="toggleDarkMode()"
+                                class="flex items-center cursor-pointer p-3 gap-2 rounded-lg text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors duration-150 hover:text-surface-900 dark:hover:text-surface-50 border border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700 group">
+                                <i
+                                    :class="[
+                                        'pi !text-base !leading-none',
+                                        isDarkMode ? 'pi-sun' : 'pi-moon',
+                                        'text-surface-500 dark:text-surface-400 group-hover:text-surface-900 dark:group-hover:text-surface-50'
+                                    ]" />
+                                <span class="font-medium text-base leading-tight">
+                                    {{ isDarkMode ? 'Light Mode' : 'Dark Mode' }}
+                                </span>
+                            </a>
+                        </li>
+                    </ul>
+                    
+                    <!-- <div class="h-px bg-surface-200 dark:bg-surface-700" />
+                    <ul class="list-none p-0 m-0 flex flex-col gap-1">
+                        <li>
+                            <div v-styleclass="{
+                                selector: '@next',
+                                enterFromClass: 'hidden',
+                                enterActiveClass: 'animate-slidedown',
+                                leaveToClass: 'hidden',
+                                leaveActiveClass: 'animate-slideup'
+                            }"
+                                class="flex items-center cursor-pointer p-3 gap-4 rounded-md text-surface-900 dark:text-surface-0 hover:bg-surface-100 dark:hover:bg-surface-800 border border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700 transition-colors duration-150">
+                                <span class="font-semibold text-base leading-tight">My Projects</span>
+                                <i
+                                    class="pi pi-chevron-down !text-sm !leading-none text-surface-500 dark:text-surface-400 ml-auto" />
+                            </div>
+                            <ul class="list-none p-0 m-0 overflow-hidden flex flex-col gap-1">
+                                <li>
                                     <a
                                         class="flex items-center cursor-pointer p-3 gap-2 rounded-lg text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors duration-150 hover:text-surface-900 dark:hover:text-surface-50 border border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700 group">
                                         <i
@@ -148,9 +186,6 @@
                                     </ul>
                                 </li>
                             -->
-                            </ul>
-                        </li>
-                    </ul>
                     <!-- 
                     <div class="h-px bg-surface-200 dark:bg-surface-700" />
 
@@ -249,7 +284,7 @@
             <div
                 class="bg-surface-0 dark:bg-surface-900 flex flex-col flex-auto rounded-xl shadow-md border border-surface-200 dark:border-surface-700 overflow-hidden">
                 <!-- Main Content Area - full height scrollable -->
-                <div class="flex-auto overflow-y-auto p-8">
+                <div class="flex-auto overflow-y-auto p-5 md:p-8">
                     <!-- Mobile menu and controls - inside scrollable area -->
                     <div class="flex justify-between items-center mb-8 lg:hidden">
                         <div class="flex items-center gap-3">
@@ -267,11 +302,6 @@
                             }" class="cursor-pointer text-surface-700 dark:text-surface-100">
                                 <i class="pi pi-bars !text-xl !leading-none" />
                             </a>
-                            <button @click="toggleDarkMode()"
-                                class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors duration-200">
-                                <i class="pi text-surface-700 dark:text-surface-300" style="font-size: 1.4rem"
-                                    :class="{ 'pi-sun': isDarkMode, 'pi-moon': !isDarkMode }" />
-                            </button>
                         </div>
                     </div>
                     

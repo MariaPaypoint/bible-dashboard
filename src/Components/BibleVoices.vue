@@ -1,21 +1,21 @@
 <template>
     <div class="w-full">
-        <DataTable :value="filteredVoices" tableStyle="min-width: 50rem" paginator :rows="15" 
-                   :rowsPerPageOptions="[15, 50, 100]" stripedRows
-                   filterDisplay="row" v-model:filters="filters">
-            <template #header>
-                <div class="flex flex-wrap items-center justify-between gap-2">
-                    <span class="text-xl font-bold">Voices</span>
-                    <div class="flex items-center gap-3">
-                        <div class="flex items-center gap-2">
-                            <SelectButton v-model="onlyActive" @change="loadVoices" 
-                                         :options="[{ label: 'Only Active', value: true }, { label: 'All', value: false } ]" 
-                                         optionLabel="label" optionValue="value" />
-                        </div>
-                        <Button icon="pi pi-refresh" rounded raised @click="loadVoices" />
-                    </div>
+        <!-- Filters Section -->
+        <div class="mb-4 p-4 border rounded-lg bg-gray-50 dark:bg-surface-800 dark:border-surface-700">
+            <div class="flex flex-wrap items-center justify-end gap-3">
+                <div class="flex items-center gap-2">
+                    <SelectButton v-model="onlyActive" @change="loadVoices" 
+                                 :options="[{ label: 'Only Active', value: true }, { label: 'All', value: false } ]" 
+                                 optionLabel="label" optionValue="value" />
                 </div>
-            </template>
+                <Button icon="pi pi-refresh" rounded raised @click="loadVoices" />
+            </div>
+        </div>
+        
+        <!-- Voices Table -->
+        <DataTable :value="filteredVoices" tableStyle="min-width: 50rem" paginator :rows="defaultPageSize" 
+                   :rowsPerPageOptions="[10, 15, 50, 100]" stripedRows
+                   filterDisplay="row" v-model:filters="filters">
             
             <Column field="translation.language" header="Language" sortable style="width: 15%" :showFilterMenu="false" :filterFunction="filterByLanguage">
                 <template #body="slotProps">
@@ -105,7 +105,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
@@ -129,6 +129,14 @@ import { useToast } from 'primevue/usetoast'
 const { state, voices, fetchTranslations, updateVoiceActive } = useTranslations()
 const { languages, fetchLanguages } = useLanguages()
 const toast = useToast()
+
+// Mobile detection and adaptive page size
+const isMobile = ref(false)
+const defaultPageSize = computed(() => isMobile.value ? 10 : 15)
+
+const updateMobileState = () => {
+  isMobile.value = window.innerWidth < 768
+}
 
 // Only active filter state
 const onlyActive = ref<boolean>(false)
@@ -321,6 +329,12 @@ const translationOptions = computed(() => {
 })
 
 onMounted(() => {
+    updateMobileState()
+    window.addEventListener('resize', updateMobileState)
     loadVoices()
+})
+
+onUnmounted(() => {
+    window.removeEventListener('resize', updateMobileState)
 })
 </script>

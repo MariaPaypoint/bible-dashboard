@@ -1,199 +1,139 @@
 <template>
-    <div class="w-full">
-        <!-- Voice Selection and Filters -->
-        <div class="mb-4 p-4 border rounded-lg bg-gray-50 dark:bg-surface-800 dark:border-surface-700">
-            <div class="flex items-center gap-3">
-                <div class="flex-1 min-w-0" style="flex: 2;">
-                    <label for="voiceSelect" class="block text-sm font-medium mb-1">Select voice to view anomalies:</label>
-                    <Select 
-                        id="voiceSelect"
-                        v-model="selectedVoice" 
-                        :options="availableVoices" 
-                        optionLabel="displayName"
-                        optionValue="code"
-                        :optionDisabled="isVoiceDisabled"
-                        placeholder="Select voice"
-                        class="w-full"
-                        @change="onVoiceChange"
-                    >
-                        <template #option="slotProps">
-                            <div class="flex items-center justify-between w-full">
-                                <span :class="{ 'opacity-50': slotProps.option.anomalies_count === 0 }">
-                                    {{ slotProps.option.displayName }}
-                                </span>
-                                <Tag 
-                                    :value="slotProps.option.anomalies_count" 
-                                    :severity="slotProps.option.anomalies_count === 0 ? 'secondary' : 'info'"
-                                    class="ml-2"
-                                />
-                            </div>
-                        </template>
-                        <template #value="slotProps">
-                            <div class="flex items-center justify-between w-full" v-if="slotProps.value">
-                                <span>
-                                    {{ getSelectedVoiceDisplayName(slotProps.value) }}
-                                </span>
-                                <Tag 
-                                    :value="getSelectedVoiceAnomaliesCount(slotProps.value)" 
-                                    :severity="getSelectedVoiceAnomaliesCount(slotProps.value) === 0 ? 'secondary' : 'info'"
-                                    class="ml-2"
-                                />
-                            </div>
-                        </template>
-                    </Select>
-                </div>
-                <div class="flex-1 min-w-0" style="flex: 1;">
-                    <label for="bookFilter" class="block text-sm font-medium mb-1">Filter by book:</label>
-                    <Select 
-                        id="bookFilter"
-                        v-model="selectedBookNumber" 
-                        :options="bookOptions" 
-                        optionLabel="label"
-                        optionValue="value"
-                        placeholder="All books"
-                        class="w-full"
-                        :disabled="!selectedVoice"
-                        :loading="booksState.loading"
-                        @change="onBookChange"
-                        showClear
-                    >
-                        <template #option="slotProps">
-                            <div class="flex items-center justify-between w-full">
-                                <span :class="{ 'opacity-50': slotProps.option.anomalies_count === 0 }">
-                                    {{ slotProps.option.label }}
-                                </span>
-                                <Tag 
-                                    v-if="selectedVoice"
-                                    :value="slotProps.option.anomalies_count" 
-                                    :severity="slotProps.option.anomalies_count === 0 ? 'secondary' : 'info'"
-                                    class="ml-2"
-                                />
-                            </div>
-                        </template>
-                        <template #value="slotProps">
-                            <div class="flex items-center justify-between w-full" v-if="slotProps.value && selectedVoice">
-                                <span>
-                                    {{ getSelectedBookDisplayName(slotProps.value) }}
-                                </span>
-                                <Tag 
-                                    :value="getSelectedBookAnomaliesCount(slotProps.value)" 
-                                    :severity="getSelectedBookAnomaliesCount(slotProps.value) === 0 ? 'secondary' : 'info'"
-                                    class="ml-2"
-                                />
-                            </div>
-                            <span v-else-if="slotProps.value">
-                                {{ getSelectedBookDisplayName(slotProps.value) }}
-                            </span>
-                        </template>
-                    </Select>
-                </div>
-                <div class="flex-1 min-w-0" style="flex: 1;">
-                    <label for="anomalyTypeFilter" class="block text-sm font-medium mb-1">Filter by anomaly type:</label>
-                    <Select 
-                        id="anomalyTypeFilter"
-                        v-model="selectedAnomalyType" 
-                        :options="anomalyTypeOptions" 
-                        optionLabel="label"
-                        optionValue="value"
-                        placeholder="All types"
-                        class="w-full"
-                        :disabled="!selectedVoice"
-                        @change="onAnomalyTypeChange"
-                        showClear
-                    />
-                </div>
-                <Button 
-                    icon="pi pi-refresh" 
-                    rounded 
-                    raised 
-                    @click="refreshData"
-                    :disabled="!selectedVoice"
-                    :loading="anomaliesState.loading"
-                />
-            </div>
+  <div class="w-full">
+    <!-- Voice Selection and Filters -->
+    <div class="mb-4 p-4 border rounded-lg bg-gray-50 dark:bg-surface-800 dark:border-surface-700">
+      <!-- Mobile: Stack vertically, Desktop: Horizontal layout -->
+      <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+        <div class="flex-1 min-w-0" style="flex: 2;">
+          <Select id="voiceSelect" v-model="selectedVoice" :options="availableVoices" optionLabel="displayName"
+            optionValue="code" :optionDisabled="isVoiceDisabled" placeholder="Select voice" class="w-full"
+            @change="onVoiceChange">
+            <template #option="slotProps">
+              <div class="flex items-center justify-between w-full">
+                <span :class="{ 'opacity-50': slotProps.option.anomalies_count === 0 }" :title="slotProps.option.displayName">
+                  {{ truncateText(slotProps.option.displayName) }}
+                </span>
+                <Tag :value="slotProps.option.anomalies_count"
+                  :severity="slotProps.option.anomalies_count === 0 ? 'secondary' : 'info'" class="ml-2" />
+              </div>
+            </template>
+            <template #value="slotProps">
+              <div class="flex items-center justify-between w-full" v-if="slotProps.value">
+                <span :title="getSelectedVoiceDisplayName(slotProps.value)">
+                  {{ truncateText(getSelectedVoiceDisplayName(slotProps.value)) }}
+                </span>
+                <Tag :value="getSelectedVoiceAnomaliesCount(slotProps.value)"
+                  :severity="getSelectedVoiceAnomaliesCount(slotProps.value) === 0 ? 'secondary' : 'info'"
+                  class="ml-2" />
+              </div>
+            </template>
+          </Select>
         </div>
-
-        <!-- Anomalies Table -->
-        <DataTable 
-            :value="anomalies" 
-            tableStyle="min-width: 50rem" 
-            paginator 
-            :rows="pageSize" 
-            :rowsPerPageOptions="[15, 50, 100]"
-            :totalRecords="totalCount"
-            :lazy="true"
-            stripedRows
-            :loading="anomaliesState.loading"
-            @page="onPageChange"
-            @sort="onSort"
-            sortMode="single"
-        >
-            <template #header>
-                <div class="flex flex-wrap items-center justify-between gap-2">
-                    <span class="text-xl font-bold">Voice Anomalies</span>
-                    <div class="flex items-center gap-2">
-                        <span v-if="selectedVoice" class="text-sm text-gray-600">
-                            Voice: {{ getVoiceName(selectedVoice) }}
-                        </span>
-                    </div>
-                </div>
+        <div class="flex-1 min-w-0" style="flex: 1;">
+          <Select id="bookFilter" v-model="selectedBookNumber" :options="bookOptions" optionLabel="label"
+            optionValue="value" placeholder="All books" class="w-full" :disabled="!selectedVoice"
+            :loading="booksState.loading" @change="onBookChange" showClear>
+            <template #option="slotProps">
+              <div class="flex items-center justify-between w-full">
+                <span :class="{ 'opacity-50': slotProps.option.anomalies_count === 0 }">
+                  {{ slotProps.option.label }}
+                </span>
+                <Tag v-if="selectedVoice" :value="slotProps.option.anomalies_count"
+                  :severity="slotProps.option.anomalies_count === 0 ? 'secondary' : 'info'" class="ml-2" />
+              </div>
             </template>
-            
-            <Column field="code" header="Code" style="width: 8%"></Column>
-            <Column field="book_number" header="Reference" sortable style="width: 20%">
-                <template #body="slotProps">
-                    <span class="text-sm font-medium">{{ formatReference(slotProps.data) }}</span>
-                </template>
-            </Column>
-            <Column field="word" header="Word" style="width: 15%">
-                <template #body="slotProps">
-                    <span class="font-mono font-semibold">{{ slotProps.data.word }}</span>
-                </template>
-            </Column>
-            <Column field="anomaly_type" header="Anomaly Type" sortable style="width: 12%">
-                <template #body="slotProps">
-                    <Tag :value="getAnomalyTypeLabel(slotProps.data.anomaly_type)" 
-                         :severity="getAnomalySeverity(slotProps.data.anomaly_type)" />
-                </template>
-            </Column>
-            <Column header="Information" style="width: 8%">
-                <template #body="slotProps">
-                    <i class="pi pi-info-circle text-blue-500 cursor-pointer" 
-                       v-tooltip.top="getInfoTooltip(slotProps.data)"
-                       style="font-size: 1.2rem;"></i>
-                </template>
-            </Column>
-            <Column field="ratio" header="Ratio" sortable style="width: 10%">
-                <template #body="slotProps">
-                    <Tag :value="slotProps.data.ratio.toFixed(2)" 
-                         :severity="getRatioSeverity(slotProps.data.ratio)" />
-                </template>
-            </Column>
-
-            
-            <template #footer>
-                <div class="flex justify-between items-center">
-                    <span>Total anomalies: {{ totalCount }} (showing: {{ anomalies ? anomalies.length : 0 }})</span>
-                    <span v-if="anomaliesState.error" class="text-red-500 text-sm">
-                        {{ anomaliesState.error }}
-                    </span>
-                </div>
+            <template #value="slotProps">
+              <div class="flex items-center justify-between w-full" v-if="slotProps.value && selectedVoice">
+                <span>
+                  {{ getSelectedBookDisplayName(slotProps.value) }}
+                </span>
+                <Tag :value="getSelectedBookAnomaliesCount(slotProps.value)"
+                  :severity="getSelectedBookAnomaliesCount(slotProps.value) === 0 ? 'secondary' : 'info'"
+                  class="ml-2" />
+              </div>
+              <span v-else-if="slotProps.value">
+                {{ getSelectedBookDisplayName(slotProps.value) }}
+              </span>
             </template>
-            
-            <template #empty>
-                <div class="text-center py-8">
-                    <i class="pi pi-info-circle text-4xl text-gray-400 mb-4"></i>
-                    <p class="text-gray-600">
-                        {{ selectedVoice ? 'No anomalies found for selected voice' : 'Select a voice to view anomalies' }}
-                    </p>
-                </div>
-            </template>
-        </DataTable>
+          </Select>
+        </div>
+        <div class="flex-1 min-w-0" style="flex: 1;">
+          <Select id="anomalyTypeFilter" v-model="selectedAnomalyType" :options="anomalyTypeOptions" optionLabel="label"
+            optionValue="value" placeholder="All types" class="w-full" :disabled="!selectedVoice"
+            @change="onAnomalyTypeChange" showClear />
+        </div>
+        <Button icon="pi pi-refresh" rounded raised @click="refreshData" :disabled="!selectedVoice"
+          :loading="anomaliesState.loading" />
+      </div>
     </div>
+
+    <!-- Anomalies Table -->
+    <DataTable :value="anomalies" tableStyle="min-width: 50rem" paginator :rows="defaultPageSize"
+      :rowsPerPageOptions="[10, 15, 50, 100]" :totalRecords="totalCount" :lazy="true" stripedRows
+      :loading="anomaliesState.loading" @page="onPageChange" @sort="onSort" sortMode="single">
+      <template #header>
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <span v-if="selectedVoice" class="text-sm text-gray-600">
+              Voice: {{ getVoiceName(selectedVoice) }}
+            </span>
+          </div>
+        </div>
+      </template>
+
+      <Column field="code" header="Code" style="width: 8%"></Column>
+      <Column field="book_number" header="Reference" sortable style="width: 20%">
+        <template #body="slotProps">
+          <span class="text-sm font-medium">{{ formatReference(slotProps.data) }}</span>
+        </template>
+      </Column>
+      <Column field="word" header="Word" style="width: 15%">
+        <template #body="slotProps">
+          <span class="font-mono font-semibold">{{ slotProps.data.word }}</span>
+        </template>
+      </Column>
+      <Column field="anomaly_type" header="Anomaly Type" sortable style="width: 12%">
+        <template #body="slotProps">
+          <Tag :value="getAnomalyTypeLabel(slotProps.data.anomaly_type)"
+            :severity="getAnomalySeverity(slotProps.data.anomaly_type)" />
+        </template>
+      </Column>
+      <Column header="Information" style="width: 8%">
+        <template #body="slotProps">
+          <i class="pi pi-info-circle text-blue-500 cursor-pointer" v-tooltip.top="getInfoTooltip(slotProps.data)"
+            style="font-size: 1.2rem;"></i>
+        </template>
+      </Column>
+      <Column field="ratio" header="Ratio" sortable style="width: 10%">
+        <template #body="slotProps">
+          <Tag :value="slotProps.data.ratio.toFixed(2)" :severity="getRatioSeverity(slotProps.data.ratio)" />
+        </template>
+      </Column>
+
+
+      <template #footer>
+        <div class="flex justify-between items-center">
+          <span>Total anomalies: {{ totalCount }} (showing: {{ anomalies ? anomalies.length : 0 }})</span>
+          <span v-if="anomaliesState.error" class="text-red-500 text-sm">
+            {{ anomaliesState.error }}
+          </span>
+        </div>
+      </template>
+
+      <template #empty>
+        <div class="text-center py-8">
+          <i class="pi pi-info-circle text-4xl text-gray-400 mb-4"></i>
+          <p class="text-gray-600">
+            {{ selectedVoice ? 'No anomalies found for selected voice' : 'Select a voice to view anomalies' }}
+          </p>
+        </div>
+      </template>
+    </DataTable>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
@@ -204,19 +144,19 @@ import type { VoiceAnomalyModel, BookModel } from '../types/api'
 import { useVoiceAnomalies, useTranslations, useBooks, type VoiceWithTranslation } from '../composables/useApi'
 
 // Composables
-const { 
-  state: anomaliesState, 
-  anomalies, 
+const {
+  state: anomaliesState,
+  anomalies,
   totalCount,
-  currentPage, 
-  pageSize, 
+  currentPage,
+  pageSize,
   selectedVoiceCode,
   selectedAnomalyType,
   selectedBookNumber,
   selectedSortBy,
   selectedSortOrder,
-  fetchAnomalies, 
-  loadPage, 
+  fetchAnomalies,
+  loadPage,
   refreshAnomalies,
   setAnomalyTypeFilter,
   setBookFilter,
@@ -286,14 +226,14 @@ const onVoiceChange = async () => {
     currentPage.value = 1
     selectedAnomalyType.value = null // Reset filters when changing voice
     selectedBookNumber.value = null
-    
+
     // Get translation code from selected voice
     const selectedVoiceData = availableVoices.value.find(v => v.code === selectedVoice.value)
     if (selectedVoiceData) {
       // Load books for the translation with voice_code to get anomalies count
       await fetchBooks(selectedVoiceData.translation.code, selectedVoice.value)
     }
-    
+
     await fetchAnomalies(selectedVoice.value, {
       page: 1,
       limit: pageSize.value,
@@ -317,19 +257,19 @@ const onBookChange = async () => {
 const onPageChange = async (event: any) => {
   const newPage = event.page + 1 // PrimeVue uses 0-based indexing
   const newPageSize = event.rows
-  
+
   // Update page size if it changed
   if (newPageSize !== pageSize.value) {
     pageSize.value = newPageSize
   }
-  
+
   await loadPage(newPage)
 }
 
 const onSort = async (event: DataTableSortEvent) => {
   // Map DataTable field names to API sort_by values
   let sortBy: 'address' | 'type' | 'ratio' = 'ratio'
-  
+
   if (event.sortField === 'book_number' || event.sortField === 'chapter_number' || event.sortField === 'verse_number') {
     sortBy = 'address'
   } else if (event.sortField === 'anomaly_type') {
@@ -337,10 +277,10 @@ const onSort = async (event: DataTableSortEvent) => {
   } else if (event.sortField === 'ratio') {
     sortBy = 'ratio'
   }
-  
+
   // Determine sort order from DataTable event
   const sortOrder: 'asc' | 'desc' = event.sortOrder === 1 ? 'asc' : 'desc'
-  
+
   await setSortBy(sortBy, sortOrder)
 }
 
@@ -423,10 +363,38 @@ const getInfoTooltip = (anomaly: VoiceAnomalyModel): string => {
   return parts.join('\n')
 }
 
+// Function to check if current viewport is mobile
+const isMobile = ref(false)
+
+// Adaptive page size based on screen size
+const defaultPageSize = computed(() => isMobile.value ? 10 : 15)
+
+// Function to truncate text on mobile
+const truncateText = (text: string, maxLength: number = 25): string => {
+  if (!isMobile.value || !text) return text
+  if (text.length <= maxLength) return text
+  return text.substring(0, maxLength) + '...'
+}
+
+// Update mobile state on window resize
+const updateMobileState = () => {
+  isMobile.value = window.innerWidth < 640
+}
+
 // Initialize data on mount
 onMounted(async () => {
   if (voices.value.length === 0) {
     await fetchTranslations()
   }
+  
+  // Initialize mobile state
+  updateMobileState()
+  window.addEventListener('resize', updateMobileState)
 })
+
+// Cleanup on unmount
+onUnmounted(() => {
+  window.removeEventListener('resize', updateMobileState)
+})
+
 </script>
