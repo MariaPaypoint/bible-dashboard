@@ -265,15 +265,40 @@
                     -->
                 </div>
 
-                <div class="p-2">
+                <div class="p-2 hidden lg:block">
                     <ul class="list-none p-0 m-0 flex flex-col gap-1">
-                        <li>
-                            <a
+                        <li class="relative settings-menu-container">
+                            <a @click="toggleSettingsMenu"
                                 class="flex items-center cursor-pointer p-3 gap-2 rounded-lg text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors duration-150 hover:text-surface-900 dark:hover:text-surface-50 border border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700 group">
                                 <i
                                     class="pi pi-cog !text-base !leading-none text-surface-500 dark:text-surface-400 group-hover:text-surface-900 dark:group-hover:text-surface-50" />
                                 <span class="font-medium text-base leading-tight">Settings</span>
+                                <i class="pi pi-chevron-up !text-sm !leading-none text-surface-500 dark:text-surface-400 ml-auto transition-transform duration-200" :class="{ 'rotate-180': !showSettingsMenu }" />
                             </a>
+                            
+                            <!-- Settings Dropdown Menu -->
+                            <div v-show="showSettingsMenu" class="absolute bottom-full left-0 mb-2 w-full bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-lg shadow-lg z-50">
+                                <ul class="list-none p-2 m-0 flex flex-col gap-1">
+                                    <li>
+                                        <a @click="setTheme('light')" 
+                                           class="flex items-center cursor-pointer p-2 gap-2 rounded-md text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors duration-150 group"
+                                           :class="{ 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300': !isDarkMode }">
+                                            <i class="pi pi-sun !text-sm !leading-none text-surface-500 dark:text-surface-400 group-hover:text-surface-900 dark:group-hover:text-surface-50" />
+                                            <span class="font-medium text-sm leading-tight">Light Theme</span>
+                                            <i v-if="!isDarkMode" class="pi pi-check !text-sm !leading-none text-primary-600 dark:text-primary-400 ml-auto" />
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a @click="setTheme('dark')" 
+                                           class="flex items-center cursor-pointer p-2 gap-2 rounded-md text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors duration-150 group"
+                                           :class="{ 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300': isDarkMode }">
+                                            <i class="pi pi-moon !text-sm !leading-none text-surface-500 dark:text-surface-400 group-hover:text-surface-900 dark:group-hover:text-surface-50" />
+                                            <span class="font-medium text-sm leading-tight">Dark Theme</span>
+                                            <i v-if="isDarkMode" class="pi pi-check !text-sm !leading-none text-primary-600 dark:text-primary-400 ml-auto" />
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
                         </li>
                     </ul>
                 </div>
@@ -334,7 +359,7 @@ import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
 import InputText from 'primevue/inputtext'
 import Toast from 'primevue/toast'
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import type { ActiveComponent } from '../types/components'
 
 // Import components
@@ -344,6 +369,7 @@ import BibleAnomalies from './BibleAnomalies.vue'
 
 const isDarkMode = ref<boolean>(false)
 const activeComponent = ref<ActiveComponent>('welcome')
+const showSettingsMenu = ref<boolean>(false)
 
 // Dynamic page title based on active component
 const pageTitle = computed(() => {
@@ -358,6 +384,14 @@ const pageTitle = computed(() => {
       return { icon: '👋', title: 'Welcome!' }
   }
 })
+
+// Handle click outside to close settings menu
+const handleClickOutside = (event: Event) => {
+    const target = event.target as Element
+    if (!target.closest('.settings-menu-container')) {
+        showSettingsMenu.value = false
+    }
+}
 
 onMounted(() => {
     // Проверяем системные настройки темы
@@ -380,6 +414,13 @@ onMounted(() => {
         }
         isDarkMode.value = document.documentElement.classList.contains('dark');
     });
+    
+    // Add click outside listener
+    document.addEventListener('click', handleClickOutside)
+});
+
+onUnmounted(() => {
+    document.removeEventListener('click', handleClickOutside)
 });
 
 function toggleDarkMode(): void {
@@ -390,5 +431,19 @@ function toggleDarkMode(): void {
 
 function setActiveComponent(component: ActiveComponent): void {
     activeComponent.value = component
+}
+
+function toggleSettingsMenu(): void {
+    showSettingsMenu.value = !showSettingsMenu.value
+}
+
+function setTheme(theme: 'light' | 'dark'): void {
+    if (theme === 'dark') {
+        document.documentElement.classList.add('dark')
+    } else {
+        document.documentElement.classList.remove('dark')
+    }
+    isDarkMode.value = document.documentElement.classList.contains('dark')
+    showSettingsMenu.value = false // Close menu after selection
 }
 </script>
