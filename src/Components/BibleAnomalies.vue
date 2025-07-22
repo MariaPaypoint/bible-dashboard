@@ -74,7 +74,7 @@
     <DataTable :value="anomalies" tableStyle="min-width: 50rem" paginator :rows="defaultPageSize"
       :rowsPerPageOptions="[10, 15, 50, 100]" :totalRecords="totalCount" :lazy="true" stripedRows
       :loading="anomaliesState.loading" @page="onPageChange" @sort="onSort" sortMode="single"
-      :rowClass="getRowClass">
+      :rowClass="getRowClass" class="compact-table">
       <template #header>
         <div class="flex flex-wrap items-center justify-between gap-2">
           <div class="flex items-center gap-2">
@@ -114,20 +114,20 @@
       </Column>
       <Column header="Actions" style="width: 10%">
         <template #body="slotProps">
-          <div class="flex gap-2">
+          <div class="flex gap-2 items-center">
             <!-- Dynamic Play/Pause button -->
             <Button v-if="currentPlayingId === slotProps.data.code && isPlaying"
-              severity="primary" class="p-button-sm w-10 h-10" rounded v-tooltip.top="'Pause'"
+              severity="primary" class="w-8 h-8"  v-tooltip.top="'Pause'"
               @click="togglePlayPause()">
-              <PauseIcon class="w-5 h-5" />
+              <PauseIcon class="w-5 h-5 -m-1.5" />
             </Button>
             <Button v-else
-              severity="info" class="p-button-sm w-10 h-10" rounded v-tooltip.top="'Play Verse'"
+              severity="info" class="w-8 h-8" v-tooltip.top="'Play Verse'"
               @click="playVerse(slotProps.data)" :disabled="isPlaying && currentPlayingId !== slotProps.data.code">
-              <PlayIcon class="w-5 h-5" />
+              <PlayIcon class="w-5 h-5 -m-1.5" />
             </Button>
-            <Button severity="secondary" class="p-button-sm w-10 h-10" rounded v-tooltip.top="'Correction'">
-              <EditIcon class="w-5 h-5" />
+            <Button severity="secondary" class="w-8 h-8" v-tooltip.top="'Correction'">
+              <EditIcon class="w-5 h-5 -m-1.5" />
             </Button>
           </div>
         </template>
@@ -644,3 +644,16 @@ onUnmounted(() => {
 })
 
 </script>
+
+<style scoped>
+/* Compact table styles - reduce vertical padding in rows */
+.compact-table :deep(.p-datatable-tbody > tr > td) {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.compact-table :deep(.p-datatable-thead > tr > th) {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+</style>
