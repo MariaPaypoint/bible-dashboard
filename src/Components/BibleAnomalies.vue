@@ -10,7 +10,8 @@
             @change="onVoiceChange">
             <template #option="slotProps">
               <div class="flex items-center justify-between w-full">
-                <span :class="{ 'opacity-50': slotProps.option.anomalies_count === 0 }" :title="slotProps.option.displayName">
+                <span :class="{ 'opacity-50': slotProps.option.anomalies_count === 0 }"
+                  :title="slotProps.option.displayName">
                   {{ truncateText(slotProps.option.displayName) }}
                 </span>
                 <Tag :value="slotProps.option.anomalies_count"
@@ -62,15 +63,18 @@
             optionValue="value" placeholder="All types" class="w-full" :disabled="!selectedVoice"
             @change="onAnomalyTypeChange" showClear />
         </div>
-        <Button icon="pi pi-refresh" rounded raised @click="refreshData" :disabled="!selectedVoice"
-          :loading="anomaliesState.loading" />
+        <Button rounded raised @click="refreshData" :disabled="!selectedVoice"
+          :loading="anomaliesState.loading">
+          <RefreshIcon class="w-5 h-5" />
+        </Button>
       </div>
     </div>
 
     <!-- Anomalies Table -->
     <DataTable :value="anomalies" tableStyle="min-width: 50rem" paginator :rows="defaultPageSize"
       :rowsPerPageOptions="[10, 15, 50, 100]" :totalRecords="totalCount" :lazy="true" stripedRows
-      :loading="anomaliesState.loading" @page="onPageChange" @sort="onSort" sortMode="single">
+      :loading="anomaliesState.loading" @page="onPageChange" @sort="onSort" sortMode="single"
+      :rowClass="getRowClass">
       <template #header>
         <div class="flex flex-wrap items-center justify-between gap-2">
           <div class="flex items-center gap-2">
@@ -100,8 +104,7 @@
       </Column>
       <Column header="Information" style="width: 8%">
         <template #body="slotProps">
-          <i class="pi pi-info-circle text-blue-500 cursor-pointer" v-tooltip.top="getInfoTooltip(slotProps.data)"
-            style="font-size: 1.2rem;"></i>
+          <InfoIcon class="w-5 h-5 text-blue-500 cursor-pointer" v-tooltip.top="getInfoTooltip(slotProps.data)" />
         </template>
       </Column>
       <Column field="ratio" header="Ratio" sortable style="width: 10%">
@@ -109,7 +112,26 @@
           <Tag :value="slotProps.data.ratio.toFixed(2)" :severity="getRatioSeverity(slotProps.data.ratio)" />
         </template>
       </Column>
-
+      <Column header="Actions" style="width: 10%">
+        <template #body="slotProps">
+          <div class="flex gap-2">
+            <!-- Dynamic Play/Pause button -->
+            <Button v-if="currentPlayingId === slotProps.data.code && isPlaying"
+              severity="primary" class="p-button-sm w-10 h-10" rounded v-tooltip.top="'Pause'"
+              @click="togglePlayPause()">
+              <PauseIcon class="w-5 h-5" />
+            </Button>
+            <Button v-else
+              severity="info" class="p-button-sm w-10 h-10" rounded v-tooltip.top="'Play Verse'"
+              @click="playVerse(slotProps.data)" :disabled="isPlaying && currentPlayingId !== slotProps.data.code">
+              <PlayIcon class="w-5 h-5" />
+            </Button>
+            <Button severity="secondary" class="p-button-sm w-10 h-10" rounded v-tooltip.top="'Correction'">
+              <EditIcon class="w-5 h-5" />
+            </Button>
+          </div>
+        </template>
+      </Column>
 
       <template #footer>
         <div class="flex justify-between items-center">
@@ -122,13 +144,61 @@
 
       <template #empty>
         <div class="text-center py-8">
-          <i class="pi pi-info-circle text-4xl text-gray-400 mb-4"></i>
+          <InfoIcon class="w-12 h-12 text-gray-400 mb-4 mx-auto" />
           <p class="text-gray-600">
             {{ selectedVoice ? 'No anomalies found for selected voice' : 'Select a voice to view anomalies' }}
           </p>
         </div>
       </template>
     </DataTable>
+
+    <!-- Mini Audio Player Popup -->
+    <div v-if="showPlayer"
+      class="fixed top-4 right-4 z-50 p-7 bg-surface-0 dark:bg-surface-900 rounded-2xl shadow-lg w-96">
+      <div class="flex gap-3 w-full">
+        <div
+          class="flex items-center justify-center h-9 w-9 bg-primary-50 dark:bg-primary-400/30 rounded-lg border border-primary-100 dark:border-primary-400/20">
+          <SpeakerIcon class="w-5 h-5 text-primary-600 dark:text-primary-200" />
+        </div>
+        <div class="flex-1 flex flex-col gap-3">
+          <div class="flex items-start justify-between gap-1">
+            <div class="flex-1 flex flex-col gap-1">
+              <span class="text-lg font-semibold text-surface-900 dark:text-surface-0 leading-normal">
+                Playing Verse
+              </span>
+              <p class="m-0 text-xs text-surface-500 dark:text-surface-300 leading-normal">
+                {{ currentVerse?.book_number ? formatReference(currentVerse) : '' }}
+              </p>
+            </div>
+            <Button text severity="secondary" class="w-10 h-10 !p-2 -mt-3 -mr-4" @click="stopPlaying">
+              <CloseIcon class="w-5 h-5" />
+            </Button>
+          </div>
+          <div class="text-sm text-surface-700 dark:text-surface-200 leading-relaxed" v-if="currentVerse?.verse_text"
+            v-html="highlightProblematicWord(currentVerse.verse_text, currentVerse.word)">
+          </div>
+          <div class="flex flex-col gap-2">
+            <div class="flex h-1.5 rounded-lg overflow-hidden">
+              <div class="bg-primary h-full rounded-l-lg transition-all duration-500 ease-in-out"
+                :style="{ width: progressPercentage + '%' }" />
+              <div
+                class="bg-surface-200 dark:bg-surface-700 h-full rounded-r-lg transition-all duration-500 ease-in-out"
+                :style="{ width: (100 - progressPercentage) + '%' }" />
+            </div>
+            <div class="text-right text-xs text-surface-900 dark:text-surface-0 leading-tight">
+              {{ formatTime(currentTime) }} / {{ formatTime(duration) }}
+            </div>
+          </div>
+          <div class="flex gap-4">
+            <Button severity="primary" class="flex-1" @click="togglePlayPause">
+              <component :is="isPlaying ? PauseIcon : PlayIcon" class="w-5 h-5 mr-2" />
+              <span>{{ isPlaying ? 'Pause' : 'Play' }}</span>
+            </Button>
+            <Button label="Stop" severity="secondary" @click="stopPlaying" />
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -142,6 +212,16 @@ import Select from 'primevue/select'
 import type { DataTableSortEvent } from 'primevue/datatable'
 import type { VoiceAnomalyModel, BookModel } from '../types/api'
 import { useVoiceAnomalies, useTranslations, useBooks, type VoiceWithTranslation } from '../composables/useApi'
+// Lucide imports
+import {
+  RotateCcw as RefreshIcon,
+  Info as InfoIcon,
+  Play as PlayIcon,
+  Pause as PauseIcon,
+  Edit as EditIcon,
+  X as CloseIcon,
+  Volume2 as SpeakerIcon
+} from 'lucide-vue-next'
 
 // Composables
 const {
@@ -168,6 +248,16 @@ const { state: booksState, books, fetchBooks, clearBooks } = useBooks()
 
 // Local state
 const selectedVoice = ref<number | null>(null)
+
+// Audio player state
+const showPlayer = ref(false)
+const isPlaying = ref(false)
+const currentVerse = ref<VoiceAnomalyModel | null>(null)
+const currentPlayingId = ref<number | null>(null) // ID of currently playing anomaly
+const audioElement = ref<HTMLAudioElement | null>(null)
+const currentTime = ref(0)
+const duration = ref(0)
+const progressUpdateInterval = ref<number | null>(null)
 
 // Anomaly type filter options
 const anomalyTypeOptions = ref([
@@ -366,8 +456,19 @@ const getInfoTooltip = (anomaly: VoiceAnomalyModel): string => {
 // Function to check if current viewport is mobile
 const isMobile = ref(false)
 
+// Function to highlight currently playing row
+const getRowClass = (data: VoiceAnomalyModel) => {
+  return currentPlayingId.value === data.code ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500' : ''
+}
+
 // Adaptive page size based on screen size
 const defaultPageSize = computed(() => isMobile.value ? 10 : 15)
+
+// Audio player computed properties
+const progressPercentage = computed(() => {
+  if (!duration.value || duration.value === 0) return 0
+  return (currentTime.value / duration.value) * 100
+})
 
 // Function to truncate text on mobile
 const truncateText = (text: string, maxLength: number = 25): string => {
@@ -381,12 +482,146 @@ const updateMobileState = () => {
   isMobile.value = window.innerWidth < 640
 }
 
+// Audio player methods
+const formatTime = (seconds: number): string => {
+  const mins = Math.floor(seconds / 60)
+  const secs = Math.floor(seconds % 60)
+  return `${mins}:${secs.toString().padStart(2, '0')}`
+}
+
+const highlightProblematicWord = (verseText: string, problematicWord: string): string => {
+  if (!verseText || !problematicWord) return verseText || ''
+
+  // Escape special regex characters
+  const escapedWord = problematicWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+  // Create a regex to find the problematic word (case-insensitive)
+  // Use word boundaries that work better with Cyrillic text
+  const regex = new RegExp(`(^|\\s|[^\\p{L}\\p{N}])(${escapedWord})(?=\\s|[^\\p{L}\\p{N}]|$)`, 'giu')
+
+  // Replace the word with highlighted version, preserving the boundary character
+  return verseText.replace(regex, (match, boundary, word) => {
+    return `${boundary}<span class="text-red-600 font-semibold bg-red-50 dark:bg-red-900/20 px-1 rounded">${word}</span>`
+  })
+}
+
+const buildAudioUrl = (anomaly: VoiceAnomalyModel): string => {
+  // Get translation code from selected voice
+  const selectedVoiceData = availableVoices.value.find(v => v.code === anomaly.voice)
+  if (!selectedVoiceData) return ''
+
+  const translationAlias = selectedVoiceData.translation.alias || selectedVoiceData.translation.code
+  const voiceAlias = selectedVoiceData.alias || selectedVoiceData.code
+  const bookNumber = anomaly.book_number.toString().padStart(2, '0')
+  const chapterNumber = anomaly.chapter_number.toString().padStart(2, '0')
+
+  return `/api/audio/${translationAlias}/${voiceAlias}/${bookNumber}/${chapterNumber}.mp3`
+}
+
+const playVerse = async (anomaly: VoiceAnomalyModel) => {
+  try {
+    // Stop current playback if any
+    if (audioElement.value) {
+      audioElement.value.pause()
+      audioElement.value = null
+    }
+
+    // Clear any existing interval
+    if (progressUpdateInterval.value) {
+      clearInterval(progressUpdateInterval.value)
+      progressUpdateInterval.value = null
+    }
+
+    // Set current verse and show player
+    currentVerse.value = anomaly
+    currentPlayingId.value = anomaly.code
+    showPlayer.value = true
+    isPlaying.value = true
+
+    // Create audio element
+    const audio = new Audio(buildAudioUrl(anomaly))
+    audioElement.value = audio
+
+    // Set up audio event listeners
+    audio.addEventListener('loadedmetadata', () => {
+      // Set current time to verse start and duration to verse length
+      audio.currentTime = anomaly.verse_start_time
+      currentTime.value = 0 // Reset display time to 0 for verse duration
+      duration.value = anomaly.verse_end_time - anomaly.verse_start_time
+    })
+
+    audio.addEventListener('timeupdate', () => {
+      const verseCurrentTime = audio.currentTime - anomaly.verse_start_time
+      currentTime.value = Math.max(0, verseCurrentTime)
+
+      // Stop when reaching verse end
+      if (audio.currentTime >= anomaly.verse_end_time) {
+        stopPlaying()
+      }
+    })
+
+    audio.addEventListener('ended', () => {
+      stopPlaying()
+    })
+
+    audio.addEventListener('error', (e) => {
+      console.error('Audio playback error:', e)
+      stopPlaying()
+    })
+
+    // Start playback
+    await audio.play()
+
+    // Update progress every 100ms
+    progressUpdateInterval.value = setInterval(() => {
+      if (audio.currentTime >= anomaly.verse_end_time) {
+        stopPlaying()
+      }
+    }, 100)
+
+  } catch (error) {
+    console.error('Error playing verse:', error)
+    stopPlaying()
+  }
+}
+
+const togglePlayPause = () => {
+  if (!audioElement.value) return
+
+  if (isPlaying.value) {
+    audioElement.value.pause()
+    isPlaying.value = false
+  } else {
+    audioElement.value.play()
+    isPlaying.value = true
+  }
+}
+
+const stopPlaying = () => {
+  if (audioElement.value) {
+    audioElement.value.pause()
+    audioElement.value = null
+  }
+
+  if (progressUpdateInterval.value) {
+    clearInterval(progressUpdateInterval.value)
+    progressUpdateInterval.value = null
+  }
+
+  showPlayer.value = false
+  isPlaying.value = false
+  currentVerse.value = null
+  currentPlayingId.value = null
+  currentTime.value = 0
+  duration.value = 0
+}
+
 // Initialize data on mount
 onMounted(async () => {
   if (voices.value.length === 0) {
     await fetchTranslations()
   }
-  
+
   // Initialize mobile state
   updateMobileState()
   window.addEventListener('resize', updateMobileState)
@@ -395,6 +630,17 @@ onMounted(async () => {
 // Cleanup on unmount
 onUnmounted(() => {
   window.removeEventListener('resize', updateMobileState)
+
+  // Clean up audio resources
+  if (audioElement.value) {
+    audioElement.value.pause()
+    audioElement.value = null
+  }
+
+  if (progressUpdateInterval.value) {
+    clearInterval(progressUpdateInterval.value)
+    progressUpdateInterval.value = null
+  }
 })
 
 </script>

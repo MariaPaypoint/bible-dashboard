@@ -52,6 +52,9 @@ export interface VoiceAnomalyModel {
   duration: number
   speed: number
   ratio: number
+  verse_start_time: number
+  verse_end_time: number
+  verse_text: string
 }
 
 // API response types
