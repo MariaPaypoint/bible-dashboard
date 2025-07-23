@@ -63,6 +63,11 @@
             optionValue="value" placeholder="All types" class="w-full" :disabled="!selectedVoice"
             @change="onAnomalyTypeChange" showClear />
         </div>
+        <div class="flex-1 min-w-0" style="flex: 1;">
+          <Select id="statusFilter" v-model="selectedStatus" :options="statusOptions" optionLabel="label"
+            optionValue="value" placeholder="All statuses" class="w-full" :disabled="!selectedVoice"
+            @change="onStatusChange" showClear />
+        </div>
         <Button @click="refreshData" :disabled="!selectedVoice" :loading="anomaliesState.loading">
           <RefreshIcon class="w-5 h-5" />
         </Button>
@@ -111,9 +116,38 @@
           <Tag :value="slotProps.data.ratio.toFixed(2)" :severity="getRatioSeverity(slotProps.data.ratio)" />
         </template>
       </Column>
+      <Column field="status" header="Status" style="width: 12%">
+        <template #body="slotProps">
+          <Button type="button" 
+            :severity="getStatusSeverity(slotProps.data.status)" 
+            @click="(event: Event) => toggleStatusPopover(event, slotProps.data.code)" 
+            class="min-w-32 text-xs flex items-center justify-between" size="small">
+            <span>{{ getStatusLabel(slotProps.data.status) }}</span>
+            <ChevronDownIcon class="w-4 h-4 ml-2" />
+          </Button>
+          
+          <Popover :ref="(el) => setStatusPopoverRef(el, slotProps.data.code)">
+            <div class="flex flex-col gap-2 p-0">
+              <ul class="list-none p-0 m-0 flex flex-col gap-1">
+                <li v-for="option in statusOptions" :key="option.value" 
+                  :class="[
+                    'flex flex-col gap-1 px-3 py-2 hover:bg-emphasis cursor-pointer rounded-border',
+                    { 'bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-700': option.value === slotProps.data.status }
+                  ]" 
+                  @click="selectStatus(slotProps.data, option.value)">
+                  <div class="flex items-center gap-2">
+                    <Tag :value="option.label" :severity="getStatusSeverity(option.value)" class="text-xs" />
+                  </div>
+                  <span class="text-xs text-muted-color ml-1">{{ option.description }}</span>
+                </li>
+              </ul>
+            </div>
+          </Popover>
+        </template>
+      </Column>
       <Column header="Actions" style="width: 10%">
         <template #body="slotProps">
-          <div class="flex gap-2 items-center">
+          <div class="flex gap-1">
             <!-- Dynamic Play/Pause button -->
             <Button v-if="currentPlayingId === slotProps.data.code && isPlaying" severity="primary" class="w-8 h-8"
               v-tooltip.top="'Pause'" @click="togglePlayPause()">
@@ -122,9 +156,6 @@
             <Button v-else severity="info" class="w-8 h-8" v-tooltip.top="'Play Verse'"
               @click="playVerse(slotProps.data)" :disabled="isPlaying && currentPlayingId !== slotProps.data.code">
               <PlayIcon class="w-5 h-5 -m-1.5" />
-            </Button>
-            <Button severity="secondary" class="w-8 h-8" v-tooltip.top="'Correction'">
-              <EditIcon class="w-5 h-5 -m-1.5" />
             </Button>
           </div>
         </template>
@@ -151,48 +182,70 @@
 
     <!-- Mini Audio Player Popup -->
     <div v-if="showPlayer"
-      class="fixed top-4 right-4 z-50 p-7 bg-surface-0 dark:bg-surface-900 rounded-2xl shadow-lg w-96">
-      <div class="flex gap-3 w-full">
-        <div
-          class="flex items-center justify-center h-9 w-9 bg-primary-50 dark:bg-primary-400/30 rounded-lg border border-primary-100 dark:border-primary-400/20">
-          <SpeakerIcon class="w-5 h-5 text-primary-600 dark:text-primary-200" />
-        </div>
-        <div class="flex-1 flex flex-col gap-3">
-          <div class="flex items-start justify-between gap-1">
-            <div class="flex-1 flex flex-col gap-1">
-              <span class="text-lg font-semibold text-surface-900 dark:text-surface-0 leading-normal">
-                Playing Verse
-              </span>
-              <p class="m-0 text-xs text-surface-500 dark:text-surface-300 leading-normal">
-                {{ currentVerse?.book_number ? formatReference(currentVerse) : '' }}
-              </p>
+      class="fixed top-4 right-4 w-[420px] bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-2xl shadow-lg p-7 z-50 transition-all duration-500 ease-in-out">
+      <div class="flex flex-col gap-3">
+        <div class="flex items-start justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-primary-50 dark:bg-primary-400/20 flex items-center justify-center">
+              <SpeakerIcon class="w-5 h-5 text-primary-600 dark:text-primary-400" />
             </div>
-            <Button text severity="secondary" class="w-10 h-10 !p-2 -mt-3 -mr-4" @click="stopPlaying">
+            <div>
+              <div class="text-base font-semibold text-surface-900 dark:text-surface-0 leading-normal">
+                Playing Verse
+              </div>
+              <div class="text-xs text-surface-500 dark:text-surface-300 leading-tight">
+                Book {{ currentVerse?.book_number }} Chapter {{ currentVerse?.chapter_number }}:{{ currentVerse?.verse_number }}
+              </div>
+            </div>
+          </div>
+          <!-- Play/Pause and Stop buttons in top right corner -->
+          <div class="flex gap-2 -mt-1 -mr-1">
+            <Button severity="primary" class="w-10 h-10 !p-2" @click="togglePlayPause">
+              <component :is="isPlaying ? PauseIcon : PlayIcon" class="w-5 h-5" />
+            </Button>
+            <Button severity="secondary" class="w-10 h-10 !p-2" @click="stopPlaying" v-tooltip.top="'Stop'">
               <CloseIcon class="w-5 h-5" />
             </Button>
           </div>
-          <div class="text-sm text-surface-700 dark:text-surface-200 leading-relaxed" v-if="currentVerse?.verse_text"
-            v-html="highlightProblematicWord(currentVerse.verse_text, currentVerse.word)">
+        </div>
+        <div class="text-sm text-surface-700 dark:text-surface-200 leading-relaxed" v-if="currentVerse?.verse_text"
+          v-html="highlightProblematicWord(currentVerse.verse_text, currentVerse.word)">
+        </div>
+        <div class="flex flex-col gap-2">
+          <div class="flex h-1.5 rounded-lg overflow-hidden">
+            <div class="bg-primary h-full rounded-l-lg transition-all duration-500 ease-in-out"
+              :style="{ width: progressPercentage + '%' }" />
+            <div
+              class="bg-surface-200 dark:bg-surface-700 h-full rounded-r-lg transition-all duration-500 ease-in-out"
+              :style="{ width: (100 - progressPercentage) + '%' }" />
           </div>
-          <div class="flex flex-col gap-2">
-            <div class="flex h-1.5 rounded-lg overflow-hidden">
-              <div class="bg-primary h-full rounded-l-lg transition-all duration-500 ease-in-out"
-                :style="{ width: progressPercentage + '%' }" />
-              <div
-                class="bg-surface-200 dark:bg-surface-700 h-full rounded-r-lg transition-all duration-500 ease-in-out"
-                :style="{ width: (100 - progressPercentage) + '%' }" />
-            </div>
-            <div class="text-right text-xs text-surface-900 dark:text-surface-0 leading-tight">
-              {{ formatTime(currentTime) }} / {{ formatTime(duration) }}
-            </div>
+          <div class="text-right text-xs text-surface-900 dark:text-surface-0 leading-tight">
+            {{ formatTime(currentTime) }} / {{ formatTime(duration) }}
           </div>
-          <div class="flex gap-4">
-            <Button severity="primary" class="flex-1" @click="togglePlayPause">
-              <component :is="isPlaying ? PauseIcon : PlayIcon" class="w-5 h-5 mr-2" />
-              <span>{{ isPlaying ? 'Pause' : 'Play' }}</span>
-            </Button>
-            <Button label="Stop" severity="secondary" @click="stopPlaying" />
-          </div>
+        </div>
+        <!-- Main action buttons -->
+        <div class="flex gap-4">
+          <Button 
+            severity="danger" 
+            :class="['flex-1', { 'animate-pulse-glow': showButtonAnimation }]" 
+            @click="confirmAnomaly" 
+            :disabled="!currentVerse">
+            <span class="font-semibold text-sm">Confirm Error</span>
+          </Button>
+          <Button 
+            severity="success" 
+            :class="['flex-1', { 'animate-pulse-glow': showButtonAnimation }]" 
+            @click="disproveAnomaly" 
+            :disabled="!currentVerse">
+            <span class="font-semibold text-sm">Alignment Correct</span>
+          </Button>
+        </div>
+        <!-- Auto-advance checkbox -->
+        <div class="flex items-center gap-2 pt-4 mt-2 border-t border-surface-200 dark:border-surface-700">
+          <Checkbox v-model="autoAdvanceToNext" inputId="autoAdvance" binary />
+          <label for="autoAdvance" class="text-sm text-surface-700 dark:text-surface-200 cursor-pointer">
+            Automatically advance to next verse
+          </label>
         </div>
       </div>
     </div>
@@ -210,9 +263,12 @@ import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import Select from 'primevue/select'
 import Toast from 'primevue/toast'
+import Popover from 'primevue/popover'
+import Checkbox from 'primevue/checkbox'
 import type { DataTableSortEvent } from 'primevue/datatable'
-import type { VoiceAnomalyModel, BookModel } from '../types/api'
+import type { VoiceAnomalyModel, BookModel, AnomalyStatus } from '../types/api'
 import { useVoiceAnomalies, useTranslations, useBooks, type VoiceWithTranslation } from '../composables/useApi'
+import { apiService } from '../services/api'
 import { useToast } from 'primevue/usetoast'
 // Lucide imports
 import {
@@ -222,7 +278,8 @@ import {
   Pause as PauseIcon,
   Edit as EditIcon,
   X as CloseIcon,
-  Volume2 as SpeakerIcon
+  Volume2 as SpeakerIcon,
+  ChevronDown as ChevronDownIcon
 } from 'lucide-vue-next'
 
 // Composables
@@ -235,6 +292,7 @@ const {
   selectedVoiceCode,
   selectedAnomalyType,
   selectedBookNumber,
+  selectedStatus,
   selectedSortBy,
   selectedSortOrder,
   fetchAnomalies,
@@ -242,7 +300,9 @@ const {
   refreshAnomalies,
   setAnomalyTypeFilter,
   setBookFilter,
-  setSortBy
+  setStatusFilter,
+  setSortBy,
+  updateAnomalyStatus
 } = useVoiceAnomalies()
 
 const { state: voicesState, voices, fetchTranslations } = useTranslations()
@@ -256,11 +316,13 @@ const selectedVoice = ref<number | null>(null)
 const showPlayer = ref(false)
 const isPlaying = ref(false)
 const currentVerse = ref<VoiceAnomalyModel | null>(null)
-const currentPlayingId = ref<number | null>(null) // ID of currently playing anomaly
+const currentPlayingId = ref<number | null>(null)
+const showButtonAnimation = ref(false) // ID of currently playing anomaly
 const audioElement = ref<HTMLAudioElement | null>(null)
 const currentTime = ref(0)
 const duration = ref(0)
 const progressUpdateInterval = ref<number | null>(null)
+const autoAdvanceToNext = ref(false) // Auto-advance to next verse checkbox
 
 // Anomaly type filter options
 const anomalyTypeOptions = ref([
@@ -313,6 +375,14 @@ const bookOptions = computed(() => {
   }))
 })
 
+// Status options
+const statusOptions = [
+  { label: 'Detected', value: 'detected' as AnomalyStatus, description: 'Error detected automatically (default)' },
+  { label: 'Confirmed', value: 'confirmed' as AnomalyStatus, description: 'Error confirmed during verification' },
+  { label: 'Disproved', value: 'disproved' as AnomalyStatus, description: 'Error disproved, not confirmed by verification' },
+  { label: 'Corrected', value: 'corrected' as AnomalyStatus, description: 'Manual correction performed' }
+]
+
 // Methods
 const onVoiceChange = async () => {
   if (selectedVoice.value) {
@@ -345,6 +415,10 @@ const onAnomalyTypeChange = async () => {
 
 const onBookChange = async () => {
   await setBookFilter(selectedBookNumber.value)
+}
+
+const onStatusChange = async () => {
+  await setStatusFilter(selectedStatus.value)
 }
 
 const onPageChange = async (event: any) => {
@@ -456,8 +530,89 @@ const getInfoTooltip = (anomaly: VoiceAnomalyModel): string => {
   return parts.join('\n')
 }
 
+// Status display functions
+const getStatusLabel = (status: AnomalyStatus): string => {
+  const statusMap = {
+    'detected': 'Detected',
+    'confirmed': 'Confirmed',
+    'disproved': 'Disproved',
+    'corrected': 'Corrected'
+  }
+  return statusMap[status] || status
+}
+
+const getStatusSeverity = (status: AnomalyStatus): 'success' | 'info' | 'warn' | 'danger' | 'secondary' => {
+  const severityMap = {
+    'detected': 'warn' as const,     // желтый
+    'confirmed': 'danger' as const,  // красный
+    'disproved': 'success' as const, // зеленый
+    'corrected': 'success' as const  // зеленый
+  }
+  return severityMap[status] || 'secondary'
+}
+
+// Function to handle status change
+const handleStatusChange = async (anomaly: VoiceAnomalyModel, newStatus: AnomalyStatus, showToast: boolean = true) => {
+  try {
+    // Direct API call without global loading state
+    const result = await apiService.updateAnomalyStatus(anomaly.code, newStatus)
+    if (result) {
+      // Update the anomaly in the local list
+      const index = anomalies.value.findIndex(a => a.code === anomaly.code)
+      if (index !== -1) {
+        anomalies.value[index] = result
+      }
+      if (showToast) {
+        toast.add({
+          severity: 'success',
+          summary: 'Status Updated',
+          detail: `Anomaly status changed to ${getStatusLabel(newStatus)}`,
+          life: 3000
+        })
+      }
+    }
+  } catch (error) {
+    console.error('Error updating anomaly status:', error)
+    if (showToast) {
+      toast.add({
+        severity: 'error',
+        summary: 'Update Failed',
+        detail: 'Failed to update anomaly status. Please try again.',
+        life: 5000
+      })
+    }
+  }
+}
+
 // Function to check if current viewport is mobile
 const isMobile = ref(false)
+
+// Status popover management
+const statusPopovers = ref<Map<number, any>>(new Map())
+
+const setStatusPopoverRef = (el: any, anomalyCode: number) => {
+  if (el) {
+    statusPopovers.value.set(anomalyCode, el)
+  }
+}
+
+const toggleStatusPopover = (event: Event, anomalyCode: number) => {
+  const popover = statusPopovers.value.get(anomalyCode)
+  if (popover) {
+    popover.toggle(event)
+  }
+}
+
+const selectStatus = async (anomaly: VoiceAnomalyModel, newStatus: AnomalyStatus) => {
+  // Close the popover
+  const popover = statusPopovers.value.get(anomaly.code)
+  if (popover) {
+    popover.hide()
+  }
+  
+  // Update the status
+  await handleStatusChange(anomaly, newStatus)
+}
 
 // Function to highlight currently playing row
 const getRowClass = (data: VoiceAnomalyModel) => {
@@ -570,12 +725,12 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
 
       // Stop when reaching verse end
       if (audio.currentTime >= anomaly.verse_end_time) {
-        stopPlaying()
+        onAudioComplete()
       }
     })
 
     audio.addEventListener('ended', () => {
-      stopPlaying()
+      onAudioComplete()
     })
 
     audio.addEventListener('error', (e) => {
@@ -633,12 +788,7 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
       return
     }
 
-    // Update progress every 100ms
-    progressUpdateInterval.value = setInterval(() => {
-      if (audio.currentTime >= anomaly.verse_end_time) {
-        stopPlaying()
-      }
-    }, 100)
+    // Progress is updated by timeupdate event, no need for interval
 
   } catch (error) {
     if (errorHandled) return // Prevent duplicate error messages
@@ -656,6 +806,15 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
 }
 
 const togglePlayPause = () => {
+  // If audio completed and no audio element, restart playback from beginning
+  if (!audioElement.value && currentVerse.value) {
+    showButtonAnimation.value = false
+    // Reset timeline before restarting
+    currentTime.value = 0
+    playVerse(currentVerse.value)
+    return
+  }
+
   if (!audioElement.value) return
 
   if (isPlaying.value) {
@@ -665,6 +824,23 @@ const togglePlayPause = () => {
     audioElement.value.play()
     isPlaying.value = true
   }
+}
+
+// Function to handle audio completion without closing player
+const onAudioComplete = () => {
+  if (audioElement.value) {
+    audioElement.value.pause()
+    audioElement.value = null
+  }
+
+  isPlaying.value = false
+  // Set currentTime to duration to ensure 100% progress
+  if (duration.value > 0) {
+    currentTime.value = duration.value
+  }
+  
+  // Start button animation to prompt user action
+  showButtonAnimation.value = true
 }
 
 const stopPlaying = () => {
@@ -684,6 +860,63 @@ const stopPlaying = () => {
   currentPlayingId.value = null
   currentTime.value = 0
   duration.value = 0
+  showButtonAnimation.value = false
+}
+
+// Function to find next anomaly in the list
+const findNextAnomaly = (): VoiceAnomalyModel | null => {
+  if (!currentVerse.value || !anomalies.value.length) {
+    return null
+  }
+  
+  const currentIndex = anomalies.value.findIndex(anomaly => anomaly.code === currentVerse.value!.code)
+  if (currentIndex >= 0 && currentIndex < anomalies.value.length - 1) {
+    return anomalies.value[currentIndex + 1]
+  }
+  
+  return null
+}
+
+// Function to advance to next verse if auto-advance is enabled
+const advanceToNextVerse = async () => {
+  if (autoAdvanceToNext.value) {
+    const nextAnomaly = findNextAnomaly()
+    if (nextAnomaly) {
+      // Small delay to show the status change before advancing
+      setTimeout(() => {
+        playVerse(nextAnomaly)
+      }, 500)
+    } else {
+      // No more anomalies, just stop playing
+      stopPlaying()
+    }
+  } else {
+    stopPlaying()
+  }
+}
+
+// Functions for anomaly status change from mini-player
+const confirmAnomaly = async () => {
+  if (currentVerse.value) {
+    showButtonAnimation.value = false
+    await handleStatusChange(currentVerse.value, 'confirmed', !autoAdvanceToNext.value)
+    await advanceToNextVerse()
+  }
+}
+
+const disproveAnomaly = async () => {
+  if (currentVerse.value) {
+    showButtonAnimation.value = false
+    await handleStatusChange(currentVerse.value, 'disproved', !autoAdvanceToNext.value)
+    await advanceToNextVerse()
+  }
+}
+
+// Keyboard event handler
+const handleKeydown = (event: KeyboardEvent) => {
+  if (event.key === 'Escape' && showPlayer.value) {
+    stopPlaying()
+  }
 }
 
 // Initialize data on mount
@@ -695,11 +928,15 @@ onMounted(async () => {
   // Initialize mobile state
   updateMobileState()
   window.addEventListener('resize', updateMobileState)
+  
+  // Set up keyboard event listener
+  window.addEventListener('keydown', handleKeydown)
 })
 
 // Cleanup on unmount
 onUnmounted(() => {
   window.removeEventListener('resize', updateMobileState)
+  window.removeEventListener('keydown', handleKeydown)
 
   // Clean up audio resources
   if (audioElement.value) {
@@ -725,5 +962,21 @@ onUnmounted(() => {
 .compact-table :deep(.p-datatable-thead > tr > th) {
   padding-top: 0.75rem;
   padding-bottom: 0.75rem;
+}
+
+/* Animation 1: Pulse effect */
+@keyframes pulse-glow {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(var(--primary-500), 0.4);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 10px rgba(var(--primary-500), 0);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 1.5s ease-in-out infinite;
 }
 </style>

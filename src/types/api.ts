@@ -37,6 +37,9 @@ export interface BookModel {
   anomalies_count?: number
 }
 
+// Voice anomaly status types
+export type AnomalyStatus = 'detected' | 'confirmed' | 'disproved' | 'corrected'
+
 // Voice anomaly model from API
 export interface VoiceAnomalyModel {
   code: number
@@ -55,6 +58,7 @@ export interface VoiceAnomalyModel {
   verse_start_time: number
   verse_end_time: number
   verse_text: string
+  status: AnomalyStatus
 }
 
 // API response types
@@ -86,6 +90,7 @@ export interface VoiceAnomalyListParams {
   limit?: number
   anomaly_type?: string
   book_number?: number
+  status?: AnomalyStatus
   sort_by?: 'address' | 'type' | 'ratio'
   sort_order?: 'asc' | 'desc'
 }

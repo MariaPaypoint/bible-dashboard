@@ -9,7 +9,8 @@ import type {
   VoiceAnomaliesResponse,
   BibleError, 
   ErrorListParams, 
-  PaginatedResponse 
+  PaginatedResponse,
+  AnomalyStatus 
 } from '../types/api'
 
 class ApiService {
@@ -77,6 +78,12 @@ class ApiService {
   // Update voice endpoint
   async updateVoice(voiceCode: number, data: { active: boolean }): Promise<any> {
     const response = await this.api.put(`/voices/${voiceCode}`, data)
+    return response.data
+  }
+
+  // Update anomaly status endpoint
+  async updateAnomalyStatus(anomalyCode: number, status: AnomalyStatus): Promise<VoiceAnomalyModel> {
+    const response = await this.api.patch<VoiceAnomalyModel>(`/voices/anomalies/${anomalyCode}/status`, { status })
     return response.data
   }
 

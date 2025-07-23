@@ -1,6 +1,6 @@
 import { ref, reactive, computed } from 'vue'
 import { apiService } from '../services/api'
-import type { TranslationModel, LanguageModel, BookModel, TranslationListParams, VoiceModel, VoiceAnomalyModel, VoiceAnomalyListParams } from '../types/api'
+import type { TranslationModel, LanguageModel, BookModel, TranslationListParams, VoiceModel, VoiceAnomalyModel, VoiceAnomalyListParams, AnomalyStatus } from '../types/api'
 
 // Extended voice model with translation info
 export interface VoiceWithTranslation extends VoiceModel {
@@ -122,6 +122,7 @@ export function useVoiceAnomalies() {
   const selectedVoiceCode = ref<number | null>(null)
   const selectedAnomalyType = ref<string | null>(null)
   const selectedBookNumber = ref<number | null>(null)
+  const selectedStatus = ref<AnomalyStatus | null>(null)
   const selectedSortBy = ref<'address' | 'type' | 'ratio'>('ratio')
   const selectedSortOrder = ref<'asc' | 'desc'>('desc')
 
@@ -142,6 +143,7 @@ export function useVoiceAnomalies() {
         limit: pageSize.value,
         anomaly_type: selectedAnomalyType.value || undefined,
         book_number: selectedBookNumber.value || undefined,
+        status: selectedStatus.value || undefined,
         sort_by: selectedSortBy.value,
         sort_order: selectedSortOrder.value
       })
@@ -155,6 +157,7 @@ export function useVoiceAnomalies() {
         limit: pageSize.value,
         anomaly_type: selectedAnomalyType.value || undefined,
         book_number: selectedBookNumber.value || undefined,
+        status: selectedStatus.value || undefined,
         sort_by: selectedSortBy.value,
         sort_order: selectedSortOrder.value
       })
@@ -170,6 +173,7 @@ export function useVoiceAnomalies() {
         limit: pageSize.value,
         anomaly_type: anomalyType || undefined,
         book_number: selectedBookNumber.value || undefined,
+        status: selectedStatus.value || undefined,
         sort_by: selectedSortBy.value,
         sort_order: selectedSortOrder.value
       })
@@ -185,6 +189,7 @@ export function useVoiceAnomalies() {
         limit: pageSize.value,
         anomaly_type: selectedAnomalyType.value || undefined,
         book_number: bookNumber || undefined,
+        status: selectedStatus.value || undefined,
         sort_by: selectedSortBy.value,
         sort_order: selectedSortOrder.value
       })
@@ -201,10 +206,40 @@ export function useVoiceAnomalies() {
         limit: pageSize.value,
         anomaly_type: selectedAnomalyType.value || undefined,
         book_number: selectedBookNumber.value || undefined,
+        status: selectedStatus.value || undefined,
         sort_by: sortBy,
         sort_order: sortOrder
       })
     }
+  }
+
+  const setStatusFilter = async (status: AnomalyStatus | null) => {
+    selectedStatus.value = status
+    currentPage.value = 1 // Reset to first page when filtering
+    if (selectedVoiceCode.value) {
+      await fetchAnomalies(selectedVoiceCode.value, {
+        page: 1,
+        limit: pageSize.value,
+        anomaly_type: selectedAnomalyType.value || undefined,
+        book_number: selectedBookNumber.value || undefined,
+        status: status || undefined,
+        sort_by: selectedSortBy.value,
+        sort_order: selectedSortOrder.value
+      })
+    }
+  }
+
+  const updateAnomalyStatus = async (anomalyCode: number, status: AnomalyStatus) => {
+    const result = await handleApiCall(() => apiService.updateAnomalyStatus(anomalyCode, status))
+    if (result) {
+      // Update the anomaly in the local list
+      const index = anomalies.value.findIndex(a => a.code === anomalyCode)
+      if (index !== -1) {
+        anomalies.value[index] = result
+      }
+      return result
+    }
+    return null
   }
 
   return {
@@ -216,6 +251,7 @@ export function useVoiceAnomalies() {
     selectedVoiceCode,
     selectedAnomalyType,
     selectedBookNumber,
+    selectedStatus,
     selectedSortBy,
     selectedSortOrder,
     fetchAnomalies,
@@ -223,7 +259,9 @@ export function useVoiceAnomalies() {
     refreshAnomalies,
     setAnomalyTypeFilter,
     setBookFilter,
-    setSortBy
+    setStatusFilter,
+    setSortBy,
+    updateAnomalyStatus
   }
 }
 
