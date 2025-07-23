@@ -266,7 +266,8 @@
                                 <Settings
                                     class="w-5 h-5 text-surface-500 dark:text-surface-400 group-hover:text-surface-900 dark:group-hover:text-surface-50" />
                                 <span class="font-medium text-base leading-tight">Settings</span>
-                                <ChevronUp class="w-5 h-5 text-surface-500 dark:text-surface-400 ml-auto transition-transform duration-200"
+                                <ChevronUp
+                                    class="w-5 h-5 text-surface-500 dark:text-surface-400 ml-auto transition-transform duration-200"
                                     :class="{ 'rotate-180': !showSettingsMenu }" />
                             </a>
 

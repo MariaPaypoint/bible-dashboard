@@ -63,8 +63,7 @@
             optionValue="value" placeholder="All types" class="w-full" :disabled="!selectedVoice"
             @change="onAnomalyTypeChange" showClear />
         </div>
-        <Button rounded raised @click="refreshData" :disabled="!selectedVoice"
-          :loading="anomaliesState.loading">
+        <Button rounded raised @click="refreshData" :disabled="!selectedVoice" :loading="anomaliesState.loading">
           <RefreshIcon class="w-5 h-5" />
         </Button>
       </div>
@@ -73,8 +72,8 @@
     <!-- Anomalies Table -->
     <DataTable :value="anomalies" tableStyle="min-width: 50rem" paginator :rows="defaultPageSize"
       :rowsPerPageOptions="[10, 15, 50, 100]" :totalRecords="totalCount" :lazy="true" stripedRows
-      :loading="anomaliesState.loading" @page="onPageChange" @sort="onSort" sortMode="single"
-      :rowClass="getRowClass" class="compact-table">
+      :loading="anomaliesState.loading" @page="onPageChange" @sort="onSort" sortMode="single" :rowClass="getRowClass"
+      class="compact-table">
       <template #header>
         <div class="flex flex-wrap items-center justify-between gap-2">
           <div class="flex items-center gap-2">
@@ -116,13 +115,11 @@
         <template #body="slotProps">
           <div class="flex gap-2 items-center">
             <!-- Dynamic Play/Pause button -->
-            <Button v-if="currentPlayingId === slotProps.data.code && isPlaying"
-              severity="primary" class="w-8 h-8"  v-tooltip.top="'Pause'"
-              @click="togglePlayPause()">
+            <Button v-if="currentPlayingId === slotProps.data.code && isPlaying" severity="primary" class="w-8 h-8"
+              v-tooltip.top="'Pause'" @click="togglePlayPause()">
               <PauseIcon class="w-5 h-5 -m-1.5" />
             </Button>
-            <Button v-else
-              severity="info" class="w-8 h-8" v-tooltip.top="'Play Verse'"
+            <Button v-else severity="info" class="w-8 h-8" v-tooltip.top="'Play Verse'"
               @click="playVerse(slotProps.data)" :disabled="isPlaying && currentPlayingId !== slotProps.data.code">
               <PlayIcon class="w-5 h-5 -m-1.5" />
             </Button>
