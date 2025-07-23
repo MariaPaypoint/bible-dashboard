@@ -63,7 +63,7 @@
             optionValue="value" placeholder="All types" class="w-full" :disabled="!selectedVoice"
             @change="onAnomalyTypeChange" showClear />
         </div>
-        <Button rounded raised @click="refreshData" :disabled="!selectedVoice" :loading="anomaliesState.loading">
+        <Button @click="refreshData" :disabled="!selectedVoice" :loading="anomaliesState.loading">
           <RefreshIcon class="w-5 h-5" />
         </Button>
       </div>
@@ -196,6 +196,9 @@
         </div>
       </div>
     </div>
+
+    <!-- Toast notifications -->
+    <Toast />
   </div>
 </template>
 
@@ -206,9 +209,11 @@ import Column from 'primevue/column'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import Select from 'primevue/select'
+import Toast from 'primevue/toast'
 import type { DataTableSortEvent } from 'primevue/datatable'
 import type { VoiceAnomalyModel, BookModel } from '../types/api'
 import { useVoiceAnomalies, useTranslations, useBooks, type VoiceWithTranslation } from '../composables/useApi'
+import { useToast } from 'primevue/usetoast'
 // Lucide imports
 import {
   RotateCcw as RefreshIcon,
@@ -242,6 +247,7 @@ const {
 
 const { state: voicesState, voices, fetchTranslations } = useTranslations()
 const { state: booksState, books, fetchBooks, clearBooks } = useBooks()
+const toast = useToast()
 
 // Local state
 const selectedVoice = ref<number | null>(null)
@@ -516,6 +522,8 @@ const buildAudioUrl = (anomaly: VoiceAnomalyModel): string => {
 }
 
 const playVerse = async (anomaly: VoiceAnomalyModel) => {
+  let errorHandled = false // Flag to prevent duplicate error messages
+  
   try {
     // Stop current playback if any
     if (audioElement.value) {
@@ -529,15 +537,20 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
       progressUpdateInterval.value = null
     }
 
-    // Set current verse and show player
+    // Set current verse but DON'T show player yet
     currentVerse.value = anomaly
     currentPlayingId.value = anomaly.code
-    showPlayer.value = true
-    isPlaying.value = true
+    // showPlayer.value = true // Move this to after successful load
+    isPlaying.value = false // Set to false initially
 
     // Create audio element
     const audio = new Audio(buildAudioUrl(anomaly))
     audioElement.value = audio
+
+    // Add load error handler
+    audio.addEventListener('loadstart', () => {
+      // Audio loading started
+    })
 
     // Set up audio event listeners
     audio.addEventListener('loadedmetadata', () => {
@@ -545,6 +558,10 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
       audio.currentTime = anomaly.verse_start_time
       currentTime.value = 0 // Reset display time to 0 for verse duration
       duration.value = anomaly.verse_end_time - anomaly.verse_start_time
+      
+      // NOW show the player since audio loaded successfully
+      showPlayer.value = true
+      isPlaying.value = true
     })
 
     audio.addEventListener('timeupdate', () => {
@@ -562,12 +579,59 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
     })
 
     audio.addEventListener('error', (e) => {
+      if (errorHandled) return // Prevent duplicate error messages
+      errorHandled = true
+      
       console.error('Audio playback error:', e)
+      let errorMessage = 'Failed to load audio file. Please try again.'
+      
+      // More specific error messages based on error type
+      const audioElement = e.target as HTMLAudioElement
+      if (audioElement && audioElement.error) {
+        switch (audioElement.error.code) {
+          case audioElement.error.MEDIA_ERR_ABORTED:
+            errorMessage = 'Audio playback was aborted.'
+            break
+          case audioElement.error.MEDIA_ERR_NETWORK:
+            errorMessage = 'Network error occurred while loading audio.'
+            break
+          case audioElement.error.MEDIA_ERR_DECODE:
+            errorMessage = 'Audio file is corrupted or in unsupported format.'
+            break
+          case audioElement.error.MEDIA_ERR_SRC_NOT_SUPPORTED:
+            errorMessage = 'Audio file not found or format not supported.'
+            break
+          default:
+            errorMessage = 'Unknown audio error occurred.'
+        }
+      }
+      
+      toast.add({
+        severity: 'error',
+        summary: 'Audio Error',
+        detail: errorMessage,
+        life: 5000
+      })
       stopPlaying()
     })
 
     // Start playback
-    await audio.play()
+    try {
+      await audio.play()
+    } catch (playError) {
+      if (errorHandled) return // Prevent duplicate error messages
+      errorHandled = true
+      
+      console.error('Error starting audio playback:', playError)
+      toast.add({
+        severity: 'error',
+        summary: 'Playback Error',
+        detail: 'Unable to start audio playback. Please click the play button to try again.',
+        life: 5000
+      })
+      stopPlaying()
+      return
+    }
 
     // Update progress every 100ms
     progressUpdateInterval.value = setInterval(() => {
@@ -577,7 +641,16 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
     }, 100)
 
   } catch (error) {
+    if (errorHandled) return // Prevent duplicate error messages
+    errorHandled = true
+    
     console.error('Error playing verse:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Playback Error',
+      detail: 'Unable to play verse audio. Please check your connection and try again.',
+      life: 5000
+    })
     stopPlaying()
   }
 }

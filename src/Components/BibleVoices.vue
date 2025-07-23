@@ -8,7 +8,7 @@
                         :options="[{ label: 'Only Active', value: true }, { label: 'All', value: false }]"
                         optionLabel="label" optionValue="value" />
                 </div>
-                <Button rounded raised @click="loadVoices">
+                <Button @click="loadVoices">
                     <RefreshIcon class="w-5 h-5" />
                 </Button>
             </div>
