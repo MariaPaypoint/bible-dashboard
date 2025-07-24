@@ -121,7 +121,7 @@
           <Button type="button" 
             :severity="getStatusSeverity(slotProps.data.status)" 
             @click="(event: Event) => toggleStatusPopover(event, slotProps.data.code)" 
-            class="min-w-32 text-xs flex items-center justify-between" size="small">
+            class="min-w-44 text-xs flex items-center justify-between" size="small">
             <span>{{ getStatusLabel(slotProps.data.status) }}</span>
             <ChevronDownIcon class="w-4 h-4 ml-2" />
           </Button>
@@ -209,15 +209,13 @@
           </div>
         </div>
         <div class="text-sm text-surface-700 dark:text-surface-200 leading-relaxed" v-if="currentVerse?.verse_text"
-          v-html="highlightProblematicWord(currentVerse.verse_text, currentVerse.word)">
+          v-html="highlightProblematicWord(currentVerse.verse_text, currentVerse.word, currentVerse.position_in_verse, currentVerse.position_from_end)">
         </div>
         <div class="flex flex-col gap-2">
-          <div class="flex h-1.5 rounded-lg overflow-hidden">
-            <div class="bg-primary h-full rounded-l-lg transition-all duration-500 ease-in-out"
+          <div class="relative h-1.5 rounded-lg overflow-hidden cursor-pointer hover:h-2 transition-all duration-200 bg-surface-200 dark:bg-surface-700"
+               @click="seekToPosition">
+            <div class="absolute top-0 left-0 bg-primary h-full rounded-lg transition-all duration-500 ease-in-out"
               :style="{ width: progressPercentage + '%' }" />
-            <div
-              class="bg-surface-200 dark:bg-surface-700 h-full rounded-r-lg transition-all duration-500 ease-in-out"
-              :style="{ width: (100 - progressPercentage) + '%' }" />
           </div>
           <div class="text-right text-xs text-surface-900 dark:text-surface-0 leading-tight">
             {{ formatTime(currentTime) }} / {{ formatTime(duration) }}
@@ -655,20 +653,59 @@ const formatTime = (seconds: number): string => {
   return `${mins}:${secs.toString().padStart(2, '0')}`
 }
 
-const highlightProblematicWord = (verseText: string, problematicWord: string | null): string => {
+const highlightProblematicWord = (verseText: string, problematicWord: string | null, positionInVerse: number | null, positionFromEnd: number | null): string => {
   if (!verseText || !problematicWord) return verseText || ''
 
+  // If no position data is available, we can't accurately highlight
+  if (positionInVerse === null && positionFromEnd === null) return verseText
+  
   // Escape special regex characters
   const escapedWord = problematicWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-
-  // Create a regex to find the problematic word (case-insensitive)
-  // Use word boundaries that work better with Cyrillic text
-  const regex = new RegExp(`(^|\\s|[^\\p{L}\\p{N}])(${escapedWord})(?=\\s|[^\\p{L}\\p{N}]|$)`, 'giu')
-
-  // Replace the word with highlighted version, preserving the boundary character
-  return verseText.replace(regex, (match, boundary, word) => {
-    return `${boundary}<span class="text-red-600 font-semibold bg-red-50 dark:bg-red-900/20 px-1 rounded">${word}</span>`
-  })
+  
+  // Split the verse text into words
+  // We'll use a regex that matches words and non-words to preserve everything
+  const parts = verseText.split(/([\p{L}\p{N}]+)/u).filter(p => p !== '')
+  
+  // Find the correct word index using position information
+  let targetIndex = -1
+  
+  if (positionInVerse !== null) {
+    // Position is 1-indexed in the API
+    targetIndex = positionInVerse - 1
+  } else if (positionFromEnd !== null && parts.length > 0) {
+    // Calculate from the end if position_from_end is available
+    // Count only actual words (not spaces/punctuation)
+    const wordCount = parts.filter(p => /[\p{L}\p{N}]/u.test(p)).length
+    targetIndex = wordCount - positionFromEnd
+  }
+  
+  // If we couldn't determine a valid index, return the original text
+  if (targetIndex < 0) return verseText
+  
+  // Count actual words until we reach our target
+  let wordIndex = -1
+  let resultText = ''
+  
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i]
+    
+    // If this is a word (not punctuation or space)
+    if (/[\p{L}\p{N}]/u.test(part)) {
+      wordIndex++
+      
+      // If this is our target word
+      if (wordIndex === targetIndex && part.toLowerCase() === problematicWord.toLowerCase()) {
+        resultText += `<span class="text-red-600 font-semibold bg-red-50 dark:bg-red-900/20 px-1 rounded">${part}</span>`
+      } else {
+        resultText += part
+      }
+    } else {
+      // Add non-word parts as is
+      resultText += part
+    }
+  }
+  
+  return resultText
 }
 
 const buildAudioUrl = (anomaly: VoiceAnomalyModel): string => {
@@ -866,6 +903,38 @@ const togglePlayPause = () => {
     audioElement.value.play()
     isPlaying.value = true
   }
+}
+
+// Function to seek to position when clicking on timeline
+const seekToPosition = (event: MouseEvent) => {
+  if (!audioElement.value || !currentVerse.value || duration.value <= 0) return
+  
+  const progressBar = event.currentTarget as HTMLElement
+  const rect = progressBar.getBoundingClientRect()
+  const clickX = event.clientX - rect.left
+  const progressBarWidth = rect.width
+  
+  // Calculate the percentage of where the user clicked
+  const clickPercentage = Math.max(0, Math.min(1, clickX / progressBarWidth))
+  
+  // Calculate the new time position
+  const newTime = clickPercentage * duration.value
+  
+  // For verse segments, we need to add the verse start time
+  if (currentVerse.value.verse_start_time !== null && currentVerse.value.verse_end_time !== null) {
+    const verseStartTime = currentVerse.value.verse_start_time
+    const actualNewTime = verseStartTime + newTime
+    
+    // Make sure we don't go beyond the verse end time
+    const maxTime = currentVerse.value.verse_end_time
+    audioElement.value.currentTime = Math.min(actualNewTime, maxTime)
+  } else {
+    // For full chapter playback
+    audioElement.value.currentTime = newTime
+  }
+  
+  // Update the current time display immediately
+  currentTime.value = newTime
 }
 
 // Function to handle audio completion without closing player
