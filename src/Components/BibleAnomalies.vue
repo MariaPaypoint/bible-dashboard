@@ -97,7 +97,7 @@
       </Column>
       <Column field="word" header="Word" style="width: 15%">
         <template #body="slotProps">
-          <span class="font-mono font-semibold">{{ slotProps.data.word }}</span>
+          <span class="font-mono font-semibold">{{ slotProps.data.word || '—' }}</span>
         </template>
       </Column>
       <Column field="anomaly_type" header="Anomaly Type" sortable style="width: 12%">
@@ -266,7 +266,7 @@ import Toast from 'primevue/toast'
 import Popover from 'primevue/popover'
 import Checkbox from 'primevue/checkbox'
 import type { DataTableSortEvent } from 'primevue/datatable'
-import type { VoiceAnomalyModel, BookModel, AnomalyStatus } from '../types/api'
+import type { VoiceAnomalyModel, BookModel, AnomalyStatus, AnomalyType } from '../types/api'
 import { useVoiceAnomalies, useTranslations, useBooks, type VoiceWithTranslation } from '../composables/useApi'
 import { apiService } from '../services/api'
 import { useToast } from 'primevue/usetoast'
@@ -326,9 +326,10 @@ const autoAdvanceToNext = ref(false) // Auto-advance to next verse checkbox
 
 // Anomaly type filter options
 const anomalyTypeOptions = ref([
-  { label: 'Fast pronunciation', value: 'fast' },
-  { label: 'Slow pronunciation', value: 'slow' },
-  { label: 'Unclear pronunciation', value: 'unclear' }
+  { label: 'Fast first word', value: 'fast_first' },
+  { label: 'Fast last word', value: 'fast_last' },
+  { label: 'Fast middle word', value: 'fast_middle' },
+  { label: 'Fast previous verse', value: 'fast_previous_verse' }
 ])
 
 // Computed properties
@@ -469,31 +470,34 @@ const getBookName = (bookNumber: number): string => {
 
 const formatReference = (anomaly: VoiceAnomalyModel): string => {
   const bookName = getBookName(anomaly.book_number)
-  const verse = anomaly.verse_number ? `:${anomaly.verse_number}` : ''
-  return `${bookName} (${anomaly.book_number}) ${anomaly.chapter_number}${verse}`
+  return `${bookName} (${anomaly.book_number}) ${anomaly.chapter_number}:${anomaly.verse_number}`
 }
 
-const getAnomalyTypeLabel = (type: string): string => {
+const getAnomalyTypeLabel = (type: AnomalyType): string => {
   switch (type) {
-    case 'fast':
-      return 'Fast pronunciation'
-    case 'slow':
-      return 'Slow pronunciation'
-    case 'unclear':
-      return 'Unclear pronunciation'
+    case 'fast_first':
+      return 'Fast first word'
+    case 'fast_last':
+      return 'Fast last word'
+    case 'fast_middle':
+      return 'Fast middle word'
+    case 'fast_previous_verse':
+      return 'Fast previous verse'
     default:
       return type
   }
 }
 
-const getAnomalySeverity = (type: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' => {
+const getAnomalySeverity = (type: AnomalyType): 'success' | 'info' | 'warn' | 'danger' | 'secondary' => {
   switch (type) {
-    case 'fast':
-      return 'info' // Blue for fast pronunciation (neutral)
-    case 'slow':
-      return 'secondary' // Gray for slow pronunciation (neutral)
-    case 'unclear':
-      return 'warn' // Orange for unclear pronunciation (mild concern)
+    case 'fast_first':
+      return 'danger' // Red for fast first word (high priority)
+    case 'fast_last':
+      return 'warn' // Orange for fast last word (medium priority)
+    case 'fast_middle':
+      return 'info' // Blue for fast middle word (low priority)
+    case 'fast_previous_verse':
+      return 'secondary' // Gray for fast previous verse (neutral)
     default:
       return 'secondary'
   }
@@ -519,8 +523,12 @@ const getRatioSeverity = (ratio: number): string => {
 
 const getInfoTooltip = (anomaly: VoiceAnomalyModel): string => {
   const parts = []
-  parts.push(`Duration: ${anomaly.duration.toFixed(3)}s`)
-  parts.push(`Speed: ${anomaly.speed.toFixed(2)}`)
+  if (anomaly.duration !== null) {
+    parts.push(`Duration: ${anomaly.duration.toFixed(3)}s`)
+  }
+  if (anomaly.speed !== null) {
+    parts.push(`Speed: ${anomaly.speed.toFixed(2)}`)
+  }
   if (anomaly.position_in_verse) {
     parts.push(`Position in verse: ${anomaly.position_in_verse}`)
   }
@@ -647,7 +655,7 @@ const formatTime = (seconds: number): string => {
   return `${mins}:${secs.toString().padStart(2, '0')}`
 }
 
-const highlightProblematicWord = (verseText: string, problematicWord: string): string => {
+const highlightProblematicWord = (verseText: string, problematicWord: string | null): string => {
   if (!verseText || !problematicWord) return verseText || ''
 
   // Escape special regex characters
@@ -666,7 +674,11 @@ const highlightProblematicWord = (verseText: string, problematicWord: string): s
 const buildAudioUrl = (anomaly: VoiceAnomalyModel): string => {
   // Get translation code from selected voice
   const selectedVoiceData = availableVoices.value.find(v => v.code === anomaly.voice)
-  if (!selectedVoiceData) return ''
+  
+  if (!selectedVoiceData) {
+    console.error('Voice not found for code:', anomaly.voice)
+    return ''
+  }
 
   const translationAlias = selectedVoiceData.translation.alias || selectedVoiceData.translation.code
   const voiceAlias = selectedVoiceData.alias || selectedVoiceData.code
@@ -680,6 +692,21 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
   let errorHandled = false // Flag to prevent duplicate error messages
   
   try {
+    // Check if verse positions are available
+    if (anomaly.verse_start_time === null || anomaly.verse_end_time === null) {
+      toast.add({
+        severity: 'error',
+        summary: 'Audio Error',
+        detail: 'Verse timing information is not available for this anomaly. Cannot play specific verse segment.',
+        life: 5000
+      })
+      return
+    }
+    
+    // Ensure translations are loaded
+    if (voices.value.length === 0) {
+      await fetchTranslations()
+    }
     // Stop current playback if any
     if (audioElement.value) {
       audioElement.value.pause()
@@ -699,7 +726,20 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
     isPlaying.value = false // Set to false initially
 
     // Create audio element
-    const audio = new Audio(buildAudioUrl(anomaly))
+    const audioUrl = buildAudioUrl(anomaly)
+    if (!audioUrl) {
+      console.error('Failed to build audio URL')
+      toast.add({
+        severity: 'error',
+        summary: 'Audio Error',
+        detail: 'Unable to build audio URL. Voice data may not be loaded.',
+        life: 5000
+      })
+      return
+    }
+    
+
+    const audio = new Audio(audioUrl)
     audioElement.value = audio
 
     // Add load error handler
@@ -710,9 +750,10 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
     // Set up audio event listeners
     audio.addEventListener('loadedmetadata', () => {
       // Set current time to verse start and duration to verse length
-      audio.currentTime = anomaly.verse_start_time
+      // (positions are guaranteed to be non-null at this point)
+      audio.currentTime = anomaly.verse_start_time!
       currentTime.value = 0 // Reset display time to 0 for verse duration
-      duration.value = anomaly.verse_end_time - anomaly.verse_start_time
+      duration.value = anomaly.verse_end_time! - anomaly.verse_start_time!
       
       // NOW show the player since audio loaded successfully
       showPlayer.value = true
@@ -720,11 +761,12 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
     })
 
     audio.addEventListener('timeupdate', () => {
-      const verseCurrentTime = audio.currentTime - anomaly.verse_start_time
+      // Playing specific verse segment (positions are guaranteed to be non-null)
+      const verseCurrentTime = audio.currentTime - anomaly.verse_start_time!
       currentTime.value = Math.max(0, verseCurrentTime)
 
       // Stop when reaching verse end
-      if (audio.currentTime >= anomaly.verse_end_time) {
+      if (audio.currentTime >= anomaly.verse_end_time!) {
         onAudioComplete()
       }
     })

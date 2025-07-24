@@ -1,6 +1,6 @@
 import { ref, reactive, computed } from 'vue'
 import { apiService } from '../services/api'
-import type { TranslationModel, LanguageModel, BookModel, TranslationListParams, VoiceModel, VoiceAnomalyModel, VoiceAnomalyListParams, AnomalyStatus } from '../types/api'
+import type { TranslationModel, LanguageModel, BookModel, TranslationListParams, VoiceModel, VoiceAnomalyModel, VoiceAnomalyListParams, AnomalyStatus, AnomalyType } from '../types/api'
 
 // Extended voice model with translation info
 export interface VoiceWithTranslation extends VoiceModel {
@@ -120,7 +120,7 @@ export function useVoiceAnomalies() {
   const currentPage = ref(1)
   const pageSize = ref(15)
   const selectedVoiceCode = ref<number | null>(null)
-  const selectedAnomalyType = ref<string | null>(null)
+  const selectedAnomalyType = ref<AnomalyType | null>(null)
   const selectedBookNumber = ref<number | null>(null)
   const selectedStatus = ref<AnomalyStatus | null>(null)
   const selectedSortBy = ref<'address' | 'type' | 'ratio'>('ratio')
@@ -164,7 +164,7 @@ export function useVoiceAnomalies() {
     }
   }
 
-  const setAnomalyTypeFilter = async (anomalyType: string | null) => {
+  const setAnomalyTypeFilter = async (anomalyType: AnomalyType | null) => {
     selectedAnomalyType.value = anomalyType
     currentPage.value = 1 // Reset to first page when filtering
     if (selectedVoiceCode.value) {
