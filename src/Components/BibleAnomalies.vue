@@ -379,7 +379,8 @@ const statusOptions = [
   { label: 'Detected', value: 'detected' as AnomalyStatus, description: 'Error detected automatically (default)' },
   { label: 'Confirmed', value: 'confirmed' as AnomalyStatus, description: 'Error confirmed during verification' },
   { label: 'Disproved', value: 'disproved' as AnomalyStatus, description: 'Error disproved, not confirmed by verification' },
-  { label: 'Corrected', value: 'corrected' as AnomalyStatus, description: 'Manual correction performed' }
+  { label: 'Corrected', value: 'corrected' as AnomalyStatus, description: 'Manual correction performed' },
+  { label: 'Already Resolved', value: 'already_resolved' as AnomalyStatus, description: 'Verse marked as completely correct previously' }
 ]
 
 // Methods
@@ -542,7 +543,8 @@ const getStatusLabel = (status: AnomalyStatus): string => {
     'detected': 'Detected',
     'confirmed': 'Confirmed',
     'disproved': 'Disproved',
-    'corrected': 'Corrected'
+    'corrected': 'Corrected',
+    'already_resolved': 'Already Resolved'
   }
   return statusMap[status] || status
 }
@@ -552,7 +554,8 @@ const getStatusSeverity = (status: AnomalyStatus): 'success' | 'info' | 'warn' |
     'detected': 'warn' as const,     // желтый
     'confirmed': 'danger' as const,  // красный
     'disproved': 'success' as const, // зеленый
-    'corrected': 'success' as const  // зеленый
+    'corrected': 'success' as const, // зеленый
+    'already_resolved': 'success' as const // зеленый
   }
   return severityMap[status] || 'secondary'
 }
