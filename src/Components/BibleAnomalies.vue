@@ -75,7 +75,7 @@
     </div>
 
     <!-- Anomalies Table -->
-    <DataTable :value="anomalies" tableStyle="min-width: 50rem" paginator :rows="defaultPageSize"
+    <DataTable :value="groupedAnomalies" tableStyle="min-width: 50rem" paginator :rows="defaultPageSize"
       :rowsPerPageOptions="[10, 15, 50, 100]" :totalRecords="totalCount" :lazy="true" stripedRows
       :loading="anomaliesState.loading" @page="onPageChange" @sort="onSort" sortMode="single" :rowClass="getRowClass"
       :rowStyle="getRowStyle" class="compact-table">
@@ -97,12 +97,17 @@
       </Column>
       <Column field="word" header="Word" style="width: 14%">
         <template #body="slotProps">
-          <span class="font-mono font-semibold">{{ slotProps.data.word || '—' }}</span>
+          <Tag v-if="slotProps.data.anomalyCount > 1" :value="`${slotProps.data.anomalyCount} anomalies`" severity="info" />
+          <span v-else class="font-mono font-semibold">{{ slotProps.data.word || '—' }}</span>
         </template>
       </Column>
       <Column field="anomaly_type" header="Anomaly Type" sortable style="width: 15%">
         <template #body="slotProps">
-          <Tag :value="getAnomalyTypeLabel(slotProps.data.anomaly_type)"
+          <div v-if="slotProps.data.anomalyTypes" class="flex flex-col gap-1">
+            <Tag v-for="type in slotProps.data.anomalyTypes" :key="type"
+              :value="getAnomalyTypeLabel(type)" :severity="getAnomalySeverity(type)" class="text-xs" />
+          </div>
+          <Tag v-else :value="getAnomalyTypeLabel(slotProps.data.anomaly_type)"
             :severity="getAnomalySeverity(slotProps.data.anomaly_type)" />
         </template>
       </Column>
@@ -113,7 +118,8 @@
       </Column>
       <Column field="ratio" header="Ratio" sortable style="width: 10%">
         <template #body="slotProps">
-          <Tag :value="slotProps.data.ratio.toFixed(2)" :severity="getRatioSeverity(slotProps.data.ratio)" />
+          <Tag :value="(slotProps.data.maxRatio || slotProps.data.ratio).toFixed(2)" 
+               :severity="getRatioSeverity(slotProps.data.maxRatio || slotProps.data.ratio)" />
         </template>
       </Column>
       <Column field="status" header="Status" style="width: 12%">
@@ -245,12 +251,12 @@
         </div>
         <!-- Main action buttons -->
         <div class="flex gap-4">
-          <Button severity="danger" :class="['flex-1', { 'animate-pulse-glow': showButtonAnimation }]"
-            @click="confirmAnomaly" :disabled="!currentVerse">
+          <Button severity="danger" :class="['flex-1', { 'animate-pulse-glow': showButtonAnimation && canChangeStatus }]"
+            @click="confirmAnomaly" :disabled="!currentVerse || !canChangeStatus">
             <span class="font-semibold text-sm">Confirm Error</span>
           </Button>
-          <Button severity="success" :class="['flex-1', { 'animate-pulse-glow': showButtonAnimation }]"
-            @click="disproveAnomaly" :disabled="!currentVerse">
+          <Button severity="success" :class="['flex-1', { 'animate-pulse-glow': showButtonAnimation && canChangeStatus }]"
+            @click="disproveAnomaly" :disabled="!currentVerse || !canChangeStatus">
             <span class="font-semibold text-sm">Alignment Correct</span>
           </Button>
         </div>
@@ -283,44 +289,44 @@
             <span class="text-sm text-surface-700 dark:text-surface-200">Start Time:</span>
             <div class="flex items-center gap-2">
               <div class="flex items-center gap-1">
-              <!-- Very fast decrease -->
-              <Button @click="adjustStartTime(-1.0)" severity="secondary" size="small"
-                class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'-1.0s'">
-                <span class="text-2xl font-bold leading-none" style="margin-top: -2px;">-</span>
-              </Button>
-              <!-- Fast decrease -->
-              <Button @click="adjustStartTime(-0.1)" severity="secondary" size="small"
-                class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'-0.1s'">
-                <span class="text-lg font-bold leading-none" style="margin-top: -1px;">-</span>
-              </Button>
-              <!-- Fine decrease -->
-              <Button @click="adjustStartTime(-0.01)" severity="secondary" size="small"
-                class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'-0.01s'">
-                <span class="text-xs font-bold leading-none">-</span>
-              </Button>
-              <!-- Time display -->
-              <span
-                class="text-sm font-mono min-w-[80px] text-center bg-surface-100 dark:bg-surface-800 px-2 py-1 rounded mx-1">{{
-                  formatTimeWithMs(correctionStartTime) }}</span>
-              <!-- Fine increase -->
-              <Button @click="adjustStartTime(0.01)" severity="secondary" size="small"
-                class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'+0.01s'">
-                <span class="text-xs font-bold leading-none">+</span>
-              </Button>
-              <!-- Fast increase -->
-              <Button @click="adjustStartTime(0.1)" severity="secondary" size="small"
-                class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'+0.1s'">
-                <span class="text-lg font-bold leading-none" style="margin-top: -1px;">+</span>
-              </Button>
-              <!-- Very fast increase -->
-              <Button @click="adjustStartTime(1.0)" severity="secondary" size="small"
-                class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'+1.0s'">
-                <span class="text-2xl font-bold leading-none" style="margin-top: -2px;">+</span>
-              </Button>
+                <!-- Very fast decrease -->
+                <Button @click="adjustStartTime(-1.0)" severity="secondary" size="small"
+                  class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'-1.0s'">
+                  <span class="text-2xl font-bold leading-none" style="margin-top: -2px;">-</span>
+                </Button>
+                <!-- Fast decrease -->
+                <Button @click="adjustStartTime(-0.1)" severity="secondary" size="small"
+                  class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'-0.1s'">
+                  <span class="text-lg font-bold leading-none" style="margin-top: -1px;">-</span>
+                </Button>
+                <!-- Fine decrease -->
+                <Button @click="adjustStartTime(-0.01)" severity="secondary" size="small"
+                  class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'-0.01s'">
+                  <span class="text-xs font-bold leading-none">-</span>
+                </Button>
+                <!-- Time display -->
+                <span
+                  class="text-sm font-mono min-w-[80px] text-center bg-surface-100 dark:bg-surface-800 px-2 py-1 rounded mx-1">{{
+                    formatTimeWithMs(correctionStartTime) }}</span>
+                <!-- Fine increase -->
+                <Button @click="adjustStartTime(0.01)" severity="secondary" size="small"
+                  class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'+0.01s'">
+                  <span class="text-xs font-bold leading-none">+</span>
+                </Button>
+                <!-- Fast increase -->
+                <Button @click="adjustStartTime(0.1)" severity="secondary" size="small"
+                  class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'+0.1s'">
+                  <span class="text-lg font-bold leading-none" style="margin-top: -1px;">+</span>
+                </Button>
+                <!-- Very fast increase -->
+                <Button @click="adjustStartTime(1.0)" severity="secondary" size="small"
+                  class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'+1.0s'">
+                  <span class="text-2xl font-bold leading-none" style="margin-top: -2px;">+</span>
+                </Button>
               </div>
               <!-- Preview button for Start Time -->
-              <Button @click="previewStartTime" severity="info" size="small" 
-                class="px-2 py-1" v-tooltip.top="'Preview start time'">
+              <Button @click="previewStartTime" severity="info" size="small" class="px-2 py-1"
+                v-tooltip.top="'Preview start time'">
                 <PlayIcon class="w-3 h-3" />
               </Button>
             </div>
@@ -331,44 +337,44 @@
             <span class="text-sm text-surface-700 dark:text-surface-200">End Time:</span>
             <div class="flex items-center gap-2">
               <div class="flex items-center gap-1">
-              <!-- Very fast decrease -->
-              <Button @click="adjustEndTime(-1.0)" severity="secondary" size="small"
-                class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'-1.0s'">
-                <span class="text-2xl font-bold leading-none" style="margin-top: -2px;">-</span>
-              </Button>
-              <!-- Fast decrease -->
-              <Button @click="adjustEndTime(-0.1)" severity="secondary" size="small"
-                class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'-0.1s'">
-                <span class="text-lg font-bold leading-none" style="margin-top: -1px;">-</span>
-              </Button>
-              <!-- Fine decrease -->
-              <Button @click="adjustEndTime(-0.01)" severity="secondary" size="small"
-                class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'-0.01s'">
-                <span class="text-xs font-bold leading-none">-</span>
-              </Button>
-              <!-- Time display -->
-              <span
-                class="text-sm font-mono min-w-[80px] text-center bg-surface-100 dark:bg-surface-800 px-2 py-1 rounded mx-1">{{
-                  formatTimeWithMs(correctionEndTime) }}</span>
-              <!-- Fine increase -->
-              <Button @click="adjustEndTime(0.01)" severity="secondary" size="small"
-                class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'+0.01s'">
-                <span class="text-xs font-bold leading-none">+</span>
-              </Button>
-              <!-- Fast increase -->
-              <Button @click="adjustEndTime(0.1)" severity="secondary" size="small"
-                class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'+0.1s'">
-                <span class="text-lg font-bold leading-none" style="margin-top: -1px;">+</span>
-              </Button>
-              <!-- Very fast increase -->
-              <Button @click="adjustEndTime(1.0)" severity="secondary" size="small"
-                class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'+1.0s'">
-                <span class="text-2xl font-bold leading-none" style="margin-top: -2px;">+</span>
-              </Button>
+                <!-- Very fast decrease -->
+                <Button @click="adjustEndTime(-1.0)" severity="secondary" size="small"
+                  class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'-1.0s'">
+                  <span class="text-2xl font-bold leading-none" style="margin-top: -2px;">-</span>
+                </Button>
+                <!-- Fast decrease -->
+                <Button @click="adjustEndTime(-0.1)" severity="secondary" size="small"
+                  class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'-0.1s'">
+                  <span class="text-lg font-bold leading-none" style="margin-top: -1px;">-</span>
+                </Button>
+                <!-- Fine decrease -->
+                <Button @click="adjustEndTime(-0.01)" severity="secondary" size="small"
+                  class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'-0.01s'">
+                  <span class="text-xs font-bold leading-none">-</span>
+                </Button>
+                <!-- Time display -->
+                <span
+                  class="text-sm font-mono min-w-[80px] text-center bg-surface-100 dark:bg-surface-800 px-2 py-1 rounded mx-1">{{
+                    formatTimeWithMs(correctionEndTime) }}</span>
+                <!-- Fine increase -->
+                <Button @click="adjustEndTime(0.01)" severity="secondary" size="small"
+                  class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'+0.01s'">
+                  <span class="text-xs font-bold leading-none">+</span>
+                </Button>
+                <!-- Fast increase -->
+                <Button @click="adjustEndTime(0.1)" severity="secondary" size="small"
+                  class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'+0.1s'">
+                  <span class="text-lg font-bold leading-none" style="margin-top: -1px;">+</span>
+                </Button>
+                <!-- Very fast increase -->
+                <Button @click="adjustEndTime(1.0)" severity="secondary" size="small"
+                  class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'+1.0s'">
+                  <span class="text-2xl font-bold leading-none" style="margin-top: -2px;">+</span>
+                </Button>
               </div>
               <!-- Preview button for End Time -->
-              <Button @click="previewEndTime" severity="info" size="small" 
-                class="px-2 py-1" v-tooltip.top="'Preview end time'">
+              <Button @click="previewEndTime" severity="info" size="small" class="px-2 py-1"
+                v-tooltip.top="'Preview end time'">
                 <PlayIcon class="w-3 h-3" />
               </Button>
             </div>
@@ -743,6 +749,12 @@ const handleStatusChange = async (anomaly: VoiceAnomalyModel, newStatus: Anomaly
       if (index !== -1) {
         anomalies.value[index] = result
       }
+      
+      // Update currentVerse if it matches the updated anomaly
+      if (currentVerse.value && currentVerse.value.code === anomaly.code) {
+        currentVerse.value = result
+        console.log('Updated currentVerse.value status to:', result.status)
+      }
       if (showToast) {
         toast.add({
           severity: 'success',
@@ -757,7 +769,7 @@ const handleStatusChange = async (anomaly: VoiceAnomalyModel, newStatus: Anomaly
     if (showToast) {
       // Extract detailed error message from API response
       let errorMessage = 'Failed to update anomaly status. Please try again.'
-      
+
       if (error.response?.data?.detail) {
         errorMessage = error.response.data.detail
       } else if (error.response?.data?.message) {
@@ -765,7 +777,7 @@ const handleStatusChange = async (anomaly: VoiceAnomalyModel, newStatus: Anomaly
       } else if (error.message) {
         errorMessage = error.message
       }
-      
+
       toast.add({
         severity: 'error',
         summary: 'Update Failed',
@@ -837,6 +849,42 @@ const getRowStyle = (data: VoiceAnomalyModel) => {
   return {}
 }
 
+// Grouped anomalies by verse
+const groupedAnomalies = computed(() => {
+  if (!anomalies.value) return []
+  
+  const groups = new Map()
+  const result: any[] = []
+  
+  anomalies.value.forEach(anomaly => {
+    const key = `${anomaly.book_number}-${anomaly.chapter_number}-${anomaly.verse_number}`
+    
+    if (!groups.has(key)) {
+      // Create new group with first anomaly's data
+      const group = {
+        ...anomaly, // Keep all original fields
+        anomalies: [anomaly],
+        maxRatio: anomaly.ratio,
+        anomalyTypes: [anomaly.anomaly_type],
+        anomalyCount: 1
+      }
+      groups.set(key, group)
+      result.push(group)
+    } else {
+      // Update existing group
+      const group = groups.get(key)
+      group.anomalies.push(anomaly)
+      group.maxRatio = Math.max(group.maxRatio, anomaly.ratio)
+      if (!group.anomalyTypes.includes(anomaly.anomaly_type)) {
+        group.anomalyTypes.push(anomaly.anomaly_type)
+      }
+      group.anomalyCount = group.anomalies.length
+    }
+  })
+  
+  return result
+})
+
 // Adaptive page size based on screen size
 const defaultPageSize = computed(() => isMobile.value ? 10 : 15)
 
@@ -859,12 +907,19 @@ const canPlayNextVerse = computed(() => {
 
 // Correction interface computed properties
 const shouldShowCorrectionInterface = computed(() => {
-  return currentVerse.value?.status === 'confirmed'
+  const result = currentVerse.value?.status === 'confirmed'
+  console.log('shouldShowCorrectionInterface:', result, 'currentVerse.status:', currentVerse.value?.status)
+  return result
 })
 
 const hasTimingChanges = computed(() => {
   return correctionStartTime.value !== originalStartTime.value ||
     correctionEndTime.value !== originalEndTime.value
+})
+
+// Check if status can be changed (only if current status is 'detected')
+const canChangeStatus = computed(() => {
+  return currentVerse.value?.status === 'detected'
 })
 
 // Function to truncate text on mobile
@@ -1228,10 +1283,10 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
     errorHandled = true
 
     console.error('Error playing verse:', error)
-    
+
     // Extract detailed error message from API response
     let errorMessage = 'Unable to play verse audio. Please check your connection and try again.'
-    
+
     if (error.response?.data?.detail) {
       errorMessage = error.response.data.detail
     } else if (error.response?.data?.message) {
@@ -1239,7 +1294,7 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
     } else if (error.message) {
       errorMessage = error.message
     }
-    
+
     toast.add({
       severity: 'error',
       summary: 'Playback Error',
@@ -1429,10 +1484,22 @@ const playNextVerse = async () => {
 const confirmAnomaly = async () => {
   if (currentVerse.value) {
     showButtonAnimation.value = false
+    
+    // Stop audio playback if it's currently playing
+    if (isPlaying.value && audioElement.value) {
+      audioElement.value.pause()
+      isPlaying.value = false
+    }
+    
+    console.log('Before handleStatusChange - currentVerse.status:', currentVerse.value.status)
     await handleStatusChange(currentVerse.value, 'confirmed', !autoAdvanceToNext.value)
+    console.log('After handleStatusChange - currentVerse.status:', currentVerse.value.status)
     // Initialize correction interface after confirming anomaly
+    console.log('confirmAnomaly: currentExcerptVerse exists:', !!currentExcerptVerse.value)
+    console.log('confirmAnomaly: currentVerse exists:', !!currentVerse.value)
+    console.log('shouldShowCorrectionInterface value:', currentVerse.value?.status === 'confirmed')
     initializeCorrectionInterface()
-    await advanceToNextVerse()
+    // Don't advance to next verse - keep the player open with correction interface
   }
 }
 
@@ -1446,6 +1513,11 @@ const disproveAnomaly = async () => {
 
 // Verse correction functions
 const initializeCorrectionInterface = () => {
+  console.log('initializeCorrectionInterface called')
+  console.log('currentExcerptVerse.value:', !!currentExcerptVerse.value)
+  console.log('showCorrectionInterface.value before:', showCorrectionInterface.value)
+  console.log('shouldShowCorrectionInterface computed:', shouldShowCorrectionInterface.value)
+  
   if (currentExcerptVerse.value) {
     // Store original values
     originalStartTime.value = currentExcerptVerse.value.begin
@@ -1454,6 +1526,10 @@ const initializeCorrectionInterface = () => {
     correctionStartTime.value = currentExcerptVerse.value.begin
     correctionEndTime.value = currentExcerptVerse.value.end
     showCorrectionInterface.value = true
+    console.log('showCorrectionInterface.value after:', showCorrectionInterface.value)
+    console.log('shouldShowCorrectionInterface computed after:', shouldShowCorrectionInterface.value)
+  } else {
+    console.log('currentExcerptVerse.value is null, cannot initialize correction interface')
   }
 }
 
@@ -1499,10 +1575,10 @@ const applyCorrectionChanges = async () => {
         detail: 'Timing corrections applied successfully',
         life: 3000
       })
-      
+
       // Close correction interface
       showCorrectionInterface.value = false
-      
+
       // Refresh the anomalies list to reflect the status change
       await refreshAnomalies()
     } else {
@@ -1515,10 +1591,10 @@ const applyCorrectionChanges = async () => {
     }
   } catch (error: any) {
     console.error('Error applying corrections:', error)
-    
+
     // Extract detailed error message from API response
     let errorMessage = 'An error occurred while applying corrections'
-    
+
     if (error.response?.data?.detail) {
       errorMessage = error.response.data.detail
     } else if (error.response?.data?.message) {
@@ -1526,7 +1602,7 @@ const applyCorrectionChanges = async () => {
     } else if (error.message) {
       errorMessage = error.message
     }
-    
+
     toast.add({
       severity: 'error',
       summary: 'Error',
@@ -1544,13 +1620,13 @@ const resetCorrectionChanges = () => {
 
 // Preview functions for timing corrections
 const previewStartTime = async () => {
-  console.log('=== START TIME PREVIEW ===') 
+  console.log('=== START TIME PREVIEW ===')
   console.log('audioElement.value:', !!audioElement.value)
   console.log('currentExcerptVerse.value:', !!currentExcerptVerse.value)
   console.log('currentExcerpt.value:', !!currentExcerpt.value)
   console.log('correctionStartTime.value:', correctionStartTime.value)
   console.log('correctionEndTime.value:', correctionEndTime.value)
-  
+
   if (!currentExcerptVerse.value || !currentExcerpt.value) {
     console.log('Early return: missing currentExcerptVerse or currentExcerpt')
     return
@@ -1583,7 +1659,7 @@ const previewStartTime = async () => {
     // Set audio position to start time
     console.log('Setting audio currentTime to:', startTime)
     audioElement.value.currentTime = startTime
-    
+
     // Start playback
     console.log('Starting playback...')
     await audioElement.value.play()
@@ -1607,13 +1683,13 @@ const previewStartTime = async () => {
 }
 
 const previewEndTime = async () => {
-  console.log('=== END TIME PREVIEW ===') 
+  console.log('=== END TIME PREVIEW ===')
   console.log('audioElement.value:', !!audioElement.value)
   console.log('currentExcerptVerse.value:', !!currentExcerptVerse.value)
   console.log('currentExcerpt.value:', !!currentExcerpt.value)
   console.log('correctionStartTime.value:', correctionStartTime.value)
   console.log('correctionEndTime.value:', correctionEndTime.value)
-  
+
   if (!currentExcerptVerse.value || !currentExcerpt.value) {
     console.log('Early return: missing currentExcerptVerse or currentExcerpt')
     return
@@ -1646,7 +1722,7 @@ const previewEndTime = async () => {
     // Set audio position to start time
     console.log('Setting audio currentTime to:', startTime)
     audioElement.value.currentTime = startTime
-    
+
     // Start playback
     console.log('Starting playback...')
     await audioElement.value.play()
