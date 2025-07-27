@@ -123,8 +123,8 @@ export function useVoiceAnomalies() {
   const selectedAnomalyType = ref<AnomalyType | null>(null)
   const selectedBookNumber = ref<number | null>(null)
   const selectedStatus = ref<AnomalyStatus | null>(null)
-  const selectedSortBy = ref<'address' | 'type' | 'ratio'>('ratio')
-  const selectedSortOrder = ref<'asc' | 'desc'>('desc')
+  const selectedSortBy = ref<'address' | 'type' | 'ratio'>('address')
+  const selectedSortOrder = ref<'asc' | 'desc'>('asc')
 
   const fetchAnomalies = async (voiceCode: number, params?: VoiceAnomalyListParams) => {
     selectedVoiceCode.value = voiceCode

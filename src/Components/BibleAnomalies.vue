@@ -78,7 +78,7 @@
     <DataTable :value="anomalies" tableStyle="min-width: 50rem" paginator :rows="defaultPageSize"
       :rowsPerPageOptions="[10, 15, 50, 100]" :totalRecords="totalCount" :lazy="true" stripedRows
       :loading="anomaliesState.loading" @page="onPageChange" @sort="onSort" sortMode="single" :rowClass="getRowClass"
-      class="compact-table">
+      :rowStyle="getRowStyle" class="compact-table">
       <template #header>
         <div class="flex flex-wrap items-center justify-between gap-2">
           <div class="flex items-center gap-2">
@@ -89,18 +89,18 @@
         </div>
       </template>
 
-      <Column field="code" header="Code" style="width: 8%"></Column>
+      <Column field="code" header="Code" style="width: 6%"></Column>
       <Column field="book_number" header="Reference" sortable style="width: 20%">
         <template #body="slotProps">
           <span class="text-sm font-medium">{{ formatReference(slotProps.data) }}</span>
         </template>
       </Column>
-      <Column field="word" header="Word" style="width: 15%">
+      <Column field="word" header="Word" style="width: 14%">
         <template #body="slotProps">
           <span class="font-mono font-semibold">{{ slotProps.data.word || '—' }}</span>
         </template>
       </Column>
-      <Column field="anomaly_type" header="Anomaly Type" sortable style="width: 12%">
+      <Column field="anomaly_type" header="Anomaly Type" sortable style="width: 15%">
         <template #body="slotProps">
           <Tag :value="getAnomalyTypeLabel(slotProps.data.anomaly_type)"
             :severity="getAnomalySeverity(slotProps.data.anomaly_type)" />
@@ -664,7 +664,33 @@ const selectStatus = async (anomaly: VoiceAnomalyModel, newStatus: AnomalyStatus
 
 // Function to highlight currently playing row
 const getRowClass = (data: VoiceAnomalyModel) => {
-  return currentPlayingId.value === data.code ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500' : ''
+  if (currentPlayingId.value === data.code) {
+    return 'p-highlight playing-row'
+  }
+  return ''
+}
+
+// Function to apply inline styles to the currently playing row
+const getRowStyle = (data: VoiceAnomalyModel) => {
+  if (currentPlayingId.value === data.code) {
+    // Определяем темную тему по классу документа
+    const isDarkTheme = document.documentElement.classList.contains('dark')
+    
+    if (isDarkTheme) {
+      return {
+        backgroundColor: 'rgba(25, 118, 210, 0.2)',
+        borderBottom: 'none',
+        fontWeight: '500'
+      }
+    } else {
+      return {
+        backgroundColor: '#e3f2fd',
+        borderBottom: 'none',
+        fontWeight: '500'
+      }
+    }
+  }
+  return {}
 }
 
 // Adaptive page size based on screen size
@@ -1144,15 +1170,20 @@ const stopPlaying = () => {
   showNavigationMenu.value = false
 }
 
-// Function to find next anomaly in the list
+// Function to find next anomaly in the list with status 'detected'
 const findNextAnomaly = (): VoiceAnomalyModel | null => {
   if (!currentVerse.value || !anomalies.value.length) {
     return null
   }
 
   const currentIndex = anomalies.value.findIndex(anomaly => anomaly.code === currentVerse.value!.code)
-  if (currentIndex >= 0 && currentIndex < anomalies.value.length - 1) {
-    return anomalies.value[currentIndex + 1]
+  if (currentIndex >= 0) {
+    // Search for next anomaly with status 'detected' starting from current index + 1
+    for (let i = currentIndex + 1; i < anomalies.value.length; i++) {
+      if (anomalies.value[i].status === 'detected') {
+        return anomalies.value[i]
+      }
+    }
   }
 
   return null
@@ -1327,5 +1358,33 @@ onUnmounted(() => {
 
 .animate-pulse-glow {
   animation: pulse-glow 1.5s ease-in-out infinite;
+}
+
+/* Стили для подсветки воспроизводимой строки */
+.p-datatable .p-datatable-tbody > tr.playing-row {
+  position: relative;
+  border-bottom: none !important; /* Убираем стандартную нижнюю границу */
+}
+
+/* Стили для светлой темы */
+:root:not(.dark) .p-datatable .p-datatable-tbody > tr.playing-row {
+  background-color: #e3f2fd !important;
+  box-shadow: inset 4px 0 0 #2196f3, 0 1px 0 0 #e3f2fd !important; /* Левая граница и нижняя тень */
+}
+
+:root:not(.dark) .p-datatable .p-datatable-tbody > tr.playing-row > td {
+  background-color: #e3f2fd !important;
+  border-bottom-color: #bbdefb !important; /* Светлее нижняя граница */
+}
+
+/* Стили для темной темы */
+.dark .p-datatable .p-datatable-tbody > tr.playing-row {
+  background-color: rgba(25, 118, 210, 0.2) !important; /* Более насыщенный синий для темной темы */
+  box-shadow: inset 4px 0 0 #42a5f5, 0 1px 0 0 rgba(25, 118, 210, 0.2) !important; /* Левая граница и нижняя тень */
+}
+
+.dark .p-datatable .p-datatable-tbody > tr.playing-row > td {
+  background-color: rgba(25, 118, 210, 0.2) !important;
+  border-bottom-color: rgba(66, 165, 245, 0.3) !important; /* Светлее нижняя граница для темной темы */
 }
 </style>
