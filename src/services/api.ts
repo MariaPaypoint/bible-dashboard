@@ -10,7 +10,9 @@ import type {
   BibleError, 
   ErrorListParams, 
   PaginatedResponse,
-  AnomalyStatus 
+  AnomalyStatus,
+  ExcerptResponse,
+  ExcerptParams 
 } from '../types/api'
 
 class ApiService {
@@ -84,6 +86,12 @@ class ApiService {
   // Update anomaly status endpoint
   async updateAnomalyStatus(anomalyCode: number, status: AnomalyStatus): Promise<VoiceAnomalyModel> {
     const response = await this.api.patch<VoiceAnomalyModel>(`/voices/anomalies/${anomalyCode}/status`, { status })
+    return response.data
+  }
+
+  // Get excerpt with alignment endpoint
+  async getExcerptWithAlignment(params: ExcerptParams): Promise<ExcerptResponse> {
+    const response = await this.api.get<ExcerptResponse>('/excerpt_with_alignment', { params })
     return response.data
   }
 

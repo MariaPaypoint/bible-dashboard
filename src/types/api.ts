@@ -120,3 +120,64 @@ export interface PaginatedResponse<T> {
   limit: number
   pages: number
 }
+
+// Excerpt API types
+export interface ExcerptBookModel {
+  code: number
+  number: number
+  alias: string
+  name: string
+  chapters_count: number
+}
+
+export interface ExcerptVerseModel {
+  code: number
+  number: number
+  join: number
+  text: string
+  html: string
+  begin: number
+  end: number
+  start_paragraph: boolean
+}
+
+export interface ExcerptNoteModel {
+  code: number
+  number: number
+  text: string
+  verse_code: number
+  title_code: number | null
+  position_text: number
+  position_html: number
+}
+
+export interface ExcerptTitleModel {
+  code: number
+  text: string
+  before_verse_code: number
+  metadata: any | null
+  reference: string | null
+}
+
+export interface ExcerptPartModel {
+  book: ExcerptBookModel
+  chapter_number: number
+  audio_link: string
+  prev_excerpt: string
+  next_excerpt: string
+  verses: ExcerptVerseModel[]
+  notes: ExcerptNoteModel[]
+  titles: ExcerptTitleModel[]
+}
+
+export interface ExcerptResponse {
+  title: string
+  is_single_chapter: boolean
+  parts: ExcerptPartModel[]
+}
+
+export interface ExcerptParams {
+  translation: number
+  excerpt: string
+  voice?: number
+}

@@ -64,7 +64,7 @@
             @change="onAnomalyTypeChange" showClear />
         </div>
         <div class="flex-1 min-w-0" style="flex: 1;">
-          <Select id="statusFilter" v-model="selectedStatus" :options="statusOptions" optionLabel="label"
+          <Select id="statusFilter" v-model="selectedStatus" :options="statusFilterOptions" optionLabel="label"
             optionValue="value" placeholder="All statuses" class="w-full" :disabled="!selectedVoice"
             @change="onStatusChange" showClear />
         </div>
@@ -106,7 +106,7 @@
             :severity="getAnomalySeverity(slotProps.data.anomaly_type)" />
         </template>
       </Column>
-      <Column header="Information" style="width: 8%">
+      <Column header="Info" style="width: 8%">
         <template #body="slotProps">
           <InfoIcon class="w-5 h-5 text-blue-500 cursor-pointer" v-tooltip.top="getInfoTooltip(slotProps.data)" />
         </template>
@@ -118,23 +118,20 @@
       </Column>
       <Column field="status" header="Status" style="width: 12%">
         <template #body="slotProps">
-          <Button type="button" 
-            :severity="getStatusSeverity(slotProps.data.status)" 
-            @click="(event: Event) => toggleStatusPopover(event, slotProps.data.code)" 
+          <Button type="button" :severity="getStatusSeverity(slotProps.data.status)"
+            @click="(event: Event) => toggleStatusPopover(event, slotProps.data.code)"
             class="min-w-44 text-xs flex items-center justify-between" size="small">
             <span>{{ getStatusLabel(slotProps.data.status) }}</span>
             <ChevronDownIcon class="w-4 h-4 ml-2" />
           </Button>
-          
+
           <Popover :ref="(el) => setStatusPopoverRef(el, slotProps.data.code)">
             <div class="flex flex-col gap-2 p-0">
               <ul class="list-none p-0 m-0 flex flex-col gap-1">
-                <li v-for="option in statusOptions" :key="option.value" 
-                  :class="[
-                    'flex flex-col gap-1 px-3 py-2 hover:bg-emphasis cursor-pointer rounded-border',
-                    { 'bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-700': option.value === slotProps.data.status }
-                  ]" 
-                  @click="selectStatus(slotProps.data, option.value)">
+                <li v-for="option in selectableStatusOptions" :key="option.value" :class="[
+                  'flex flex-col gap-1 px-3 py-2 hover:bg-emphasis cursor-pointer rounded-border',
+                  { 'bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-700': option.value === slotProps.data.status }
+                ]" @click="selectStatus(slotProps.data, option.value)">
                   <div class="flex items-center gap-2">
                     <Tag :value="option.label" :severity="getStatusSeverity(option.value)" class="text-xs" />
                   </div>
@@ -194,26 +191,53 @@
                 Playing Verse
               </div>
               <div class="text-xs text-surface-500 dark:text-surface-300 leading-tight">
-                Book {{ currentVerse?.book_number }} Chapter {{ currentVerse?.chapter_number }}:{{ currentVerse?.verse_number }}
+                Book {{ currentVerse?.book_number }} Chapter {{ currentVerse?.chapter_number }}:{{
+                  currentVerse?.verse_number }}
               </div>
             </div>
           </div>
-          <!-- Play/Pause and Stop buttons in top right corner -->
+          <!-- Play/Pause, Navigation and Stop buttons in top right corner -->
           <div class="flex gap-2 -mt-1 -mr-1">
             <Button severity="primary" class="w-10 h-10 !p-2" @click="togglePlayPause">
               <component :is="isPlaying ? PauseIcon : PlayIcon" class="w-5 h-5" />
             </Button>
+            <!-- Navigation menu button -->
+            <div class="relative navigation-menu-container">
+              <Button severity="secondary" class="w-10 h-10 !p-2" @click="toggleNavigationMenu"
+                v-tooltip.top="'Navigation'">
+                <MoreHorizontalIcon class="w-5 h-5" />
+              </Button>
+              <!-- Navigation dropdown menu -->
+              <div v-if="showNavigationMenu"
+                class="absolute top-12 right-0 w-56 bg-surface-0 dark:bg-surface-800 border border-surface-200 dark:border-surface-700 rounded-lg shadow-lg z-50 py-1">
+                <button
+                  class="w-full px-4 py-3 text-left text-sm text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-700 flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                  :disabled="!canPlayPreviousVerse"
+                  @click="playPreviousVerse">
+                  <SkipBackIcon class="w-5 h-5 flex-shrink-0" />
+                  Воспроизвести предыдущий стих
+                </button>
+                <button
+                  class="w-full px-4 py-3 text-left text-sm text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-700 flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                  :disabled="!canPlayNextVerse"
+                  @click="playNextVerse">
+                  <SkipForwardIcon class="w-5 h-5 flex-shrink-0"  />
+                  Воспроизвести следующий стих
+                </button>
+              </div>
+            </div>
             <Button severity="secondary" class="w-10 h-10 !p-2" @click="stopPlaying" v-tooltip.top="'Stop'">
               <CloseIcon class="w-5 h-5" />
             </Button>
           </div>
         </div>
-        <div class="text-sm text-surface-700 dark:text-surface-200 leading-relaxed" v-if="currentVerse?.verse_text"
-          v-html="highlightProblematicWord(currentVerse.verse_text, currentVerse.word, currentVerse.position_in_verse, currentVerse.position_from_end)">
+        <div class="text-sm text-surface-700 dark:text-surface-200 leading-relaxed" v-if="currentExcerptVerse?.text"
+          v-html="highlightProblematicWord(currentExcerptVerse.text, currentVerse?.word || null, currentVerse?.position_in_verse || null, currentVerse?.position_from_end || null)">
         </div>
         <div class="flex flex-col gap-2">
-          <div class="relative h-1.5 rounded-lg overflow-hidden cursor-pointer hover:h-2 transition-all duration-200 bg-surface-200 dark:bg-surface-700"
-               @click="seekToPosition">
+          <div
+            class="relative h-1.5 rounded-lg overflow-hidden cursor-pointer hover:h-2 transition-all duration-200 bg-surface-200 dark:bg-surface-700"
+            @click="seekToPosition">
             <div class="absolute top-0 left-0 bg-primary h-full rounded-lg transition-all duration-500 ease-in-out"
               :style="{ width: progressPercentage + '%' }" />
           </div>
@@ -223,18 +247,12 @@
         </div>
         <!-- Main action buttons -->
         <div class="flex gap-4">
-          <Button 
-            severity="danger" 
-            :class="['flex-1', { 'animate-pulse-glow': showButtonAnimation }]" 
-            @click="confirmAnomaly" 
-            :disabled="!currentVerse">
+          <Button severity="danger" :class="['flex-1', { 'animate-pulse-glow': showButtonAnimation }]"
+            @click="confirmAnomaly" :disabled="!currentVerse">
             <span class="font-semibold text-sm">Confirm Error</span>
           </Button>
-          <Button 
-            severity="success" 
-            :class="['flex-1', { 'animate-pulse-glow': showButtonAnimation }]" 
-            @click="disproveAnomaly" 
-            :disabled="!currentVerse">
+          <Button severity="success" :class="['flex-1', { 'animate-pulse-glow': showButtonAnimation }]"
+            @click="disproveAnomaly" :disabled="!currentVerse">
             <span class="font-semibold text-sm">Alignment Correct</span>
           </Button>
         </div>
@@ -264,7 +282,7 @@ import Toast from 'primevue/toast'
 import Popover from 'primevue/popover'
 import Checkbox from 'primevue/checkbox'
 import type { DataTableSortEvent } from 'primevue/datatable'
-import type { VoiceAnomalyModel, BookModel, AnomalyStatus, AnomalyType } from '../types/api'
+import type { VoiceAnomalyModel, BookModel, AnomalyStatus, AnomalyType, ExcerptResponse, ExcerptVerseModel } from '../types/api'
 import { useVoiceAnomalies, useTranslations, useBooks, type VoiceWithTranslation } from '../composables/useApi'
 import { apiService } from '../services/api'
 import { useToast } from 'primevue/usetoast'
@@ -277,7 +295,10 @@ import {
   Edit as EditIcon,
   X as CloseIcon,
   Volume2 as SpeakerIcon,
-  ChevronDown as ChevronDownIcon
+  ChevronDown as ChevronDownIcon,
+  MoreHorizontal as MoreHorizontalIcon,
+  SkipBack as SkipBackIcon,
+  SkipForward as SkipForwardIcon
 } from 'lucide-vue-next'
 
 // Composables
@@ -321,6 +342,15 @@ const currentTime = ref(0)
 const duration = ref(0)
 const progressUpdateInterval = ref<number | null>(null)
 const autoAdvanceToNext = ref(false) // Auto-advance to next verse checkbox
+
+// Excerpt data state
+const currentExcerpt = ref<ExcerptResponse | null>(null)
+const currentExcerptVerse = ref<ExcerptVerseModel | null>(null)
+const adjacentVerses = ref<ExcerptVerseModel[]>([])
+
+// Navigation menu state
+const showNavigationMenu = ref(false)
+const navigationMenuRef = ref<any>(null)
 
 // Anomaly type filter options
 const anomalyTypeOptions = ref([
@@ -375,12 +405,21 @@ const bookOptions = computed(() => {
 })
 
 // Status options
-const statusOptions = [
+// Status options for filtering (includes all statuses)
+const statusFilterOptions = [
   { label: 'Detected', value: 'detected' as AnomalyStatus, description: 'Error detected automatically (default)' },
   { label: 'Confirmed', value: 'confirmed' as AnomalyStatus, description: 'Error confirmed during verification' },
   { label: 'Disproved', value: 'disproved' as AnomalyStatus, description: 'Error disproved, not confirmed by verification' },
   { label: 'Corrected', value: 'corrected' as AnomalyStatus, description: 'Manual correction performed' },
   { label: 'Already Resolved', value: 'already_resolved' as AnomalyStatus, description: 'Verse marked as completely correct previously' }
+]
+
+// Status options for manual selection (excludes already_resolved)
+const selectableStatusOptions = [
+  { label: 'Detected', value: 'detected' as AnomalyStatus, description: 'Error detected automatically (default)' },
+  { label: 'Confirmed', value: 'confirmed' as AnomalyStatus, description: 'Error confirmed during verification' },
+  { label: 'Disproved', value: 'disproved' as AnomalyStatus, description: 'Error disproved, not confirmed by verification' },
+  { label: 'Corrected', value: 'corrected' as AnomalyStatus, description: 'Manual correction performed' }
 ]
 
 // Methods
@@ -618,7 +657,7 @@ const selectStatus = async (anomaly: VoiceAnomalyModel, newStatus: AnomalyStatus
   if (popover) {
     popover.hide()
   }
-  
+
   // Update the status
   await handleStatusChange(anomaly, newStatus)
 }
@@ -635,6 +674,17 @@ const defaultPageSize = computed(() => isMobile.value ? 10 : 15)
 const progressPercentage = computed(() => {
   if (!duration.value || duration.value === 0) return 0
   return (currentTime.value / duration.value) * 100
+})
+
+// Navigation computed properties
+const canPlayPreviousVerse = computed(() => {
+  if (!currentExcerptVerse.value || !adjacentVerses.value.length) return false
+  return adjacentVerses.value.some(verse => verse.number < currentExcerptVerse.value!.number)
+})
+
+const canPlayNextVerse = computed(() => {
+  if (!currentExcerptVerse.value || !adjacentVerses.value.length) return false
+  return adjacentVerses.value.some(verse => verse.number > currentExcerptVerse.value!.number)
 })
 
 // Function to truncate text on mobile
@@ -661,17 +711,17 @@ const highlightProblematicWord = (verseText: string, problematicWord: string | n
 
   // If no position data is available, we can't accurately highlight
   if (positionInVerse === null && positionFromEnd === null) return verseText
-  
+
   // Escape special regex characters
   const escapedWord = problematicWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  
+
   // Split the verse text into words
   // We'll use a regex that matches words and non-words to preserve everything
   const parts = verseText.split(/([\p{L}\p{N}]+)/u).filter(p => p !== '')
-  
+
   // Find the correct word index using position information
   let targetIndex = -1
-  
+
   if (positionInVerse !== null) {
     // Position is 1-indexed in the API
     targetIndex = positionInVerse - 1
@@ -681,21 +731,21 @@ const highlightProblematicWord = (verseText: string, problematicWord: string | n
     const wordCount = parts.filter(p => /[\p{L}\p{N}]/u.test(p)).length
     targetIndex = wordCount - positionFromEnd
   }
-  
+
   // If we couldn't determine a valid index, return the original text
   if (targetIndex < 0) return verseText
-  
+
   // Count actual words until we reach our target
   let wordIndex = -1
   let resultText = ''
-  
+
   for (let i = 0; i < parts.length; i++) {
     const part = parts[i]
-    
+
     // If this is a word (not punctuation or space)
     if (/[\p{L}\p{N}]/u.test(part)) {
       wordIndex++
-      
+
       // If this is our target word
       if (wordIndex === targetIndex && part.toLowerCase() === problematicWord.toLowerCase()) {
         resultText += `<span class="text-red-600 font-semibold bg-red-50 dark:bg-red-900/20 px-1 rounded">${part}</span>`
@@ -707,46 +757,101 @@ const highlightProblematicWord = (verseText: string, problematicWord: string | n
       resultText += part
     }
   }
-  
+
   return resultText
 }
 
-const buildAudioUrl = (anomaly: VoiceAnomalyModel): string => {
-  // Get translation code from selected voice
-  const selectedVoiceData = availableVoices.value.find(v => v.code === anomaly.voice)
-  
-  if (!selectedVoiceData) {
-    console.error('Voice not found for code:', anomaly.voice)
-    return ''
+// Function to get alternative audio URL from structured API error response
+const getAlternativeAudioUrl = async (originalUrl: string): Promise<string | null> => {
+  try {
+    const response = await fetch(originalUrl)
+    if (response.status === 404) {
+      const errorData = await response.json()
+      if (errorData.detail && errorData.detail.alternative_url) {
+        return errorData.detail.alternative_url
+      }
+    }
+    return null
+  } catch (error) {
+    return null
   }
+}
 
-  const translationAlias = selectedVoiceData.translation.alias || selectedVoiceData.translation.code
-  const voiceAlias = selectedVoiceData.alias || selectedVoiceData.code
-  const bookNumber = anomaly.book_number.toString().padStart(2, '0')
-  const chapterNumber = anomaly.chapter_number.toString().padStart(2, '0')
+// Function to get excerpt data with adjacent verses
+const getExcerptData = async (anomaly: VoiceAnomalyModel): Promise<{ excerpt: ExcerptResponse, targetVerse: ExcerptVerseModel, audioUrl: string } | null> => {
+  try {
+    // Get translation code from selected voice
+    const selectedVoiceData = availableVoices.value.find(v => v.code === anomaly.voice)
+    if (!selectedVoiceData) {
+      console.error('Voice not found for code:', anomaly.voice)
+      return null
+    }
 
-  return `/api/audio/${translationAlias}/${voiceAlias}/${bookNumber}/${chapterNumber}.mp3`
+    // Get book alias from books data
+    const book = books.value.find(b => b.book_number === anomaly.book_number)
+    if (!book) {
+      console.error('Book not found for number:', anomaly.book_number)
+      return null
+    }
+
+    // Calculate verse range (current verse ± 1)
+    const startVerse = Math.max(1, anomaly.verse_number - 1)
+    const endVerse = anomaly.verse_number + 1
+
+    // Build excerpt string: "gen 1:3-5" format
+    const excerptString = `${book.alias} ${anomaly.chapter_number}:${startVerse}-${endVerse}`
+
+    console.log('Requesting excerpt:', excerptString)
+
+    // Request excerpt data
+    const excerptData = await apiService.getExcerptWithAlignment({
+      translation: selectedVoiceData.translation.code,
+      excerpt: excerptString,
+      voice: anomaly.voice
+    })
+
+    if (!excerptData.parts || excerptData.parts.length === 0) {
+      console.error('No parts in excerpt response')
+      return null
+    }
+
+    const part = excerptData.parts[0]
+
+    // Find the target verse in the response
+    const targetVerse = part.verses.find(v => v.number === anomaly.verse_number)
+    if (!targetVerse) {
+      console.error('Target verse not found in excerpt response')
+      return null
+    }
+
+    console.log('Excerpt data received:', {
+      title: excerptData.title,
+      audioUrl: part.audio_link,
+      versesCount: part.verses.length,
+      targetVerse: targetVerse.number
+    })
+
+    return {
+      excerpt: excerptData,
+      targetVerse,
+      audioUrl: part.audio_link
+    }
+
+  } catch (error) {
+    console.error('Error fetching excerpt data:', error)
+    return null
+  }
 }
 
 const playVerse = async (anomaly: VoiceAnomalyModel) => {
   let errorHandled = false // Flag to prevent duplicate error messages
-  
+
   try {
-    // Check if verse positions are available
-    if (anomaly.verse_start_time === null || anomaly.verse_end_time === null) {
-      toast.add({
-        severity: 'error',
-        summary: 'Audio Error',
-        detail: 'Verse timing information is not available for this anomaly. Cannot play specific verse segment.',
-        life: 5000
-      })
-      return
-    }
-    
     // Ensure translations are loaded
     if (voices.value.length === 0) {
       await fetchTranslations()
     }
+
     // Stop current playback if any
     if (audioElement.value) {
       audioElement.value.pause()
@@ -759,27 +864,32 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
       progressUpdateInterval.value = null
     }
 
-    // Set current verse but DON'T show player yet
+    // Set current verse and show player immediately to display verse text
     currentVerse.value = anomaly
     currentPlayingId.value = anomaly.code
-    // showPlayer.value = true // Move this to after successful load
+    showPlayer.value = true // Show player immediately to display verse text
     isPlaying.value = false // Set to false initially
 
-    // Create audio element
-    const audioUrl = buildAudioUrl(anomaly)
-    if (!audioUrl) {
-      console.error('Failed to build audio URL')
+    // Get excerpt data with adjacent verses
+    const excerptResult = await getExcerptData(anomaly)
+    if (!excerptResult) {
       toast.add({
         severity: 'error',
         summary: 'Audio Error',
-        detail: 'Unable to build audio URL. Voice data may not be loaded.',
+        detail: 'Unable to load verse data. Please try again.',
         life: 5000
       })
+      stopPlaying()
       return
     }
-    
 
-    const audio = new Audio(audioUrl)
+    // Store excerpt data
+    currentExcerpt.value = excerptResult.excerpt
+    currentExcerptVerse.value = excerptResult.targetVerse
+    adjacentVerses.value = excerptResult.excerpt.parts[0].verses
+
+    // Create audio element with URL from excerpt
+    const audio = new Audio(excerptResult.audioUrl)
     audioElement.value = audio
 
     // Add load error handler
@@ -790,23 +900,23 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
     // Set up audio event listeners
     audio.addEventListener('loadedmetadata', () => {
       // Set current time to verse start and duration to verse length
-      // (positions are guaranteed to be non-null at this point)
-      audio.currentTime = anomaly.verse_start_time!
+      // Use timing data from excerpt response
+      audio.currentTime = excerptResult.targetVerse.begin
       currentTime.value = 0 // Reset display time to 0 for verse duration
-      duration.value = anomaly.verse_end_time! - anomaly.verse_start_time!
-      
+      duration.value = excerptResult.targetVerse.end - excerptResult.targetVerse.begin
+
       // NOW show the player since audio loaded successfully
       showPlayer.value = true
       isPlaying.value = true
     })
 
     audio.addEventListener('timeupdate', () => {
-      // Playing specific verse segment (positions are guaranteed to be non-null)
-      const verseCurrentTime = audio.currentTime - anomaly.verse_start_time!
+      // Playing specific verse segment using excerpt timing data
+      const verseCurrentTime = audio.currentTime - excerptResult.targetVerse.begin
       currentTime.value = Math.max(0, verseCurrentTime)
 
       // Stop when reaching verse end
-      if (audio.currentTime >= anomaly.verse_end_time!) {
+      if (audio.currentTime >= excerptResult.targetVerse.end) {
         onAudioComplete()
       }
     })
@@ -815,34 +925,88 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
       onAudioComplete()
     })
 
-    audio.addEventListener('error', (e) => {
+    audio.addEventListener('error', async (e) => {
       if (errorHandled) return // Prevent duplicate error messages
       errorHandled = true
-      
+
+      // Try alternative URL first
+      const alternativeUrl = await getAlternativeAudioUrl(excerptResult.audioUrl)
+      if (alternativeUrl) {
+        try {
+          // Stop current audio
+          audio.pause()
+          audio.src = ''
+
+          // Create new audio with alternative URL
+          const newAudio = new Audio(alternativeUrl)
+          audioElement.value = newAudio
+
+          // Set up same event listeners for new audio
+          newAudio.addEventListener('loadedmetadata', () => {
+            newAudio.currentTime = excerptResult.targetVerse.begin
+            currentTime.value = 0
+            duration.value = excerptResult.targetVerse.end - excerptResult.targetVerse.begin
+            showPlayer.value = true
+            isPlaying.value = true
+          })
+
+          newAudio.addEventListener('timeupdate', () => {
+            const verseCurrentTime = newAudio.currentTime - excerptResult.targetVerse.begin
+            currentTime.value = Math.max(0, verseCurrentTime)
+            if (newAudio.currentTime >= excerptResult.targetVerse.end) {
+              onAudioComplete()
+            }
+          })
+
+          newAudio.addEventListener('ended', () => {
+            onAudioComplete()
+          })
+
+          newAudio.addEventListener('error', () => {
+            // If alternative URL also fails, show error
+            console.error('Both original and alternative audio URLs failed')
+            toast.add({
+              severity: 'error',
+              summary: 'Audio Error',
+              detail: 'Audio file not available. Please try again later.',
+              life: 5000
+            })
+            stopPlaying()
+          })
+
+          // Try to play alternative audio
+          await newAudio.play()
+          return // Success with alternative URL
+        } catch (altError) {
+          console.error('Error with alternative audio:', altError)
+        }
+      }
+
+      // If no alternative URL or alternative failed, show original error
       console.error('Audio playback error:', e)
       let errorMessage = 'Failed to load audio file. Please try again.'
-      
+
       // More specific error messages based on error type
-      const audioElement = e.target as HTMLAudioElement
-      if (audioElement && audioElement.error) {
-        switch (audioElement.error.code) {
-          case audioElement.error.MEDIA_ERR_ABORTED:
+      const failedAudio = e.target as HTMLAudioElement
+      if (failedAudio && failedAudio.error) {
+        switch (failedAudio.error.code) {
+          case failedAudio.error.MEDIA_ERR_ABORTED:
             errorMessage = 'Audio playback was aborted.'
             break
-          case audioElement.error.MEDIA_ERR_NETWORK:
+          case failedAudio.error.MEDIA_ERR_NETWORK:
             errorMessage = 'Network error occurred while loading audio.'
             break
-          case audioElement.error.MEDIA_ERR_DECODE:
+          case failedAudio.error.MEDIA_ERR_DECODE:
             errorMessage = 'Audio file is corrupted or in unsupported format.'
             break
-          case audioElement.error.MEDIA_ERR_SRC_NOT_SUPPORTED:
+          case failedAudio.error.MEDIA_ERR_SRC_NOT_SUPPORTED:
             errorMessage = 'Audio file not found or format not supported.'
             break
           default:
             errorMessage = 'Unknown audio error occurred.'
         }
       }
-      
+
       toast.add({
         severity: 'error',
         summary: 'Audio Error',
@@ -858,7 +1022,7 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
     } catch (playError) {
       if (errorHandled) return // Prevent duplicate error messages
       errorHandled = true
-      
+
       console.error('Error starting audio playback:', playError)
       toast.add({
         severity: 'error',
@@ -875,7 +1039,7 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
   } catch (error) {
     if (errorHandled) return // Prevent duplicate error messages
     errorHandled = true
-    
+
     console.error('Error playing verse:', error)
     toast.add({
       severity: 'error',
@@ -910,32 +1074,27 @@ const togglePlayPause = () => {
 
 // Function to seek to position when clicking on timeline
 const seekToPosition = (event: MouseEvent) => {
-  if (!audioElement.value || !currentVerse.value || duration.value <= 0) return
-  
+  if (!audioElement.value || !currentExcerptVerse.value || duration.value <= 0) return
+
   const progressBar = event.currentTarget as HTMLElement
   const rect = progressBar.getBoundingClientRect()
   const clickX = event.clientX - rect.left
   const progressBarWidth = rect.width
-  
+
   // Calculate the percentage of where the user clicked
   const clickPercentage = Math.max(0, Math.min(1, clickX / progressBarWidth))
-  
+
   // Calculate the new time position
   const newTime = clickPercentage * duration.value
-  
-  // For verse segments, we need to add the verse start time
-  if (currentVerse.value.verse_start_time !== null && currentVerse.value.verse_end_time !== null) {
-    const verseStartTime = currentVerse.value.verse_start_time
-    const actualNewTime = verseStartTime + newTime
-    
-    // Make sure we don't go beyond the verse end time
-    const maxTime = currentVerse.value.verse_end_time
-    audioElement.value.currentTime = Math.min(actualNewTime, maxTime)
-  } else {
-    // For full chapter playback
-    audioElement.value.currentTime = newTime
-  }
-  
+
+  // For verse segments using excerpt data
+  const verseStartTime = currentExcerptVerse.value.begin
+  const actualNewTime = verseStartTime + newTime
+
+  // Make sure we don't go beyond the verse end time
+  const maxTime = currentExcerptVerse.value.end
+  audioElement.value.currentTime = Math.min(actualNewTime, maxTime)
+
   // Update the current time display immediately
   currentTime.value = newTime
 }
@@ -952,7 +1111,7 @@ const onAudioComplete = () => {
   if (duration.value > 0) {
     currentTime.value = duration.value
   }
-  
+
   // Start button animation to prompt user action
   showButtonAnimation.value = true
 }
@@ -975,6 +1134,14 @@ const stopPlaying = () => {
   currentTime.value = 0
   duration.value = 0
   showButtonAnimation.value = false
+
+  // Clear excerpt data
+  currentExcerpt.value = null
+  currentExcerptVerse.value = null
+  adjacentVerses.value = []
+
+  // Close navigation menu
+  showNavigationMenu.value = false
 }
 
 // Function to find next anomaly in the list
@@ -982,12 +1149,12 @@ const findNextAnomaly = (): VoiceAnomalyModel | null => {
   if (!currentVerse.value || !anomalies.value.length) {
     return null
   }
-  
+
   const currentIndex = anomalies.value.findIndex(anomaly => anomaly.code === currentVerse.value!.code)
   if (currentIndex >= 0 && currentIndex < anomalies.value.length - 1) {
     return anomalies.value[currentIndex + 1]
   }
-  
+
   return null
 }
 
@@ -1006,6 +1173,51 @@ const advanceToNextVerse = async () => {
     }
   } else {
     stopPlaying()
+  }
+}
+
+// Navigation menu functions
+const toggleNavigationMenu = () => {
+  showNavigationMenu.value = !showNavigationMenu.value
+}
+
+const playPreviousVerse = async () => {
+  if (!canPlayPreviousVerse.value || !currentExcerptVerse.value) return
+
+  // Find previous verse in adjacent verses
+  const previousVerse = adjacentVerses.value
+    .filter(verse => verse.number < currentExcerptVerse.value!.number)
+    .sort((a, b) => b.number - a.number)[0] // Get the highest number that's less than current
+
+  if (previousVerse && currentVerse.value) {
+    // Create a mock anomaly for the previous verse to play it
+    const previousAnomalyMock: VoiceAnomalyModel = {
+      ...currentVerse.value,
+      verse_number: previousVerse.number
+    }
+
+    showNavigationMenu.value = false
+    await playVerse(previousAnomalyMock)
+  }
+}
+
+const playNextVerse = async () => {
+  if (!canPlayNextVerse.value || !currentExcerptVerse.value) return
+
+  // Find next verse in adjacent verses
+  const nextVerse = adjacentVerses.value
+    .filter(verse => verse.number > currentExcerptVerse.value!.number)
+    .sort((a, b) => a.number - b.number)[0] // Get the lowest number that's greater than current
+
+  if (nextVerse && currentVerse.value) {
+    // Create a mock anomaly for the next verse to play it
+    const nextAnomalyMock: VoiceAnomalyModel = {
+      ...currentVerse.value,
+      verse_number: nextVerse.number
+    }
+
+    showNavigationMenu.value = false
+    await playVerse(nextAnomalyMock)
   }
 }
 
@@ -1028,8 +1240,24 @@ const disproveAnomaly = async () => {
 
 // Keyboard event handler
 const handleKeydown = (event: KeyboardEvent) => {
-  if (event.key === 'Escape' && showPlayer.value) {
-    stopPlaying()
+  if (event.key === 'Escape') {
+    // Close navigation menu first, then player
+    if (showNavigationMenu.value) {
+      showNavigationMenu.value = false
+    } else if (showPlayer.value) {
+      stopPlaying()
+    }
+  }
+}
+
+// Handle click outside navigation menu
+const handleClickOutside = (event: MouseEvent) => {
+  if (showNavigationMenu.value) {
+    const target = event.target as HTMLElement
+    const menuContainer = target.closest('.navigation-menu-container')
+    if (!menuContainer) {
+      showNavigationMenu.value = false
+    }
   }
 }
 
@@ -1042,15 +1270,19 @@ onMounted(async () => {
   // Initialize mobile state
   updateMobileState()
   window.addEventListener('resize', updateMobileState)
-  
+
   // Set up keyboard event listener
   window.addEventListener('keydown', handleKeydown)
+
+  // Set up click outside handler for navigation menu
+  document.addEventListener('click', handleClickOutside)
 })
 
 // Cleanup on unmount
 onUnmounted(() => {
   window.removeEventListener('resize', updateMobileState)
   window.removeEventListener('keydown', handleKeydown)
+  document.removeEventListener('click', handleClickOutside)
 
   // Clean up audio resources
   if (audioElement.value) {
@@ -1080,10 +1312,13 @@ onUnmounted(() => {
 
 /* Animation 1: Pulse effect */
 @keyframes pulse-glow {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: scale(1);
     box-shadow: 0 0 0 0 rgba(var(--primary-500), 0.4);
   }
+
   50% {
     transform: scale(1.05);
     box-shadow: 0 0 0 10px rgba(var(--primary-500), 0);
