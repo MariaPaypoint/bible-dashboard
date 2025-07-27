@@ -84,8 +84,21 @@ class ApiService {
   }
 
   // Update anomaly status endpoint
-  async updateAnomalyStatus(anomalyCode: number, status: AnomalyStatus): Promise<VoiceAnomalyModel> {
-    const response = await this.api.patch<VoiceAnomalyModel>(`/voices/anomalies/${anomalyCode}/status`, { status })
+  async updateAnomalyStatus(
+    anomalyCode: number, 
+    status: AnomalyStatus, 
+    begin?: number, 
+    end?: number
+  ): Promise<VoiceAnomalyModel> {
+    const payload: { status: AnomalyStatus; begin?: number; end?: number } = { status }
+    
+    // Add begin and end parameters only for corrected status
+    if (status === 'corrected' && begin !== undefined && end !== undefined) {
+      payload.begin = begin
+      payload.end = end
+    }
+    
+    const response = await this.api.patch<VoiceAnomalyModel>(`/voices/anomalies/${anomalyCode}/status`, payload)
     return response.data
   }
 

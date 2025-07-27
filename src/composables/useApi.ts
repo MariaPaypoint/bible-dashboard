@@ -229,8 +229,13 @@ export function useVoiceAnomalies() {
     }
   }
 
-  const updateAnomalyStatus = async (anomalyCode: number, status: AnomalyStatus) => {
-    const result = await handleApiCall(() => apiService.updateAnomalyStatus(anomalyCode, status))
+  const updateAnomalyStatus = async (
+    anomalyCode: number, 
+    status: AnomalyStatus, 
+    begin?: number, 
+    end?: number
+  ) => {
+    const result = await handleApiCall(() => apiService.updateAnomalyStatus(anomalyCode, status, begin, end))
     if (result) {
       // Update the anomaly in the local list
       const index = anomalies.value.findIndex(a => a.code === anomalyCode)

@@ -212,16 +212,14 @@
                 class="absolute top-12 right-0 w-56 bg-surface-0 dark:bg-surface-800 border border-surface-200 dark:border-surface-700 rounded-lg shadow-lg z-50 py-1">
                 <button
                   class="w-full px-4 py-3 text-left text-sm text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-700 flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-                  :disabled="!canPlayPreviousVerse"
-                  @click="playPreviousVerse">
+                  :disabled="!canPlayPreviousVerse" @click="playPreviousVerse">
                   <SkipBackIcon class="w-5 h-5 flex-shrink-0" />
                   Воспроизвести предыдущий стих
                 </button>
                 <button
                   class="w-full px-4 py-3 text-left text-sm text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-700 flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-                  :disabled="!canPlayNextVerse"
-                  @click="playNextVerse">
-                  <SkipForwardIcon class="w-5 h-5 flex-shrink-0"  />
+                  :disabled="!canPlayNextVerse" @click="playNextVerse">
+                  <SkipForwardIcon class="w-5 h-5 flex-shrink-0" />
                   Воспроизвести следующий стих
                 </button>
               </div>
@@ -263,6 +261,132 @@
             Automatically advance to next verse
           </label>
         </div>
+
+        <!-- Verse Correction Interface - Variant 1: Compact Inline -->
+        <div v-if="shouldShowCorrectionInterface && !showCorrectionInterface"
+          class="pt-4 mt-2 border-t border-surface-200 dark:border-surface-700">
+          <Button @click="initializeCorrectionInterface" severity="secondary" size="small" class="w-full">
+            <EditIcon class="w-4 h-4 mr-2" />
+            Adjust Verse Timing
+          </Button>
+        </div>
+
+        <!-- Verse Correction Interface - Variant 1: Expanded Controls -->
+        <div v-if="shouldShowCorrectionInterface && showCorrectionInterface"
+          class="pt-4 mt-2 border-t border-surface-200 dark:border-surface-700 space-y-3">
+          <div class="text-sm font-medium text-surface-900 dark:text-surface-0 mb-3">
+            Adjust Verse Timing
+          </div>
+
+          <!-- Start Time Controls -->
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-surface-700 dark:text-surface-200">Start Time:</span>
+            <div class="flex items-center gap-2">
+              <div class="flex items-center gap-1">
+              <!-- Very fast decrease -->
+              <Button @click="adjustStartTime(-1.0)" severity="secondary" size="small"
+                class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'-1.0s'">
+                <span class="text-2xl font-bold leading-none" style="margin-top: -2px;">-</span>
+              </Button>
+              <!-- Fast decrease -->
+              <Button @click="adjustStartTime(-0.1)" severity="secondary" size="small"
+                class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'-0.1s'">
+                <span class="text-lg font-bold leading-none" style="margin-top: -1px;">-</span>
+              </Button>
+              <!-- Fine decrease -->
+              <Button @click="adjustStartTime(-0.01)" severity="secondary" size="small"
+                class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'-0.01s'">
+                <span class="text-xs font-bold leading-none">-</span>
+              </Button>
+              <!-- Time display -->
+              <span
+                class="text-sm font-mono min-w-[80px] text-center bg-surface-100 dark:bg-surface-800 px-2 py-1 rounded mx-1">{{
+                  formatTimeWithMs(correctionStartTime) }}</span>
+              <!-- Fine increase -->
+              <Button @click="adjustStartTime(0.01)" severity="secondary" size="small"
+                class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'+0.01s'">
+                <span class="text-xs font-bold leading-none">+</span>
+              </Button>
+              <!-- Fast increase -->
+              <Button @click="adjustStartTime(0.1)" severity="secondary" size="small"
+                class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'+0.1s'">
+                <span class="text-lg font-bold leading-none" style="margin-top: -1px;">+</span>
+              </Button>
+              <!-- Very fast increase -->
+              <Button @click="adjustStartTime(1.0)" severity="secondary" size="small"
+                class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'+1.0s'">
+                <span class="text-2xl font-bold leading-none" style="margin-top: -2px;">+</span>
+              </Button>
+              </div>
+              <!-- Preview button for Start Time -->
+              <Button @click="previewStartTime" severity="info" size="small" 
+                class="px-2 py-1" v-tooltip.top="'Preview start time'">
+                <PlayIcon class="w-3 h-3" />
+              </Button>
+            </div>
+          </div>
+
+          <!-- End Time Controls -->
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-surface-700 dark:text-surface-200">End Time:</span>
+            <div class="flex items-center gap-2">
+              <div class="flex items-center gap-1">
+              <!-- Very fast decrease -->
+              <Button @click="adjustEndTime(-1.0)" severity="secondary" size="small"
+                class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'-1.0s'">
+                <span class="text-2xl font-bold leading-none" style="margin-top: -2px;">-</span>
+              </Button>
+              <!-- Fast decrease -->
+              <Button @click="adjustEndTime(-0.1)" severity="secondary" size="small"
+                class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'-0.1s'">
+                <span class="text-lg font-bold leading-none" style="margin-top: -1px;">-</span>
+              </Button>
+              <!-- Fine decrease -->
+              <Button @click="adjustEndTime(-0.01)" severity="secondary" size="small"
+                class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'-0.01s'">
+                <span class="text-xs font-bold leading-none">-</span>
+              </Button>
+              <!-- Time display -->
+              <span
+                class="text-sm font-mono min-w-[80px] text-center bg-surface-100 dark:bg-surface-800 px-2 py-1 rounded mx-1">{{
+                  formatTimeWithMs(correctionEndTime) }}</span>
+              <!-- Fine increase -->
+              <Button @click="adjustEndTime(0.01)" severity="secondary" size="small"
+                class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'+0.01s'">
+                <span class="text-xs font-bold leading-none">+</span>
+              </Button>
+              <!-- Fast increase -->
+              <Button @click="adjustEndTime(0.1)" severity="secondary" size="small"
+                class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'+0.1s'">
+                <span class="text-lg font-bold leading-none" style="margin-top: -1px;">+</span>
+              </Button>
+              <!-- Very fast increase -->
+              <Button @click="adjustEndTime(1.0)" severity="secondary" size="small"
+                class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'+1.0s'">
+                <span class="text-2xl font-bold leading-none" style="margin-top: -2px;">+</span>
+              </Button>
+              </div>
+              <!-- Preview button for End Time -->
+              <Button @click="previewEndTime" severity="info" size="small" 
+                class="px-2 py-1" v-tooltip.top="'Preview end time'">
+                <PlayIcon class="w-3 h-3" />
+              </Button>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex gap-2 pt-2">
+            <Button @click="applyCorrectionChanges" severity="success" size="small" class="flex-1"
+              :disabled="!hasTimingChanges">
+              Apply
+            </Button>
+            <Button @click="resetCorrectionChanges" severity="secondary" size="small" class="flex-1">
+              Reset
+            </Button>
+          </div>
+        </div>
+
+
       </div>
     </div>
 
@@ -298,7 +422,9 @@ import {
   ChevronDown as ChevronDownIcon,
   MoreHorizontal as MoreHorizontalIcon,
   SkipBack as SkipBackIcon,
-  SkipForward as SkipForwardIcon
+  SkipForward as SkipForwardIcon,
+  Plus as PlusIcon,
+  Minus as MinusIcon
 } from 'lucide-vue-next'
 
 // Composables
@@ -351,6 +477,13 @@ const adjacentVerses = ref<ExcerptVerseModel[]>([])
 // Navigation menu state
 const showNavigationMenu = ref(false)
 const navigationMenuRef = ref<any>(null)
+
+// Verse correction state
+const showCorrectionInterface = ref(false)
+const correctionStartTime = ref(0)
+const correctionEndTime = ref(0)
+const originalStartTime = ref(0)
+const originalEndTime = ref(0)
 
 // Anomaly type filter options
 const anomalyTypeOptions = ref([
@@ -675,7 +808,7 @@ const getRowStyle = (data: VoiceAnomalyModel) => {
   if (currentPlayingId.value === data.code) {
     // Определяем темную тему по классу документа
     const isDarkTheme = document.documentElement.classList.contains('dark')
-    
+
     if (isDarkTheme) {
       return {
         backgroundColor: 'rgba(25, 118, 210, 0.2)',
@@ -713,6 +846,16 @@ const canPlayNextVerse = computed(() => {
   return adjacentVerses.value.some(verse => verse.number > currentExcerptVerse.value!.number)
 })
 
+// Correction interface computed properties
+const shouldShowCorrectionInterface = computed(() => {
+  return currentVerse.value?.status === 'confirmed'
+})
+
+const hasTimingChanges = computed(() => {
+  return correctionStartTime.value !== originalStartTime.value ||
+    correctionEndTime.value !== originalEndTime.value
+})
+
 // Function to truncate text on mobile
 const truncateText = (text: string, maxLength: number = 25): string => {
   if (!isMobile.value || !text) return text
@@ -730,6 +873,13 @@ const formatTime = (seconds: number): string => {
   const mins = Math.floor(seconds / 60)
   const secs = Math.floor(seconds % 60)
   return `${mins}:${secs.toString().padStart(2, '0')}`
+}
+
+const formatTimeWithMs = (seconds: number): string => {
+  const mins = Math.floor(seconds / 60)
+  const secs = Math.floor(seconds % 60)
+  const ms = Math.floor((seconds % 1) * 1000)
+  return `${mins}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`
 }
 
 const highlightProblematicWord = (verseText: string, problematicWord: string | null, positionInVerse: number | null, positionFromEnd: number | null): string => {
@@ -1257,6 +1407,8 @@ const confirmAnomaly = async () => {
   if (currentVerse.value) {
     showButtonAnimation.value = false
     await handleStatusChange(currentVerse.value, 'confirmed', !autoAdvanceToNext.value)
+    // Initialize correction interface after confirming anomaly
+    initializeCorrectionInterface()
     await advanceToNextVerse()
   }
 }
@@ -1266,6 +1418,219 @@ const disproveAnomaly = async () => {
     showButtonAnimation.value = false
     await handleStatusChange(currentVerse.value, 'disproved', !autoAdvanceToNext.value)
     await advanceToNextVerse()
+  }
+}
+
+// Verse correction functions
+const initializeCorrectionInterface = () => {
+  if (currentExcerptVerse.value) {
+    // Store original values
+    originalStartTime.value = currentExcerptVerse.value.begin
+    originalEndTime.value = currentExcerptVerse.value.end
+    // Set current values
+    correctionStartTime.value = currentExcerptVerse.value.begin
+    correctionEndTime.value = currentExcerptVerse.value.end
+    showCorrectionInterface.value = true
+  }
+}
+
+const adjustStartTime = (delta: number) => {
+  const newValue = correctionStartTime.value + delta
+  if (newValue >= 0 && newValue < correctionEndTime.value) {
+    correctionStartTime.value = newValue
+  }
+}
+
+const adjustEndTime = (delta: number) => {
+  const newValue = correctionEndTime.value + delta
+  if (newValue > correctionStartTime.value) {
+    correctionEndTime.value = newValue
+  }
+}
+
+const applyCorrectionChanges = async () => {
+  if (!currentVerse.value) {
+    console.error('No current verse selected')
+    return
+  }
+
+  try {
+    console.log('Applying corrections:', {
+      anomalyCode: currentVerse.value.code,
+      startTime: correctionStartTime.value,
+      endTime: correctionEndTime.value
+    })
+
+    // Update anomaly status to 'corrected' with timing corrections
+    const result = await updateAnomalyStatus(
+      currentVerse.value.code,
+      'corrected',
+      correctionStartTime.value,
+      correctionEndTime.value
+    )
+
+    if (result) {
+      toast.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: 'Timing corrections applied successfully',
+        life: 3000
+      })
+      
+      // Close correction interface
+      showCorrectionInterface.value = false
+      
+      // Refresh the anomalies list to reflect the status change
+      await refreshAnomalies()
+    } else {
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Failed to apply timing corrections',
+        life: 5000
+      })
+    }
+  } catch (error) {
+    console.error('Error applying corrections:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'An error occurred while applying corrections',
+      life: 5000
+    })
+  }
+}
+
+const resetCorrectionChanges = () => {
+  // Reset to original values
+  correctionStartTime.value = originalStartTime.value
+  correctionEndTime.value = originalEndTime.value
+}
+
+// Preview functions for timing corrections
+const previewStartTime = async () => {
+  console.log('=== START TIME PREVIEW ===') 
+  console.log('audioElement.value:', !!audioElement.value)
+  console.log('currentExcerptVerse.value:', !!currentExcerptVerse.value)
+  console.log('currentExcerpt.value:', !!currentExcerpt.value)
+  console.log('correctionStartTime.value:', correctionStartTime.value)
+  console.log('correctionEndTime.value:', correctionEndTime.value)
+  
+  if (!currentExcerptVerse.value || !currentExcerpt.value) {
+    console.log('Early return: missing currentExcerptVerse or currentExcerpt')
+    return
+  }
+
+  // Create audio element if it doesn't exist
+  if (!audioElement.value) {
+    console.log('Creating audio element for preview')
+    const audioUrl = currentExcerpt.value.parts[0]?.audio_link
+    if (!audioUrl) {
+      console.log('No audio URL available')
+      return
+    }
+    audioElement.value = new Audio(audioUrl)
+    audioElement.value.preload = 'metadata'
+    console.log('Audio element created with URL:', audioUrl)
+  }
+
+  try {
+    // Stop current playback
+    console.log('Stopping current playback...')
+    audioElement.value.pause()
+    isPlaying.value = false
+
+    // For start time correction: play from corrected start for 2 seconds
+    const startTime = correctionStartTime.value
+    const endTime = Math.min(correctionStartTime.value + 2, correctionEndTime.value)
+    console.log(`Preview start time: ${startTime}s to ${endTime}s (duration: ${endTime - startTime}s)`)
+
+    // Set audio position to start time
+    console.log('Setting audio currentTime to:', startTime)
+    audioElement.value.currentTime = startTime
+    
+    // Start playback
+    console.log('Starting playback...')
+    await audioElement.value.play()
+    isPlaying.value = true
+    console.log('Playback started successfully')
+
+    // Schedule stop after 2 seconds or at end time
+    const playDuration = (endTime - startTime) * 1000 // Convert to milliseconds
+    console.log('Scheduling stop in', playDuration, 'ms')
+    setTimeout(() => {
+      if (audioElement.value) {
+        console.log('Stopping preview playback')
+        audioElement.value.pause()
+        isPlaying.value = false
+      }
+    }, playDuration)
+
+  } catch (error) {
+    console.error('Error during start time preview:', error)
+  }
+}
+
+const previewEndTime = async () => {
+  console.log('=== END TIME PREVIEW ===') 
+  console.log('audioElement.value:', !!audioElement.value)
+  console.log('currentExcerptVerse.value:', !!currentExcerptVerse.value)
+  console.log('currentExcerpt.value:', !!currentExcerpt.value)
+  console.log('correctionStartTime.value:', correctionStartTime.value)
+  console.log('correctionEndTime.value:', correctionEndTime.value)
+  
+  if (!currentExcerptVerse.value || !currentExcerpt.value) {
+    console.log('Early return: missing currentExcerptVerse or currentExcerpt')
+    return
+  }
+
+  // Create audio element if it doesn't exist
+  if (!audioElement.value) {
+    console.log('Creating audio element for preview')
+    const audioUrl = currentExcerpt.value.parts[0]?.audio_link
+    if (!audioUrl) {
+      console.log('No audio URL available')
+      return
+    }
+    audioElement.value = new Audio(audioUrl)
+    audioElement.value.preload = 'metadata'
+    console.log('Audio element created with URL:', audioUrl)
+  }
+
+  try {
+    // Stop current playback
+    console.log('Stopping current playback...')
+    audioElement.value.pause()
+    isPlaying.value = false
+
+    // For end time correction: play 2 seconds before corrected end until end
+    const startTime = Math.max(correctionEndTime.value - 2, correctionStartTime.value)
+    const endTime = correctionEndTime.value
+    console.log(`Preview end time: ${startTime}s to ${endTime}s (duration: ${endTime - startTime}s)`)
+
+    // Set audio position to start time
+    console.log('Setting audio currentTime to:', startTime)
+    audioElement.value.currentTime = startTime
+    
+    // Start playback
+    console.log('Starting playback...')
+    await audioElement.value.play()
+    isPlaying.value = true
+    console.log('Playback started successfully')
+
+    // Schedule stop at end time
+    const playDuration = (endTime - startTime) * 1000 // Convert to milliseconds
+    console.log('Scheduling stop in', playDuration, 'ms')
+    setTimeout(() => {
+      if (audioElement.value) {
+        console.log('Stopping preview playback')
+        audioElement.value.pause()
+        isPlaying.value = false
+      }
+    }, playDuration)
+
+  } catch (error) {
+    console.error('Error during end time preview:', error)
   }
 }
 
@@ -1361,30 +1726,36 @@ onUnmounted(() => {
 }
 
 /* Стили для подсветки воспроизводимой строки */
-.p-datatable .p-datatable-tbody > tr.playing-row {
+.p-datatable .p-datatable-tbody>tr.playing-row {
   position: relative;
-  border-bottom: none !important; /* Убираем стандартную нижнюю границу */
+  border-bottom: none !important;
+  /* Убираем стандартную нижнюю границу */
 }
 
 /* Стили для светлой темы */
-:root:not(.dark) .p-datatable .p-datatable-tbody > tr.playing-row {
+:root:not(.dark) .p-datatable .p-datatable-tbody>tr.playing-row {
   background-color: #e3f2fd !important;
-  box-shadow: inset 4px 0 0 #2196f3, 0 1px 0 0 #e3f2fd !important; /* Левая граница и нижняя тень */
+  box-shadow: inset 4px 0 0 #2196f3, 0 1px 0 0 #e3f2fd !important;
+  /* Левая граница и нижняя тень */
 }
 
-:root:not(.dark) .p-datatable .p-datatable-tbody > tr.playing-row > td {
+:root:not(.dark) .p-datatable .p-datatable-tbody>tr.playing-row>td {
   background-color: #e3f2fd !important;
-  border-bottom-color: #bbdefb !important; /* Светлее нижняя граница */
+  border-bottom-color: #bbdefb !important;
+  /* Светлее нижняя граница */
 }
 
 /* Стили для темной темы */
-.dark .p-datatable .p-datatable-tbody > tr.playing-row {
-  background-color: rgba(25, 118, 210, 0.2) !important; /* Более насыщенный синий для темной темы */
-  box-shadow: inset 4px 0 0 #42a5f5, 0 1px 0 0 rgba(25, 118, 210, 0.2) !important; /* Левая граница и нижняя тень */
+.dark .p-datatable .p-datatable-tbody>tr.playing-row {
+  background-color: rgba(25, 118, 210, 0.2) !important;
+  /* Более насыщенный синий для темной темы */
+  box-shadow: inset 4px 0 0 #42a5f5, 0 1px 0 0 rgba(25, 118, 210, 0.2) !important;
+  /* Левая граница и нижняя тень */
 }
 
-.dark .p-datatable .p-datatable-tbody > tr.playing-row > td {
+.dark .p-datatable .p-datatable-tbody>tr.playing-row>td {
   background-color: rgba(25, 118, 210, 0.2) !important;
-  border-bottom-color: rgba(66, 165, 245, 0.3) !important; /* Светлее нижняя граница для темной темы */
+  border-bottom-color: rgba(66, 165, 245, 0.3) !important;
+  /* Светлее нижняя граница для темной темы */
 }
 </style>
