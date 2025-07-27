@@ -68,9 +68,14 @@
             optionValue="value" placeholder="All statuses" class="w-full" :disabled="!selectedVoice"
             @change="onStatusChange" showClear />
         </div>
-        <Button @click="refreshData" :disabled="!selectedVoice" :loading="anomaliesState.loading">
-          <RefreshIcon class="w-5 h-5" />
-        </Button>
+        <div class="flex gap-2">
+          <Button @click="openCreateAnomalyDialog" :disabled="!selectedVoice" severity="help" title="Add New Anomaly">
+            <PlusIcon class="w-5 h-5" />
+          </Button>
+          <Button @click="refreshData" :disabled="!selectedVoice" :loading="anomaliesState.loading" title="Refresh">
+            <RefreshIcon class="w-5 h-5" />
+          </Button>
+        </div>
       </div>
     </div>
 
@@ -413,6 +418,59 @@
       </div>
     </div>
 
+    <!-- Create Anomaly Dialog -->
+    <Dialog v-model:visible="showCreateAnomalyDialog" modal header="Create New Anomaly" 
+      :style="{ width: '500px' }" :closable="true" @hide="resetCreateAnomalyForm">
+      <div class="space-y-4">
+        <!-- Book Selection -->
+        <div class="field">
+          <label for="createBook" class="block text-sm font-medium mb-2">Book</label>
+          <Select id="createBook" v-model="newAnomaly.book_number" :options="bookOptions" 
+            optionLabel="label" optionValue="value" placeholder="Select book" class="w-full" />
+        </div>
+        
+        <!-- Chapter Number -->
+        <div class="field">
+          <label for="createChapter" class="block text-sm font-medium mb-2">Chapter</label>
+          <InputNumber id="createChapter" v-model="newAnomaly.chapter_number" 
+            :min="1" :max="150" placeholder="Chapter number" class="w-full" />
+        </div>
+        
+        <!-- Verse Number -->
+        <div class="field">
+          <label for="createVerse" class="block text-sm font-medium mb-2">Verse</label>
+          <InputNumber id="createVerse" v-model="newAnomaly.verse_number" 
+            :min="1" :max="200" placeholder="Verse number" class="w-full" />
+        </div>
+        
+
+        
+        <!-- Anomaly Type -->
+        <div class="field">
+          <label for="createType" class="block text-sm font-medium mb-2">Anomaly Type</label>
+          <Select id="createType" v-model="newAnomaly.anomaly_type" :options="createAnomalyTypeOptions" 
+            optionLabel="label" optionValue="value" placeholder="Select type" class="w-full" />
+        </div>
+        
+
+        
+        <!-- Ratio -->
+        <div class="field">
+          <label for="createRatio" class="block text-sm font-medium mb-2">Ratio</label>
+          <InputNumber id="createRatio" v-model="newAnomaly.ratio" 
+            :min="0.1" :max="10" :minFractionDigits="2" :maxFractionDigits="2" 
+            placeholder="Anomaly ratio" class="w-full" />
+        </div>
+      </div>
+      
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <Button label="Cancel" severity="secondary" @click="showCreateAnomalyDialog = false" />
+          <Button label="Create" severity="help" @click="createNewAnomaly" :loading="creatingAnomaly" />
+        </div>
+      </template>
+    </Dialog>
+
     <!-- Toast notifications -->
     <Toast />
   </div>
@@ -428,6 +486,9 @@ import Select from 'primevue/select'
 import Toast from 'primevue/toast'
 import Popover from 'primevue/popover'
 import Checkbox from 'primevue/checkbox'
+import Dialog from 'primevue/dialog'
+import InputText from 'primevue/inputtext'
+import InputNumber from 'primevue/inputnumber'
 import type { DataTableSortEvent } from 'primevue/datatable'
 import type { VoiceAnomalyModel, BookModel, AnomalyStatus, AnomalyType, ExcerptResponse, ExcerptVerseModel, CreateAnomalyRequest } from '../types/api'
 import { useVoiceAnomalies, useTranslations, useBooks, type VoiceWithTranslation } from '../composables/useApi'
@@ -503,6 +564,25 @@ const adjacentVerses = ref<ExcerptVerseModel[]>([])
 // Navigation menu state
 const showNavigationMenu = ref(false)
 const navigationMenuRef = ref<any>(null)
+
+// Create anomaly dialog state
+const showCreateAnomalyDialog = ref(false)
+const creatingAnomaly = ref(false)
+const newAnomaly = ref<Partial<CreateAnomalyRequest>>({
+  voice: undefined,
+  translation: undefined,
+  book_number: undefined,
+  chapter_number: undefined,
+  verse_number: undefined,
+  word: 'N/A', // Default value since field is removed
+  position_in_verse: 1, // Default value since field is removed
+  position_from_end: 1, // Default value since field is removed
+  duration: 1.0, // Default value since field is removed
+  speed: 1.0, // Default value since field is removed
+  ratio: 1.0,
+  anomaly_type: 'manual',
+  status: 'detected'
+})
 
 // Verse correction state
 const showCorrectionInterface = ref(false)
@@ -580,6 +660,15 @@ const selectableStatusOptions = [
   { label: 'Confirmed', value: 'confirmed' as AnomalyStatus, description: 'Error confirmed during verification' },
   { label: 'Disproved', value: 'disproved' as AnomalyStatus, description: 'Error disproved, not confirmed by verification' },
   { label: 'Corrected', value: 'corrected' as AnomalyStatus, description: 'Manual correction performed' }
+]
+
+// Anomaly type options for create form
+const createAnomalyTypeOptions = [
+  { label: 'Fast First', value: 'fast_first' as AnomalyType },
+  { label: 'Fast Last', value: 'fast_last' as AnomalyType },
+  { label: 'Fast Middle', value: 'fast_middle' as AnomalyType },
+  { label: 'Fast Previous Verse', value: 'fast_previous_verse' as AnomalyType },
+  { label: 'Manual', value: 'manual' as AnomalyType }
 ]
 
 // Methods
@@ -668,7 +757,7 @@ const getBookName = (bookNumber: number): string => {
 
 const formatReference = (anomaly: VoiceAnomalyModel): string => {
   const bookName = getBookName(anomaly.book_number)
-  return `${bookName} (${anomaly.book_number}) ${anomaly.chapter_number}:${anomaly.verse_number}`
+  return `${bookName} ${anomaly.chapter_number}:${anomaly.verse_number}`
 }
 
 const getAnomalyTypeLabel = (type: AnomalyType): string => {
@@ -932,7 +1021,7 @@ const canPlayNextVerse = computed(() => {
 
 // Correction interface computed properties
 const shouldShowCorrectionInterface = computed(() => {
-  const result = currentVerse.value?.status === 'confirmed'
+  const result = currentVerse.value?.status === 'confirmed' || currentVerse.value?.status === 'corrected'
   console.log('shouldShowCorrectionInterface:', result, 'currentVerse.status:', currentVerse.value?.status)
   return result
 })
@@ -1988,6 +2077,118 @@ const addAnomalyToNextVerse = async () => {
       detail: errorMessage,
       life: 5000
     })
+  }
+}
+
+// Create anomaly dialog functions
+const openCreateAnomalyDialog = () => {
+  if (!selectedVoice.value) {
+    toast.add({
+      severity: 'warn',
+      summary: 'Warning',
+      detail: 'Please select a voice first',
+      life: 3000
+    })
+    return
+  }
+  
+  // Set voice and translation from selected voice
+  const selectedVoiceData = availableVoices.value.find(v => v.code === selectedVoice.value)
+  if (selectedVoiceData) {
+    newAnomaly.value.voice = selectedVoice.value
+    newAnomaly.value.translation = selectedVoiceData.translation.code
+  }
+  
+  showCreateAnomalyDialog.value = true
+}
+
+const resetCreateAnomalyForm = () => {
+  newAnomaly.value = {
+    voice: selectedVoice.value || undefined,
+    translation: undefined,
+    book_number: undefined,
+    chapter_number: undefined,
+    verse_number: undefined,
+    word: 'N/A', // Default value since field is removed
+    position_in_verse: 1, // Default value since field is removed
+    position_from_end: 1, // Default value since field is removed
+    duration: 1.0, // Default value since field is removed
+    speed: 1.0, // Default value since field is removed
+    ratio: 1.0,
+    anomaly_type: 'manual',
+    status: 'detected'
+  }
+  
+  // Set voice and translation again if voice is selected
+  const selectedVoiceData = availableVoices.value.find(v => v.code === selectedVoice.value)
+  if (selectedVoiceData) {
+    newAnomaly.value.voice = selectedVoice.value
+    newAnomaly.value.translation = selectedVoiceData.translation.code
+  }
+}
+
+const createNewAnomaly = async () => {
+  try {
+    // Validate required fields
+    if (!newAnomaly.value.voice || !newAnomaly.value.translation || 
+        !newAnomaly.value.book_number || !newAnomaly.value.chapter_number || 
+        !newAnomaly.value.verse_number || !newAnomaly.value.ratio ||
+        !newAnomaly.value.anomaly_type || !newAnomaly.value.status) {
+      toast.add({
+        severity: 'error',
+        summary: 'Validation Error',
+        detail: 'Please fill in all required fields',
+        life: 5000
+      })
+      return
+    }
+    
+    creatingAnomaly.value = true
+    
+    const result = await createAnomaly(newAnomaly.value as CreateAnomalyRequest)
+    
+    if (result) {
+      toast.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: 'Anomaly created successfully',
+        life: 3000
+      })
+      
+      showCreateAnomalyDialog.value = false
+      resetCreateAnomalyForm()
+      
+      // Refresh the anomalies list
+      await refreshData()
+    } else {
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Failed to create anomaly. Please try again.',
+        life: 5000
+      })
+    }
+  } catch (error: any) {
+    console.error('Error creating anomaly:', error)
+    
+    let errorMessage = 'Failed to create anomaly. Please try again.'
+    
+    if (error.response?.data?.detail) {
+      errorMessage = error.response.data.detail
+    } else if (error.response?.data?.message) {
+      errorMessage = error.response.data.message
+    } else if (error.message) {
+      errorMessage = error.message
+    }
+    
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: errorMessage,
+      life: 5000
+    })
+  } finally {
+    creatingAnomaly.value = false
   }
 }
 
