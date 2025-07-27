@@ -752,13 +752,24 @@ const handleStatusChange = async (anomaly: VoiceAnomalyModel, newStatus: Anomaly
         })
       }
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating anomaly status:', error)
     if (showToast) {
+      // Extract detailed error message from API response
+      let errorMessage = 'Failed to update anomaly status. Please try again.'
+      
+      if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+      
       toast.add({
         severity: 'error',
         summary: 'Update Failed',
-        detail: 'Failed to update anomaly status. Please try again.',
+        detail: errorMessage,
         life: 5000
       })
     }
@@ -1212,15 +1223,27 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
 
     // Progress is updated by timeupdate event, no need for interval
 
-  } catch (error) {
+  } catch (error: any) {
     if (errorHandled) return // Prevent duplicate error messages
     errorHandled = true
 
     console.error('Error playing verse:', error)
+    
+    // Extract detailed error message from API response
+    let errorMessage = 'Unable to play verse audio. Please check your connection and try again.'
+    
+    if (error.response?.data?.detail) {
+      errorMessage = error.response.data.detail
+    } else if (error.response?.data?.message) {
+      errorMessage = error.response.data.message
+    } else if (error.message) {
+      errorMessage = error.message
+    }
+    
     toast.add({
       severity: 'error',
       summary: 'Playback Error',
-      detail: 'Unable to play verse audio. Please check your connection and try again.',
+      detail: errorMessage,
       life: 5000
     })
     stopPlaying()
@@ -1490,12 +1513,24 @@ const applyCorrectionChanges = async () => {
         life: 5000
       })
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error applying corrections:', error)
+    
+    // Extract detailed error message from API response
+    let errorMessage = 'An error occurred while applying corrections'
+    
+    if (error.response?.data?.detail) {
+      errorMessage = error.response.data.detail
+    } else if (error.response?.data?.message) {
+      errorMessage = error.response.data.message
+    } else if (error.message) {
+      errorMessage = error.message
+    }
+    
     toast.add({
       severity: 'error',
       summary: 'Error',
-      detail: 'An error occurred while applying corrections',
+      detail: errorMessage,
       life: 5000
     })
   }
