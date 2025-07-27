@@ -1,6 +1,6 @@
 import { ref, reactive, computed } from 'vue'
 import { apiService } from '../services/api'
-import type { TranslationModel, LanguageModel, BookModel, TranslationListParams, VoiceModel, VoiceAnomalyModel, VoiceAnomalyListParams, AnomalyStatus, AnomalyType } from '../types/api'
+import type { TranslationModel, LanguageModel, BookModel, TranslationListParams, VoiceModel, VoiceAnomalyModel, VoiceAnomalyListParams, AnomalyStatus, AnomalyType, CreateAnomalyRequest } from '../types/api'
 
 // Extended voice model with translation info
 export interface VoiceWithTranslation extends VoiceModel {
@@ -247,6 +247,17 @@ export function useVoiceAnomalies() {
     return null
   }
 
+  const createAnomaly = async (anomalyData: CreateAnomalyRequest) => {
+    const result = await handleApiCall(() => apiService.createAnomaly(anomalyData))
+    if (result) {
+      // Add the new anomaly to the local list
+      anomalies.value.unshift(result)
+      totalCount.value += 1
+      return result
+    }
+    return null
+  }
+
   return {
     state,
     anomalies,
@@ -266,7 +277,8 @@ export function useVoiceAnomalies() {
     setBookFilter,
     setStatusFilter,
     setSortBy,
-    updateAnomalyStatus
+    updateAnomalyStatus,
+    createAnomaly
   }
 }
 

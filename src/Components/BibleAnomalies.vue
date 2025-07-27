@@ -251,14 +251,31 @@
         </div>
         <!-- Main action buttons -->
         <div class="flex gap-4">
-          <Button severity="danger" :class="['flex-1', { 'animate-pulse-glow': showButtonAnimation && canChangeStatus }]"
-            @click="confirmAnomaly" :disabled="!currentVerse || !canChangeStatus">
-            <span class="font-semibold text-sm">Confirm Error</span>
-          </Button>
-          <Button severity="success" :class="['flex-1', { 'animate-pulse-glow': showButtonAnimation && canChangeStatus }]"
-            @click="disproveAnomaly" :disabled="!currentVerse || !canChangeStatus">
-            <span class="font-semibold text-sm">Alignment Correct</span>
-          </Button>
+          <!-- Original verse buttons -->
+          <template v-if="currentVerseType === 'original'">
+            <Button severity="danger" :class="['flex-1', { 'animate-pulse-glow': showButtonAnimation && canChangeStatus }]"
+              @click="confirmAnomaly" :disabled="!currentVerse || !canChangeStatus">
+              <span class="font-semibold text-sm">Confirm Error</span>
+            </Button>
+            <Button severity="success" :class="['flex-1', { 'animate-pulse-glow': showButtonAnimation && canChangeStatus }]"
+              @click="disproveAnomaly" :disabled="!currentVerse || !canChangeStatus">
+              <span class="font-semibold text-sm">Alignment Correct</span>
+            </Button>
+          </template>
+          
+          <!-- Previous verse button -->
+          <template v-else-if="currentVerseType === 'previous'">
+            <Button severity="warn" class="flex-1" :disabled="!currentVerse" @click="addAnomalyToPreviousVerse">
+              <span class="font-semibold text-sm">Add anomaly to previous verse</span>
+            </Button>
+          </template>
+          
+          <!-- Next verse button -->
+          <template v-else-if="currentVerseType === 'next'">
+            <Button severity="warn" class="flex-1" :disabled="!currentVerse" @click="addAnomalyToNextVerse">
+              <span class="font-semibold text-sm">Add anomaly to next verse</span>
+            </Button>
+          </template>
         </div>
         <!-- Auto-advance checkbox -->
         <div class="flex items-center gap-2 pt-4 mt-2 border-t border-surface-200 dark:border-surface-700">
@@ -412,7 +429,7 @@ import Toast from 'primevue/toast'
 import Popover from 'primevue/popover'
 import Checkbox from 'primevue/checkbox'
 import type { DataTableSortEvent } from 'primevue/datatable'
-import type { VoiceAnomalyModel, BookModel, AnomalyStatus, AnomalyType, ExcerptResponse, ExcerptVerseModel } from '../types/api'
+import type { VoiceAnomalyModel, BookModel, AnomalyStatus, AnomalyType, ExcerptResponse, ExcerptVerseModel, CreateAnomalyRequest } from '../types/api'
 import { useVoiceAnomalies, useTranslations, useBooks, type VoiceWithTranslation } from '../composables/useApi'
 import { apiService } from '../services/api'
 import { useToast } from 'primevue/usetoast'
@@ -453,7 +470,8 @@ const {
   setBookFilter,
   setStatusFilter,
   setSortBy,
-  updateAnomalyStatus
+  updateAnomalyStatus,
+  createAnomaly
 } = useVoiceAnomalies()
 
 const { state: voicesState, voices, fetchTranslations } = useTranslations()
@@ -474,6 +492,8 @@ const currentTime = ref(0)
 const duration = ref(0)
 const progressUpdateInterval = ref<number | null>(null)
 const autoAdvanceToNext = ref(false) // Auto-advance to next verse checkbox
+const currentVerseType = ref<'original' | 'previous' | 'next'>('original') // Type of currently playing verse
+const originalVerseNumber = ref<number | null>(null) // Store original verse number with anomaly
 
 // Excerpt data state
 const currentExcerpt = ref<ExcerptResponse | null>(null)
@@ -496,7 +516,8 @@ const anomalyTypeOptions = ref([
   { label: 'Fast first word', value: 'fast_first' },
   { label: 'Fast last word', value: 'fast_last' },
   { label: 'Fast middle word', value: 'fast_middle' },
-  { label: 'Fast previous verse', value: 'fast_previous_verse' }
+  { label: 'Fast previous verse', value: 'fast_previous_verse' },
+  { label: 'Manual', value: 'manual' }
 ])
 
 // Computed properties
@@ -660,6 +681,8 @@ const getAnomalyTypeLabel = (type: AnomalyType): string => {
       return 'Fast middle word'
     case 'fast_previous_verse':
       return 'Fast previous verse'
+    case 'manual':
+      return 'Manual'
     default:
       return type
   }
@@ -675,6 +698,8 @@ const getAnomalySeverity = (type: AnomalyType): 'success' | 'info' | 'warn' | 'd
       return 'info' // Blue for fast middle word (low priority)
     case 'fast_previous_verse':
       return 'secondary' // Gray for fast previous verse (neutral)
+    case 'manual':
+      return 'warn' // Orange for manual anomalies
     default:
       return 'secondary'
   }
@@ -1109,6 +1134,13 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
     // Set current verse and show player immediately to display verse text
     currentVerse.value = anomaly
     currentPlayingId.value = anomaly.code
+    currentVerseType.value = 'original' // Set as original verse
+    
+    // Store original verse number only if it's not already set (first time playing)
+    if (originalVerseNumber.value === null) {
+      originalVerseNumber.value = anomaly.verse_number
+    }
+    
     showPlayer.value = true // Show player immediately to display verse text
     isPlaying.value = false // Set to false initially
 
@@ -1388,6 +1420,8 @@ const stopPlaying = () => {
   currentTime.value = 0
   duration.value = 0
   showButtonAnimation.value = false
+  currentVerseType.value = 'original' // Reset to original verse type
+  originalVerseNumber.value = null // Clear original verse number
 
   // Clear excerpt data
   currentExcerpt.value = null
@@ -1440,6 +1474,21 @@ const toggleNavigationMenu = () => {
   showNavigationMenu.value = !showNavigationMenu.value
 }
 
+// Function to determine verse type based on verse number
+const determineVerseType = (verseNumber: number): 'original' | 'previous' | 'next' => {
+  if (originalVerseNumber.value === null) {
+    return 'original'
+  }
+  
+  if (verseNumber === originalVerseNumber.value) {
+    return 'original'
+  } else if (verseNumber < originalVerseNumber.value) {
+    return 'previous'
+  } else {
+    return 'next'
+  }
+}
+
 const playPreviousVerse = async () => {
   if (!canPlayPreviousVerse.value || !currentExcerptVerse.value) return
 
@@ -1457,6 +1506,10 @@ const playPreviousVerse = async () => {
 
     showNavigationMenu.value = false
     await playVerse(previousAnomalyMock)
+    // Small delay to ensure playVerse is complete
+    await new Promise(resolve => setTimeout(resolve, 100))
+    // Determine verse type based on verse number
+    currentVerseType.value = determineVerseType(previousVerse.number)
   }
 }
 
@@ -1477,6 +1530,10 @@ const playNextVerse = async () => {
 
     showNavigationMenu.value = false
     await playVerse(nextAnomalyMock)
+    // Small delay to ensure playVerse is complete
+    await new Promise(resolve => setTimeout(resolve, 100))
+    // Determine verse type based on verse number
+    currentVerseType.value = determineVerseType(nextVerse.number)
   }
 }
 
@@ -1802,6 +1859,137 @@ onUnmounted(() => {
     progressUpdateInterval.value = null
   }
 })
+
+// Functions for adding anomalies to adjacent verses
+const addAnomalyToPreviousVerse = async () => {
+  if (!currentVerse.value || !currentExcerptVerse.value || !originalVerseNumber.value) {
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'Unable to add anomaly: missing verse information',
+      life: 5000
+    })
+    return
+  }
+
+  try {
+    const previousVerseNumber = currentExcerptVerse.value.number
+    
+    // Create anomaly data for previous verse
+    const anomalyData: CreateAnomalyRequest = {
+      voice: currentVerse.value.voice,
+      translation: currentVerse.value.translation,
+      book_number: currentVerse.value.book_number,
+      chapter_number: currentVerse.value.chapter_number,
+      verse_number: previousVerseNumber,
+      word: currentExcerptVerse.value.text.split(' ')[0] || 'Unknown', // First word of the verse
+      position_in_verse: 1,
+      position_from_end: currentExcerptVerse.value.text.split(' ').length,
+      duration: currentExcerptVerse.value.end - currentExcerptVerse.value.begin,
+      speed: 1.0, // Default speed
+      ratio: 1.0, // Default ratio
+      anomaly_type: 'manual',
+      status: 'detected'
+    }
+
+    const result = await createAnomaly(anomalyData)
+    
+    if (result) {
+      toast.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: `Anomaly added to previous verse (${currentVerse.value.book_number}:${currentVerse.value.chapter_number}:${previousVerseNumber})`,
+        life: 3000
+      })
+      
+      // Close the player
+      stopPlaying()
+    }
+  } catch (error: any) {
+    console.error('Error adding anomaly to previous verse:', error)
+    
+    let errorMessage = 'Failed to add anomaly to previous verse'
+    if (error.response?.data?.detail) {
+      errorMessage = error.response.data.detail
+    } else if (error.response?.data?.message) {
+      errorMessage = error.response.data.message
+    } else if (error.message) {
+      errorMessage = error.message
+    }
+
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: errorMessage,
+      life: 5000
+    })
+  }
+}
+
+const addAnomalyToNextVerse = async () => {
+  if (!currentVerse.value || !currentExcerptVerse.value || !originalVerseNumber.value) {
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'Unable to add anomaly: missing verse information',
+      life: 5000
+    })
+    return
+  }
+
+  try {
+    const nextVerseNumber = currentExcerptVerse.value.number
+    
+    // Create anomaly data for next verse
+    const anomalyData: CreateAnomalyRequest = {
+      voice: currentVerse.value.voice,
+      translation: currentVerse.value.translation,
+      book_number: currentVerse.value.book_number,
+      chapter_number: currentVerse.value.chapter_number,
+      verse_number: nextVerseNumber,
+      word: currentExcerptVerse.value.text.split(' ')[0] || 'Unknown', // First word of the verse
+      position_in_verse: 1,
+      position_from_end: currentExcerptVerse.value.text.split(' ').length,
+      duration: currentExcerptVerse.value.end - currentExcerptVerse.value.begin,
+      speed: 1.0, // Default speed
+      ratio: 1.0, // Default ratio
+      anomaly_type: 'manual',
+      status: 'detected'
+    }
+
+    const result = await createAnomaly(anomalyData)
+    
+    if (result) {
+      toast.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: `Anomaly added to next verse (${currentVerse.value.book_number}:${currentVerse.value.chapter_number}:${nextVerseNumber})`,
+        life: 3000
+      })
+      
+      // Close the player
+      stopPlaying()
+    }
+  } catch (error: any) {
+    console.error('Error adding anomaly to next verse:', error)
+    
+    let errorMessage = 'Failed to add anomaly to next verse'
+    if (error.response?.data?.detail) {
+      errorMessage = error.response.data.detail
+    } else if (error.response?.data?.message) {
+      errorMessage = error.response.data.message
+    } else if (error.message) {
+      errorMessage = error.message
+    }
+
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: errorMessage,
+      life: 5000
+    })
+  }
+}
 
 </script>
 

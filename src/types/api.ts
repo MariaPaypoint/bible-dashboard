@@ -41,7 +41,7 @@ export interface BookModel {
 export type AnomalyStatus = 'detected' | 'confirmed' | 'disproved' | 'corrected' | 'already_resolved'
 
 // Voice anomaly types
-export type AnomalyType = 'fast_first' | 'fast_last' | 'fast_middle' | 'fast_previous_verse'
+export type AnomalyType = 'fast_first' | 'fast_last' | 'fast_middle' | 'fast_previous_verse' | 'manual'
 
 // Voice anomaly model from API
 export interface VoiceAnomalyModel {
@@ -61,6 +61,23 @@ export interface VoiceAnomalyModel {
   verse_start_time: number | null // nullable - API may not always provide timing
   verse_end_time: number | null // nullable - API may not always provide timing
   verse_text: string
+  status: AnomalyStatus
+}
+
+// Create anomaly request body
+export interface CreateAnomalyRequest {
+  voice: number
+  translation: number
+  book_number: number
+  chapter_number: number
+  verse_number: number
+  word: string
+  position_in_verse: number
+  position_from_end: number
+  duration: number
+  speed: number
+  ratio: number
+  anomaly_type: AnomalyType
   status: AnomalyStatus
 }
 

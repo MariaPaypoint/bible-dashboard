@@ -12,7 +12,8 @@ import type {
   PaginatedResponse,
   AnomalyStatus,
   ExcerptResponse,
-  ExcerptParams 
+  ExcerptParams,
+  CreateAnomalyRequest
 } from '../types/api'
 
 class ApiService {
@@ -99,6 +100,12 @@ class ApiService {
     }
     
     const response = await this.api.patch<VoiceAnomalyModel>(`/voices/anomalies/${anomalyCode}/status`, payload)
+    return response.data
+  }
+
+  // Create new anomaly endpoint
+  async createAnomaly(anomalyData: CreateAnomalyRequest): Promise<VoiceAnomalyModel> {
+    const response = await this.api.post<VoiceAnomalyModel>('/voices/anomalies', anomalyData)
     return response.data
   }
 
