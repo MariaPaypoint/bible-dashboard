@@ -243,6 +243,32 @@
         <div class="text-sm text-surface-700 dark:text-surface-200 leading-relaxed" v-if="currentExcerptVerse?.text"
           v-html="highlightProblematicWord(currentExcerptVerse.text, currentVerse?.word || null, currentVerse?.position_in_verse || null, currentVerse?.position_from_end || null)">
         </div>
+        
+        <!-- Timing overlap warnings -->
+        <div v-if="timingAnalysis.hasBeginOverlap || timingAnalysis.hasEndOverlap" class="space-y-2">
+          <div v-if="timingAnalysis.hasBeginOverlap" 
+            class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+            <div class="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <span class="text-white text-xs font-bold">!</span>
+            </div>
+            <div class="text-sm text-red-800 dark:text-red-200 leading-relaxed">
+              <div class="font-semibold mb-1">Begin Time Overlap</div>
+              <div>{{ timingAnalysis.beginOverlapMessage }}</div>
+            </div>
+          </div>
+          
+          <div v-if="timingAnalysis.hasEndOverlap" 
+            class="flex items-start gap-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+            <div class="w-5 h-5 rounded-full bg-yellow-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <span class="text-white text-xs font-bold">!</span>
+            </div>
+            <div class="text-sm text-yellow-800 dark:text-yellow-200 leading-relaxed">
+              <div class="font-semibold mb-1">End Time Overlap</div>
+              <div>{{ timingAnalysis.endOverlapMessage }}</div>
+            </div>
+          </div>
+        </div>
+        
         <div class="flex flex-col gap-2">
           <div
             class="relative h-1.5 rounded-lg overflow-hidden cursor-pointer hover:h-2 transition-all duration-200 bg-surface-200 dark:bg-surface-700"
@@ -398,6 +424,39 @@
               <Button @click="previewEndTime" severity="info" size="small" class="px-2 py-1"
                 v-tooltip.top="'Preview end time'">
                 <PlayIcon class="w-3 h-3" />
+              </Button>
+            </div>
+          </div>
+
+          <!-- Timing overlap warnings for corrected values -->
+          <div v-if="correctedTimingAnalysis.hasBeginOverlap || correctedTimingAnalysis.hasEndOverlap" class="space-y-2 pt-2">
+            <div v-if="correctedTimingAnalysis.hasBeginOverlap" 
+              class="flex items-start gap-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+              <div class="w-4 h-4 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span class="text-white text-xs font-bold">!</span>
+              </div>
+              <div class="flex-1 text-xs text-red-800 dark:text-red-200 leading-relaxed">
+                <div class="font-semibold mb-1">Begin Time Overlap</div>
+                <div>{{ correctedTimingAnalysis.beginOverlapMessage }}</div>
+              </div>
+              <Button @click="correctBeginOverlap" severity="danger" size="small" class="px-2 py-1 text-xs h-6"
+                v-tooltip.top="'Auto-correct begin time overlap'">
+                Correct
+              </Button>
+            </div>
+            
+            <div v-if="correctedTimingAnalysis.hasEndOverlap" 
+              class="flex items-start gap-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+              <div class="w-4 h-4 rounded-full bg-yellow-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span class="text-white text-xs font-bold">!</span>
+              </div>
+              <div class="flex-1 text-xs text-yellow-800 dark:text-yellow-200 leading-relaxed">
+                <div class="font-semibold mb-1">End Time Overlap</div>
+                <div>{{ correctedTimingAnalysis.endOverlapMessage }}</div>
+              </div>
+              <Button @click="correctEndOverlap" severity="warn" size="small" class="px-2 py-1 text-xs h-6"
+                v-tooltip.top="'Auto-correct end time overlap'">
+                Correct
               </Button>
             </div>
           </div>
@@ -593,6 +652,95 @@ const correctionStartTime = ref(0)
 const correctionEndTime = ref(0)
 const originalStartTime = ref(0)
 const originalEndTime = ref(0)
+
+// Timing analysis computed properties
+const timingAnalysis = computed(() => {
+  if (!currentExcerptVerse.value || !adjacentVerses.value || adjacentVerses.value.length === 0) {
+    return {
+      hasBeginOverlap: false,
+      hasEndOverlap: false,
+      beginOverlapMessage: '',
+      endOverlapMessage: ''
+    }
+  }
+
+  const currentVerse = currentExcerptVerse.value
+  const currentVerseNumber = currentVerse.number
+  
+  // Find previous and next verses
+  const previousVerse = adjacentVerses.value.find(v => v.number === currentVerseNumber - 1)
+  const nextVerse = adjacentVerses.value.find(v => v.number === currentVerseNumber + 1)
+  
+  let hasBeginOverlap = false
+  let hasEndOverlap = false
+  let beginOverlapMessage = ''
+  let endOverlapMessage = ''
+  
+  // Check if current verse begin is less than previous verse end
+  if (previousVerse && currentVerse.begin < previousVerse.end) {
+    hasBeginOverlap = true
+    const overlapDuration = (previousVerse.end - currentVerse.begin).toFixed(2)
+    beginOverlapMessage = `Begin time (${currentVerse.begin.toFixed(2)}s) overlaps with previous verse end (${previousVerse.end.toFixed(2)}s) by ${overlapDuration}s`
+  }
+  
+  // Check if current verse end is greater than next verse begin
+  if (nextVerse && currentVerse.end > nextVerse.begin) {
+    hasEndOverlap = true
+    const overlapDuration = (currentVerse.end - nextVerse.begin).toFixed(2)
+    endOverlapMessage = `End time (${currentVerse.end.toFixed(2)}s) overlaps with next verse begin (${nextVerse.begin.toFixed(2)}s) by ${overlapDuration}s`
+  }
+  
+  return {
+    hasBeginOverlap,
+    hasEndOverlap,
+    beginOverlapMessage,
+    endOverlapMessage
+  }
+})
+
+// Timing analysis for corrected values (used in correction interface)
+const correctedTimingAnalysis = computed(() => {
+  if (!currentExcerptVerse.value || !adjacentVerses.value || adjacentVerses.value.length === 0 || !showCorrectionInterface.value) {
+    return {
+      hasBeginOverlap: false,
+      hasEndOverlap: false,
+      beginOverlapMessage: '',
+      endOverlapMessage: ''
+    }
+  }
+
+  const currentVerseNumber = currentExcerptVerse.value.number
+  
+  // Find previous and next verses
+  const previousVerse = adjacentVerses.value.find(v => v.number === currentVerseNumber - 1)
+  const nextVerse = adjacentVerses.value.find(v => v.number === currentVerseNumber + 1)
+  
+  let hasBeginOverlap = false
+  let hasEndOverlap = false
+  let beginOverlapMessage = ''
+  let endOverlapMessage = ''
+  
+  // Check if corrected begin is less than previous verse end
+  if (previousVerse && correctionStartTime.value < previousVerse.end) {
+    hasBeginOverlap = true
+    const overlapDuration = (previousVerse.end - correctionStartTime.value).toFixed(2)
+    beginOverlapMessage = `Corrected begin time (${correctionStartTime.value.toFixed(2)}s) would overlap with previous verse end (${previousVerse.end.toFixed(2)}s) by ${overlapDuration}s`
+  }
+  
+  // Check if corrected end is greater than next verse begin
+  if (nextVerse && correctionEndTime.value > nextVerse.begin) {
+    hasEndOverlap = true
+    const overlapDuration = (correctionEndTime.value - nextVerse.begin).toFixed(2)
+    endOverlapMessage = `Corrected end time (${correctionEndTime.value.toFixed(2)}s) would overlap with next verse begin (${nextVerse.begin.toFixed(2)}s) by ${overlapDuration}s`
+  }
+  
+  return {
+    hasBeginOverlap,
+    hasEndOverlap,
+    beginOverlapMessage,
+    endOverlapMessage
+  }
+})
 
 // Anomaly type filter options
 const anomalyTypeOptions = ref([
@@ -1739,6 +1887,41 @@ const adjustEndTime = (delta: number) => {
   const newValue = correctionEndTime.value + delta
   if (newValue > correctionStartTime.value) {
     correctionEndTime.value = newValue
+  }
+}
+
+// Functions for automatic overlap correction
+const correctBeginOverlap = () => {
+  if (!currentExcerptVerse.value || !adjacentVerses.value) return
+  
+  const currentVerseNumber = currentExcerptVerse.value.number
+  const previousVerse = adjacentVerses.value.find(v => v.number === currentVerseNumber - 1)
+  
+  if (previousVerse && correctionStartTime.value < previousVerse.end) {
+    // Set begin time to previous verse end + small gap (0.01s)
+    correctionStartTime.value = previousVerse.end + 0.01
+    
+    // Ensure end time is still after begin time
+    if (correctionEndTime.value <= correctionStartTime.value) {
+      correctionEndTime.value = correctionStartTime.value + 0.1
+    }
+  }
+}
+
+const correctEndOverlap = () => {
+  if (!currentExcerptVerse.value || !adjacentVerses.value) return
+  
+  const currentVerseNumber = currentExcerptVerse.value.number
+  const nextVerse = adjacentVerses.value.find(v => v.number === currentVerseNumber + 1)
+  
+  if (nextVerse && correctionEndTime.value > nextVerse.begin) {
+    // Set end time to next verse begin - small gap (0.01s)
+    correctionEndTime.value = nextVerse.begin - 0.01
+    
+    // Ensure begin time is still before end time
+    if (correctionStartTime.value >= correctionEndTime.value) {
+      correctionStartTime.value = correctionEndTime.value - 0.1
+    }
   }
 }
 
