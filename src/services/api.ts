@@ -48,6 +48,17 @@ class ApiService {
       },
       (error) => {
         console.error('API Response Error:', error.response?.data || error.message)
+        if (error.response?.status === 422) {
+          console.error('422 Error Details:', {
+            status: error.response.status,
+            data: error.response.data,
+            config: {
+              method: error.config?.method,
+              url: error.config?.url,
+              data: error.config?.data
+            }
+          })
+        }
         return Promise.reject(error)
       }
     )
@@ -93,7 +104,7 @@ class ApiService {
   ): Promise<VoiceAnomalyModel> {
     const payload: { status: AnomalyStatus; begin?: number; end?: number } = { status }
     
-    // Add begin and end parameters only for corrected status
+    // Add begin and end parameters for corrected status
     if (status === 'corrected' && begin !== undefined && end !== undefined) {
       payload.begin = begin
       payload.end = end

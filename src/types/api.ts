@@ -58,8 +58,6 @@ export interface VoiceAnomalyModel {
   duration: number | null // nullable now
   speed: number | null // nullable now
   ratio: number
-  verse_start_time: number | null // nullable - API may not always provide timing
-  verse_end_time: number | null // nullable - API may not always provide timing
   verse_text: string
   status: AnomalyStatus
 }

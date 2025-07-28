@@ -68,7 +68,7 @@
             optionValue="value" placeholder="All statuses" class="w-full" :disabled="!selectedVoice"
             @change="onStatusChange" showClear />
         </div>
-        <div class="flex gap-2">
+        <div class="flex gap-3">
           <Button @click="openCreateAnomalyDialog" :disabled="!selectedVoice" severity="help" title="Add New Anomaly">
             <PlusIcon class="w-5 h-5" />
           </Button>
@@ -162,7 +162,7 @@
               <PauseIcon class="w-5 h-5 -m-1.5" />
             </Button>
             <Button v-else severity="info" class="w-8 h-8" v-tooltip.top="'Play Verse'"
-              @click="playVerse(slotProps.data)" :disabled="isPlaying && currentPlayingId !== slotProps.data.code">
+              @click="playVerse(slotProps.data)">
               <PlayIcon class="w-5 h-5 -m-1.5" />
             </Button>
           </div>
@@ -406,10 +406,13 @@
           <div class="flex gap-2 pt-2">
             <Button @click="applyCorrectionChanges" severity="success" size="small" class="flex-1"
               :disabled="!hasTimingChanges">
-              Apply
+              Apply Corrections
             </Button>
             <Button @click="resetCorrectionChanges" severity="secondary" size="small" class="flex-1">
               Reset
+            </Button>
+            <Button @click="showCorrectionInterface = false" severity="secondary" size="small" class="flex-1">
+              Close
             </Button>
           </div>
         </div>
@@ -477,7 +480,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
@@ -1203,6 +1206,9 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
   let errorHandled = false // Flag to prevent duplicate error messages
 
   try {
+    // Reset correction interface when switching verses
+    showCorrectionInterface.value = false
+    
     // Ensure translations are loaded
     if (voices.value.length === 0) {
       await fetchTranslations()
@@ -1262,11 +1268,28 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
 
     // Set up audio event listeners
     audio.addEventListener('loadedmetadata', () => {
+      // Check if currentExcerptVerse has valid timing data
+      if (!currentExcerptVerse.value || 
+          typeof currentExcerptVerse.value.begin !== 'number' || 
+          typeof currentExcerptVerse.value.end !== 'number' ||
+          isNaN(currentExcerptVerse.value.begin) || 
+          isNaN(currentExcerptVerse.value.end)) {
+        console.error('Invalid verse timing data:', currentExcerptVerse.value)
+        toast.add({
+          severity: 'error',
+          summary: 'Audio Error',
+          detail: 'Invalid verse timing data. Cannot play specific verse segment.',
+          life: 5000
+        })
+        stopPlaying()
+        return
+      }
+
       // Set current time to verse start and duration to verse length
-      // Use timing data from excerpt response
-      audio.currentTime = excerptResult.targetVerse.begin
+      // Use timing data from currentExcerptVerse
+      audio.currentTime = currentExcerptVerse.value.begin
       currentTime.value = 0 // Reset display time to 0 for verse duration
-      duration.value = excerptResult.targetVerse.end - excerptResult.targetVerse.begin
+      duration.value = currentExcerptVerse.value.end - currentExcerptVerse.value.begin
 
       // NOW show the player since audio loaded successfully
       showPlayer.value = true
@@ -1274,12 +1297,21 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
     })
 
     audio.addEventListener('timeupdate', () => {
-      // Playing specific verse segment using excerpt timing data
-      const verseCurrentTime = audio.currentTime - excerptResult.targetVerse.begin
+      // Check if currentExcerptVerse has valid timing data
+      if (!currentExcerptVerse.value || 
+          typeof currentExcerptVerse.value.begin !== 'number' || 
+          typeof currentExcerptVerse.value.end !== 'number' ||
+          isNaN(currentExcerptVerse.value.begin) || 
+          isNaN(currentExcerptVerse.value.end)) {
+        return // Skip this update if data is invalid
+      }
+
+      // Playing specific verse segment using current excerpt timing data
+      const verseCurrentTime = audio.currentTime - currentExcerptVerse.value.begin
       currentTime.value = Math.max(0, verseCurrentTime)
 
       // Stop when reaching verse end
-      if (audio.currentTime >= excerptResult.targetVerse.end) {
+      if (audio.currentTime >= currentExcerptVerse.value.end) {
         onAudioComplete()
       }
     })
@@ -1306,17 +1338,37 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
 
           // Set up same event listeners for new audio
           newAudio.addEventListener('loadedmetadata', () => {
-            newAudio.currentTime = excerptResult.targetVerse.begin
+            // Check if currentExcerptVerse has valid timing data
+            if (!currentExcerptVerse.value || 
+                typeof currentExcerptVerse.value.begin !== 'number' || 
+                typeof currentExcerptVerse.value.end !== 'number' ||
+                isNaN(currentExcerptVerse.value.begin) || 
+                isNaN(currentExcerptVerse.value.end)) {
+              console.error('Invalid verse timing data for alternative audio:', currentExcerptVerse.value)
+              stopPlaying()
+              return
+            }
+
+            newAudio.currentTime = currentExcerptVerse.value.begin
             currentTime.value = 0
-            duration.value = excerptResult.targetVerse.end - excerptResult.targetVerse.begin
+            duration.value = currentExcerptVerse.value.end - currentExcerptVerse.value.begin
             showPlayer.value = true
             isPlaying.value = true
           })
 
           newAudio.addEventListener('timeupdate', () => {
-            const verseCurrentTime = newAudio.currentTime - excerptResult.targetVerse.begin
+            // Check if currentExcerptVerse has valid timing data
+            if (!currentExcerptVerse.value || 
+                typeof currentExcerptVerse.value.begin !== 'number' || 
+                typeof currentExcerptVerse.value.end !== 'number' ||
+                isNaN(currentExcerptVerse.value.begin) || 
+                isNaN(currentExcerptVerse.value.end)) {
+              return // Skip this update if data is invalid
+            }
+
+            const verseCurrentTime = newAudio.currentTime - currentExcerptVerse.value.begin
             currentTime.value = Math.max(0, verseCurrentTime)
-            if (newAudio.currentTime >= excerptResult.targetVerse.end) {
+            if (newAudio.currentTime >= currentExcerptVerse.value.end) {
               onAudioComplete()
             }
           })
@@ -1395,6 +1447,11 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
       })
       stopPlaying()
       return
+    }
+
+    // Auto-open correction interface for confirmed and corrected anomalies
+    if ((anomaly.status === 'confirmed' || anomaly.status === 'corrected') && currentExcerptVerse.value) {
+      initializeCorrectionInterface()
     }
 
     // Progress is updated by timeupdate event, no need for interval
@@ -1659,11 +1716,6 @@ const disproveAnomaly = async () => {
 
 // Verse correction functions
 const initializeCorrectionInterface = () => {
-  console.log('initializeCorrectionInterface called')
-  console.log('currentExcerptVerse.value:', !!currentExcerptVerse.value)
-  console.log('showCorrectionInterface.value before:', showCorrectionInterface.value)
-  console.log('shouldShowCorrectionInterface computed:', shouldShowCorrectionInterface.value)
-  
   if (currentExcerptVerse.value) {
     // Store original values
     originalStartTime.value = currentExcerptVerse.value.begin
@@ -1671,11 +1723,8 @@ const initializeCorrectionInterface = () => {
     // Set current values
     correctionStartTime.value = currentExcerptVerse.value.begin
     correctionEndTime.value = currentExcerptVerse.value.end
+    
     showCorrectionInterface.value = true
-    console.log('showCorrectionInterface.value after:', showCorrectionInterface.value)
-    console.log('shouldShowCorrectionInterface computed after:', shouldShowCorrectionInterface.value)
-  } else {
-    console.log('currentExcerptVerse.value is null, cannot initialize correction interface')
   }
 }
 
@@ -1702,11 +1751,12 @@ const applyCorrectionChanges = async () => {
   try {
     console.log('Applying corrections:', {
       anomalyCode: currentVerse.value.code,
+      status: 'corrected',
       startTime: correctionStartTime.value,
       endTime: correctionEndTime.value
     })
 
-    // Update anomaly status to 'corrected' with timing corrections
+    // Update anomaly status to 'corrected' with current timing values
     const result = await updateAnomalyStatus(
       currentVerse.value.code,
       'corrected',
@@ -1913,6 +1963,17 @@ const handleClickOutside = (event: MouseEvent) => {
     }
   }
 }
+
+// Watch for changes in currentExcerptVerse and update correction values if interface is open
+watch(currentExcerptVerse, (newVerse) => {
+  if (newVerse && showCorrectionInterface.value) {
+    // Update correction values with new verse timing
+    originalStartTime.value = newVerse.begin
+    originalEndTime.value = newVerse.end
+    correctionStartTime.value = newVerse.begin
+    correctionEndTime.value = newVerse.end
+  }
+}, { deep: true })
 
 // Initialize data on mount
 onMounted(async () => {
@@ -2121,7 +2182,7 @@ const resetCreateAnomalyForm = () => {
   
   // Set voice and translation again if voice is selected
   const selectedVoiceData = availableVoices.value.find(v => v.code === selectedVoice.value)
-  if (selectedVoiceData) {
+  if (selectedVoiceData && selectedVoice.value !== null) {
     newAnomaly.value.voice = selectedVoice.value
     newAnomaly.value.translation = selectedVoiceData.translation.code
   }
