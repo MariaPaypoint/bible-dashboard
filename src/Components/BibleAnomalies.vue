@@ -110,10 +110,12 @@
         <template #body="slotProps">
           <div v-if="slotProps.data.anomalyTypes" class="flex flex-col gap-1">
             <Tag v-for="type in slotProps.data.anomalyTypes" :key="type"
-              :value="getAnomalyTypeLabel(type)" :severity="getAnomalySeverity(type)" class="text-xs" />
+              :value="getAnomalyTypeLabel(type)" :severity="getAnomalySeverity(type)" 
+              :class="`text-xs ${getAnomalyTypeClass(type)}`" />
           </div>
           <Tag v-else :value="getAnomalyTypeLabel(slotProps.data.anomaly_type)"
-            :severity="getAnomalySeverity(slotProps.data.anomaly_type)" />
+            :severity="getAnomalySeverity(slotProps.data.anomaly_type)"
+            :class="getAnomalyTypeClass(slotProps.data.anomaly_type)" />
         </template>
       </Column>
       <Column header="Info" style="width: 8%">
@@ -744,10 +746,16 @@ const correctedTimingAnalysis = computed(() => {
 
 // Anomaly type filter options
 const anomalyTypeOptions = ref([
-  { label: 'Fast first word', value: 'fast_first' },
-  { label: 'Fast last word', value: 'fast_last' },
-  { label: 'Fast middle word', value: 'fast_middle' },
-  { label: 'Fast previous verse', value: 'fast_previous_verse' },
+  { label: 'Fast First', value: 'fast_first' },
+  { label: 'Fast Last', value: 'fast_last' },
+  { label: 'Fast Middle', value: 'fast_middle' },
+  { label: 'Fast Next Verse', value: 'fast_next_verse' },
+  { label: 'Fast Previous Verse', value: 'fast_previous_verse' },
+  { label: 'Slow First', value: 'slow_first' },
+  { label: 'Slow Last', value: 'slow_last' },
+  { label: 'Slow Middle', value: 'slow_middle' },
+  { label: 'Slow Next Verse', value: 'slow_next_verse' },
+  { label: 'Slow Previous Verse', value: 'slow_previous_verse' },
   { label: 'Manual', value: 'manual' }
 ])
 
@@ -914,13 +922,25 @@ const formatReference = (anomaly: VoiceAnomalyModel): string => {
 const getAnomalyTypeLabel = (type: AnomalyType): string => {
   switch (type) {
     case 'fast_first':
-      return 'Fast first word'
+      return 'Fast First'
     case 'fast_last':
-      return 'Fast last word'
+      return 'Fast Last'
     case 'fast_middle':
-      return 'Fast middle word'
+      return 'Fast Middle'
+    case 'fast_next_verse':
+      return 'Fast Next Verse'
     case 'fast_previous_verse':
-      return 'Fast previous verse'
+      return 'Fast Previous Verse'
+    case 'slow_first':
+      return 'Slow First'
+    case 'slow_last':
+      return 'Slow Last'
+    case 'slow_middle':
+      return 'Slow Middle'
+    case 'slow_next_verse':
+      return 'Slow Next Verse'
+    case 'slow_previous_verse':
+      return 'Slow Previous Verse'
     case 'manual':
       return 'Manual'
     default:
@@ -930,18 +950,65 @@ const getAnomalyTypeLabel = (type: AnomalyType): string => {
 
 const getAnomalySeverity = (type: AnomalyType): 'success' | 'info' | 'warn' | 'danger' | 'secondary' => {
   switch (type) {
+    // Fast anomalies - Purple shades (using info/secondary for purple-like colors)
     case 'fast_first':
-      return 'danger' // Red for fast first word (high priority)
+      return 'danger' // Deep purple (darkest)
     case 'fast_last':
-      return 'warn' // Orange for fast last word (medium priority)
+      return 'warn' // Medium purple
     case 'fast_middle':
-      return 'info' // Blue for fast middle word (low priority)
+      return 'info' // Light purple
+    case 'fast_next_verse':
+      return 'secondary' // Lightest purple
     case 'fast_previous_verse':
-      return 'secondary' // Gray for fast previous verse (neutral)
+      return 'secondary' // Lightest purple
+    
+    // Slow anomalies - Brown shades (using warn/secondary for brown-like colors)
+    case 'slow_first':
+      return 'warn' // Dark brown
+    case 'slow_last':
+      return 'warn' // Medium brown
+    case 'slow_middle':
+      return 'secondary' // Light brown
+    case 'slow_next_verse':
+      return 'secondary' // Lightest brown
+    case 'slow_previous_verse':
+      return 'secondary' // Lightest brown
+    
+    // Manual anomalies - Teal/Cyan
     case 'manual':
-      return 'warn' // Orange for manual anomalies
+      return 'info' // Teal/Cyan color
+    
     default:
       return 'secondary'
+  }
+}
+
+const getAnomalyTypeClass = (type: AnomalyType): string => {
+  switch (type) {
+    case 'fast_first':
+      return 'fast-first'
+    case 'fast_last':
+      return 'fast-last'
+    case 'fast_middle':
+      return 'fast-middle'
+    case 'fast_next_verse':
+      return 'fast-next'
+    case 'fast_previous_verse':
+      return 'fast-previous'
+    case 'slow_first':
+      return 'slow-first'
+    case 'slow_last':
+      return 'slow-last'
+    case 'slow_middle':
+      return 'slow-middle'
+    case 'slow_next_verse':
+      return 'slow-next'
+    case 'slow_previous_verse':
+      return 'slow-previous'
+    case 'manual':
+      return 'manual'
+    default:
+      return ''
   }
 }
 
@@ -2501,5 +2568,82 @@ const createNewAnomaly = async () => {
   background-color: rgba(25, 118, 210, 0.2) !important;
   border-bottom-color: rgba(66, 165, 245, 0.3) !important;
   /* Светлее нижняя граница для темной темы */
+}
+
+/* Custom anomaly type colors */
+/* Fast anomalies - Purple shades */
+.p-tag.p-tag-danger.fast-first {
+  background-color: #6B46C1 !important; /* Deep purple */
+  color: white !important;
+}
+
+.p-tag.p-tag-warn.fast-last {
+  background-color: #8B5CF6 !important; /* Medium purple */
+  color: white !important;
+}
+
+.p-tag.p-tag-info.fast-middle {
+  background-color: #A78BFA !important; /* Light purple */
+  color: white !important;
+}
+
+.p-tag.p-tag-secondary.fast-next,
+.p-tag.p-tag-secondary.fast-previous {
+  background-color: #C4B5FD !important; /* Lightest purple */
+  color: #4C1D95 !important;
+}
+
+/* Slow anomalies - Brown shades */
+.p-tag.p-tag-warn.slow-first,
+.p-tag.p-tag-warn.slow-last {
+  background-color: #92400E !important; /* Dark brown */
+  color: white !important;
+}
+
+.p-tag.p-tag-secondary.slow-middle,
+.p-tag.p-tag-secondary.slow-next,
+.p-tag.p-tag-secondary.slow-previous {
+  background-color: #D97706 !important; /* Light brown */
+  color: white !important;
+}
+
+/* Manual anomalies - Teal/Cyan */
+.p-tag.p-tag-info.manual {
+  background-color: #0891B2 !important; /* Teal */
+  color: white !important;
+}
+
+/* Dark theme adjustments */
+.dark .p-tag.p-tag-danger.fast-first {
+  background-color: #7C3AED !important;
+}
+
+.dark .p-tag.p-tag-warn.fast-last {
+  background-color: #9333EA !important;
+}
+
+.dark .p-tag.p-tag-info.fast-middle {
+  background-color: #A855F7 !important;
+}
+
+.dark .p-tag.p-tag-secondary.fast-next,
+.dark .p-tag.p-tag-secondary.fast-previous {
+  background-color: #DDD6FE !important;
+  color: #5B21B6 !important;
+}
+
+.dark .p-tag.p-tag-warn.slow-first,
+.dark .p-tag.p-tag-warn.slow-last {
+  background-color: #A16207 !important;
+}
+
+.dark .p-tag.p-tag-secondary.slow-middle,
+.dark .p-tag.p-tag-secondary.slow-next,
+.dark .p-tag.p-tag-secondary.slow-previous {
+  background-color: #EA580C !important;
+}
+
+.dark .p-tag.p-tag-info.manual {
+  background-color: #0E7490 !important;
 }
 </style>
