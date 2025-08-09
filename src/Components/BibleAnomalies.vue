@@ -556,7 +556,7 @@ import InputNumber from 'primevue/inputnumber'
 import type { DataTableSortEvent } from 'primevue/datatable'
 import type { VoiceAnomalyModel, BookModel, AnomalyStatus, AnomalyType, ExcerptResponse, ExcerptVerseModel, CreateAnomalyRequest } from '../types/api'
 import { useVoiceAnomalies, useTranslations, useBooks, type VoiceWithTranslation } from '../composables/useApi'
-import { apiService } from '../services/api'
+import { alignmentApiService } from '../services/api'
 import { useToast } from 'primevue/usetoast'
 // Lucide imports
 import {
@@ -1074,7 +1074,7 @@ const getStatusSeverity = (status: AnomalyStatus): 'success' | 'info' | 'warn' |
 const handleStatusChange = async (anomaly: VoiceAnomalyModel, newStatus: AnomalyStatus, showToast: boolean = true) => {
   try {
     // Direct API call without global loading state
-    const result = await apiService.updateAnomalyStatus(anomaly.code, newStatus)
+    const result = await alignmentApiService.updateAnomalyStatus(anomaly.code, newStatus)
     if (result) {
       // Update the anomaly in the local list
       const index = anomalies.value.findIndex(a => a.code === anomaly.code)
@@ -1378,7 +1378,7 @@ const getExcerptData = async (anomaly: VoiceAnomalyModel): Promise<{ excerpt: Ex
     console.log('Requesting excerpt:', excerptString)
 
     // Request excerpt data
-    const excerptData = await apiService.getExcerptWithAlignment({
+    const excerptData = await alignmentApiService.getExcerptWithAlignment({
       translation: selectedVoiceData.translation.code,
       excerpt: excerptString,
       voice: anomaly.voice

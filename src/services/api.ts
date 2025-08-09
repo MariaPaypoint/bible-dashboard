@@ -16,10 +16,11 @@ import type {
   CreateAnomalyRequest
 } from '../types/api'
 
-class ApiService {
+// Exported to allow creating multiple API instances (e.g., general and Bible alignment)
+export class ApiService {
   private api: AxiosInstance
 
-  constructor(baseURL: string = '/api') {
+  constructor(baseURL: string = '/alignment-api') {
     this.api = axios.create({
       baseURL,
       timeout: 10000,
@@ -133,6 +134,7 @@ class ApiService {
   }
 }
 
-// Export singleton instance
-export const apiService = new ApiService()
-export default apiService
+// Export singleton instances
+export const alignmentApiService = new ApiService('/alignment-api')
+export const bibleApiService = new ApiService('/bible-api')
+export default alignmentApiService

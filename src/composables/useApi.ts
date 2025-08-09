@@ -1,5 +1,5 @@
 import { ref, reactive, computed } from 'vue'
-import { apiService } from '../services/api'
+import { alignmentApiService } from '../services/api'
 import type { TranslationModel, LanguageModel, BookModel, TranslationListParams, VoiceModel, VoiceAnomalyModel, VoiceAnomalyListParams, AnomalyStatus, AnomalyType, CreateAnomalyRequest } from '../types/api'
 
 // Extended voice model with translation info
@@ -69,7 +69,7 @@ export function useTranslations() {
   })
   
   const fetchTranslations = async (params?: TranslationListParams) => {
-    const result = await handleApiCall(() => apiService.getTranslations(params))
+    const result = await handleApiCall(() => alignmentApiService.getTranslations(params))
     if (result) {
       translations.value = result
     }
@@ -100,7 +100,7 @@ export function useLanguages() {
   const languages = ref<LanguageModel[]>([])
 
   const fetchLanguages = async () => {
-    const result = await handleApiCall(() => apiService.getLanguages())
+    const result = await handleApiCall(() => alignmentApiService.getLanguages())
     if (result) {
       languages.value = result
     }
@@ -128,7 +128,7 @@ export function useVoiceAnomalies() {
 
   const fetchAnomalies = async (voiceCode: number, params?: VoiceAnomalyListParams) => {
     selectedVoiceCode.value = voiceCode
-    const result = await handleApiCall(() => apiService.getVoiceAnomalies(voiceCode, params))
+    const result = await handleApiCall(() => alignmentApiService.getVoiceAnomalies(voiceCode, params))
     if (result) {
       anomalies.value = result.items
       totalCount.value = result.total_count
@@ -235,7 +235,7 @@ export function useVoiceAnomalies() {
     begin?: number, 
     end?: number
   ) => {
-    const result = await handleApiCall(() => apiService.updateAnomalyStatus(anomalyCode, status, begin, end))
+    const result = await handleApiCall(() => alignmentApiService.updateAnomalyStatus(anomalyCode, status, begin, end))
     if (result) {
       // Update the anomaly in the local list
       const index = anomalies.value.findIndex(a => a.code === anomalyCode)
@@ -248,7 +248,7 @@ export function useVoiceAnomalies() {
   }
 
   const createAnomaly = async (anomalyData: CreateAnomalyRequest) => {
-    const result = await handleApiCall(() => apiService.createAnomaly(anomalyData))
+    const result = await handleApiCall(() => alignmentApiService.createAnomaly(anomalyData))
     if (result) {
       // Add the new anomaly to the local list
       anomalies.value.unshift(result)
@@ -291,7 +291,7 @@ export function useBooks() {
   const fetchBooks = async (translationCode: number, voiceCode?: number) => {
     selectedTranslationCode.value = translationCode
     selectedVoiceCode.value = voiceCode || null
-    const result = await handleApiCall(() => apiService.getTranslationBooks(translationCode, voiceCode))
+    const result = await handleApiCall(() => alignmentApiService.getTranslationBooks(translationCode, voiceCode))
     if (result) {
       books.value = result
     }

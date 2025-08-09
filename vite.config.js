@@ -23,12 +23,21 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
-    proxy: {
-      '/api': {
-        target: 'http://replica-vm-maria:8000',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
+    proxy: (() => {
+      const alignmentApiTarget = process.env.VITE_ALIGNMENT_API_TARGET || 'http://replica-vm-maria:8000'
+      const bibleApiTarget = process.env.VITE_BIBLE_API_TARGET || 'http://berlin-vm-maria:8000'
+      return {
+        '/alignment-api': {
+          target: alignmentApiTarget,
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/alignment-api/, '')
+        },
+        '/bible-api': {
+          target: bibleApiTarget,
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/bible-api/, '')
+        }
       }
-    }
+    })()
   }
 })
