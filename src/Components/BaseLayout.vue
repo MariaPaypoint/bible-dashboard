@@ -6,12 +6,46 @@
                 <div class="flex items-center justify-start px-4 py-4">
                     <div class="flex items-center gap-4">
                         <img src="@/assets/logo.png" alt="Logo" width="32" height="32" class="flex-shrink-0" />
-                        <span class="text-lg font-semibold leading-tight text-surface-900 dark:text-surface-0">Bible
-                            Forced Alignments</span>
+                        <span class="text-lg font-semibold leading-tight text-surface-900 dark:text-surface-0">Forced Alignments</span>
                     </div>
                 </div>
                 <div class="flex-1 overflow-y-auto p-2 flex flex-col gap-4">
                     <ul class="list-none p-0 m-0 flex flex-col gap-1">
+
+                        <!-- Alignments Group -->
+                        <li>
+                            <div v-styleclass="{
+                                selector: '@next',
+                                enterFromClass: 'hidden',
+                                enterActiveClass: 'animate-slidedown',
+                                leaveToClass: 'hidden',
+                                leaveActiveClass: 'animate-slideup'
+                            }"
+                                class="flex items-center cursor-pointer p-3 gap-4 rounded-md text-surface-900 dark:text-surface-0 hover:bg-surface-100 dark:hover:bg-surface-800 border border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700 transition-colors duration-150">
+                                <span class="font-semibold text-base leading-tight">Alignments</span>
+                                <ChevronDown class="w-5 h-5 text-surface-500 dark:text-surface-400 ml-auto" />
+                            </div>
+                            <ul class="list-none p-0 m-0 overflow-hidden flex flex-col gap-1">
+                                <li>
+                                    <a @click="setActiveComponent('alignment_tasks')" :class="[
+                                        'flex items-center cursor-pointer p-3 gap-2 rounded-lg transition-colors duration-150 border group',
+                                        activeComponent === 'alignment_tasks'
+                                            ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 border-primary-200 dark:border-primary-800'
+                                            : 'text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 hover:text-surface-900 dark:hover:text-surface-50 border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700'
+                                    ]">
+                                        <Clock :class="[
+                                            'w-5 h-5',
+                                            activeComponent === 'alignment_tasks'
+                                                ? 'text-primary-600 dark:text-primary-400'
+                                                : 'text-surface-500 dark:text-surface-400 group-hover:text-surface-900 dark:group-hover:text-surface-50'
+                                        ]" />
+                                        <span class="font-medium text-base leading-tight">Tasks</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+
+                        <!-- Bibles Group -->
                         <li>
                             <div v-styleclass="{
                                 selector: '@next',
@@ -61,6 +95,7 @@
                                 </li>
                             </ul>
                         </li>
+
                     </ul>
 
                     <!-- Theme Toggle - Mobile Only -->
@@ -80,182 +115,6 @@
                             </a>
                         </li>
                     </ul>
-
-                    <!-- <div class="h-px bg-surface-200 dark:bg-surface-700" />
-                    <ul class="list-none p-0 m-0 flex flex-col gap-1">
-                        <li>
-                            <div v-styleclass="{
-                                selector: '@next',
-                                enterFromClass: 'hidden',
-                                enterActiveClass: 'animate-slidedown',
-                                leaveToClass: 'hidden',
-                                leaveActiveClass: 'animate-slideup'
-                            }"
-                                class="flex items-center cursor-pointer p-3 gap-4 rounded-md text-surface-900 dark:text-surface-0 hover:bg-surface-100 dark:hover:bg-surface-800 border border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700 transition-colors duration-150">
-                                <span class="font-semibold text-base leading-tight">My Projects</span>
-                                <ChevronDown
-                                    class="w-5 h-5 text-surface-500 dark:text-surface-400 ml-auto" />
-                            </div>
-                            <ul class="list-none p-0 m-0 overflow-hidden flex flex-col gap-1">
-                                <li>
-                                    <a
-                                        class="flex items-center cursor-pointer p-3 gap-2 rounded-lg text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors duration-150 hover:text-surface-900 dark:hover:text-surface-50 border border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700 group">
-                                        <Calendar
-                                            class="w-5 h-5 text-surface-500 dark:text-surface-400 group-hover:text-surface-900 dark:group-hover:text-surface-50" />
-                                        <span class="font-medium text-base leading-tight">Events</span>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a
-                                        class="flex items-center cursor-pointer p-3 gap-2 rounded-lg text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors duration-150 hover:text-surface-900 dark:hover:text-surface-50 border border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700 group">
-                                        <MessageSquare
-                                            class="w-5 h-5 text-surface-500 dark:text-surface-400 group-hover:text-surface-900 dark:group-hover:text-surface-50" />
-                                        <span class="font-medium text-base leading-tight">Chat</span>
-                                        <Badge value="5" severity="secondary"
-                                            class="ml-auto !h-5 !min-w-5 !text-xs !font-bold !leading-tight !rounded-xl" />
-                                    </a>
-                                </li>
-                                <li>
-                                    <a v-styleclass="{
-                                        selector: '@next',
-                                        enterFromClass: 'hidden',
-                                        enterActiveClass: 'animate-slidedown',
-                                        leaveToClass: 'hidden',
-                                        leaveActiveClass: 'animate-slideup'
-                                    }"
-                                        class="flex items-center cursor-pointer p-3 gap-2 rounded-lg text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors duration-150 hover:text-surface-900 dark:hover:text-surface-50 border border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700 group">
-                                        <Shield
-                                            class="w-5 h-5 text-surface-500 dark:text-surface-400 group-hover:text-surface-900 dark:group-hover:text-surface-50" />
-                                        <span class="font-medium text-base leading-tight">Security</span>
-                                        <ChevronDown
-                                            class="w-5 h-5 text-surface-500 dark:text-surface-400 ml-auto" />
-                                    </a>
-                                    <ul
-                                        class="list-none py-0 pl-8 pr-0 m-0 hidden overflow-y-hidden transition-all duration-[400ms] ease-in-out flex flex-col gap-1 mt-1">
-                                        <li>
-                                            <a v-styleclass="{
-                                                selector: '@next',
-                                                enterFromClass: 'hidden',
-                                                enterActiveClass: 'animate-slidedown',
-                                                leaveToClass: 'hidden',
-                                                leaveActiveClass: 'animate-slideup'
-                                            }"
-                                                class="flex items-center cursor-pointer p-3 gap-2 rounded-lg text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors duration-150 hover:text-surface-900 dark:hover:text-surface-50 border border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700 group">
-                                                <Lock
-                                                    class="w-5 h-5 text-surface-500 dark:text-surface-400 group-hover:text-surface-900 dark:group-hover:text-surface-50" />
-                                                <span class="font-medium text-base leading-tight">Permissions</span>
-                                                <ChevronDown
-                                                    class="w-5 h-5 ml-auto text-surface-500 dark:text-surface-400" />
-                                            </a>
-                                            <ul
-                                                class="list-none py-0 pl-8 pr-0 m-0 hidden overflow-y-hidden transition-all duration-[400ms] ease-in-out flex flex-col gap-1 mt-1">
-                                                <li>
-                                                    <a
-                                                        class="flex items-center cursor-pointer p-3 gap-2 rounded-lg text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors duration-150 hover:text-surface-900 dark:hover:text-surface-50 border border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700 group">
-                                                        <Users
-                                                            class="w-5 h-5 text-surface-500 dark:text-surface-400 group-hover:text-surface-900 dark:group-hover:text-surface-50" />
-                                                        <span class="font-medium text-base leading-tight">User
-                                                            Access</span>
-                                                    </a>
-                                                </li>
-                                                <li>
-                                                    <a
-                                                        class="flex items-center cursor-pointer p-3 gap-2 rounded-lg text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors duration-150 hover:text-surface-900 dark:hover:text-surface-50 border border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700 group">
-                                                        <Clock
-                                                            class="w-5 h-5 text-surface-500 dark:text-surface-400 group-hover:text-surface-900 dark:group-hover:text-surface-50" />
-                                                        <span class="font-medium text-base leading-tight">Audit
-                                                            Log</span>
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </li>
-                                        <li>
-                                            <a
-                                                class="flex items-center cursor-pointer p-3 gap-2 rounded-lg text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors duration-150 hover:text-surface-900 dark:hover:text-surface-50 border border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700 group">
-                                                <Bell
-                                                    class="w-5 h-5 text-surface-500 dark:text-surface-400 group-hover:text-surface-900 dark:group-hover:text-surface-50" />
-                                                <span class="font-medium text-base leading-tight">Alerts</span>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </li>
-                            -->
-                    <!-- 
-                    <div class="h-px bg-surface-200 dark:bg-surface-700" />
-
-                    <ul class="list-none p-0 m-0 flex flex-col gap-1">
-                        <li>
-                            <div v-styleclass="{
-                                selector: '@next',
-                                enterFromClass: 'hidden',
-                                enterActiveClass: 'animate-slidedown',
-                                leaveToClass: 'hidden',
-                                leaveActiveClass: 'animate-slideup'
-                            }"
-                                class="flex items-center cursor-pointer p-3 gap-4 rounded-md text-surface-900 dark:text-surface-0 hover:bg-surface-100 dark:hover:bg-surface-800 border border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700 transition-colors duration-150">
-                                <span class="font-semibold text-base leading-tight">My Projects</span>
-                                <ChevronDown class="w-5 h-5 text-surface-500 dark:text-surface-400 ml-auto" />
-                            </div>
-                            <ul class="list-none p-0 m-0 overflow-hidden flex flex-col gap-1">
-                                <li>
-                                    <a
-                                        class="flex items-center cursor-pointer p-3 gap-2 rounded-lg text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors duration-150 hover:text-surface-900 dark:hover:text-surface-50 border border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700 group">
-                                        <span
-                                            class="flex items-center justify-center p-1 bg-blue-100 dark:bg-blue-900 border border-blue-200 dark:border-blue-800 rounded-md">
-                                            <Globe
-                                                class="w-3 h-3 text-blue-600 dark:text-blue-300" />
-                                        </span>
-                                        <span class="font-medium text-base leading-tight">E-Commerce Platform</span>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a
-                                        class="flex items-center cursor-pointer p-3 gap-2 rounded-lg text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors duration-150 hover:text-surface-900 dark:hover:text-surface-50 border border-transparent hover:border hover:border-surface-100 dark:hover:border-surface-700 group">
-                                        <span
-                                            class="flex items-center justify-center p-1 bg-emerald-100 dark:bg-emerald-900 border border-emerald-200 dark:border-emerald-800 rounded-md">
-                                            <Smartphone
-                                                class="w-3 h-3 text-emerald-600 dark:text-emerald-300" />
-                                        </span>
-                                        <span class="font-medium text-base leading-tight">Mobile App</span>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a
-                                        class="flex items-center cursor-pointer p-3 gap-2 rounded-lg text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors duration-150 hover:text-surface-900 dark:hover:text-surface-50 border border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700 group">
-                                        <span
-                                            class="flex items-center justify-center p-1 bg-purple-100 dark:bg-purple-900 border border-purple-200 dark:border-purple-800 rounded-md">
-                                            <BarChart3
-                                                class="w-3 h-3 text-purple-600 dark:text-purple-300" />
-                                        </span>
-                                        <span class="font-medium text-base leading-tight">Analytics Dashboard</span>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a
-                                        class="flex items-center cursor-pointer p-3 gap-2 rounded-lg text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors duration-150 hover:text-surface-900 dark:hover:text-surface-50 border border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700 group">
-                                        <span
-                                            class="flex items-center justify-center p-1 bg-rose-100 dark:bg-rose-900 border border-rose-200 dark:border-rose-800 rounded-md">
-                                            <Cloud
-                                                class="w-3 h-3 text-rose-600 dark:text-rose-300" />
-                                        </span>
-                                        <span class="font-medium text-base leading-tight">Cloud Storage</span>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a
-                                        class="flex items-center cursor-pointer p-3 gap-2 rounded-lg text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors duration-150 hover:text-surface-900 dark:hover:text-surface-50 border border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700 group">
-                                        <span
-                                            class="flex items-center justify-center p-1 bg-primary-100 dark:bg-primary-900 border border-primary-200 dark:border-primary-800 rounded-md">
-                                            <Shield
-                                                class="w-3 h-3 text-primary-600 dark:text-primary-300" />
-                                        </span>
-                                        <span class="font-medium text-base leading-tight">Security System</span>
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
-                    </ul>
-                    -->
                 </div>
 
                 <div class="p-2 hidden lg:block">
@@ -347,6 +206,7 @@
                     <Welcome v-if="activeComponent === 'welcome'" @navigate="setActiveComponent" />
                     <BibleVoices v-else-if="activeComponent === 'bible_voices'" />
                     <BibleAnomalies v-else-if="activeComponent === 'bible_anomalies'" />
+                    <AlignmentTasks v-else-if="activeComponent === 'alignment_tasks'" />
                 </div>
             </div>
         </div>
@@ -367,6 +227,7 @@ import type { ActiveComponent } from '../types/components'
 import Welcome from './Welcome.vue'
 import BibleVoices from './BibleVoices.vue'
 import BibleAnomalies from './BibleAnomalies.vue'
+import AlignmentTasks from './AlignmentTasks.vue'
 
 // Lucide imports
 import {
@@ -405,6 +266,8 @@ const pageTitle = computed(() => {
             return { icon: '🎧', title: 'Voices' }
         case 'bible_anomalies':
             return { icon: '⚠️', title: 'Anomalies' }
+        case 'alignment_tasks':
+            return { icon: '⏱️', title: 'Alignment Tasks' }
         default:
             return { icon: '👋', title: 'Welcome!' }
     }
