@@ -24,8 +24,8 @@ export default defineConfig({
     host: true,
     port: 5173,
     proxy: (() => {
-      const alignmentApiTarget = process.env.VITE_ALIGNMENT_API_TARGET || 'http://replica-vm-maria:8000'
-      const bibleApiTarget = process.env.VITE_BIBLE_API_TARGET || 'http://berlin-vm-maria:8000'
+      const alignmentApiTarget = process.env.VITE_ALIGNMENT_API_TARGET || 'http://berlin-vm-maria:8000'
+      const bibleApiTarget = process.env.VITE_BIBLE_API_TARGET || 'http://replica-vm-maria:8000'
       return {
         '/alignment-api': {
           target: alignmentApiTarget,
