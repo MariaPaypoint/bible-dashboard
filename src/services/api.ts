@@ -13,7 +13,16 @@ import type {
   AnomalyStatus,
   ExcerptResponse,
   ExcerptParams,
-  CreateAnomalyRequest
+  CreateAnomalyRequest,
+  AlignmentTaskResponse,
+  AlignmentTaskUpdate,
+  CreateAlignmentTaskRequest,
+  AlignmentTaskListParams,
+  AlignmentStatus,
+  MFAModelResponse,
+  LanguageResponse,
+  ModelType,
+  ModelsUpdateResponse
 } from '../types/api'
 
 // Exported to allow creating multiple API instances (e.g., general and Bible alignment)
@@ -130,6 +139,77 @@ export class ApiService {
   // Health check
   async healthCheck(): Promise<{ status: string; timestamp: string }> {
     const response = await this.api.get<{ status: string; timestamp: string }>('/health')
+    return response.data
+  }
+
+  // Alignment tasks endpoints
+  async getAlignmentTasks(params?: AlignmentTaskListParams): Promise<AlignmentTaskResponse[]> {
+    const response = await this.api.get<AlignmentTaskResponse[]>('/alignment/', { params })
+    return response.data
+  }
+
+  async getAlignmentTask(taskId: number): Promise<AlignmentTaskResponse> {
+    const response = await this.api.get<AlignmentTaskResponse>(`/alignment/${taskId}`)
+    return response.data
+  }
+
+  async createAlignmentTask(taskData: CreateAlignmentTaskRequest): Promise<AlignmentTaskResponse> {
+    const formData = new FormData()
+    formData.append('audio_file', taskData.audio_file)
+    formData.append('text_file', taskData.text_file)
+    formData.append('acoustic_model_name', taskData.acoustic_model_name)
+    formData.append('acoustic_model_version', taskData.acoustic_model_version)
+    formData.append('dictionary_model_name', taskData.dictionary_model_name)
+    formData.append('dictionary_model_version', taskData.dictionary_model_version)
+    
+    if (taskData.g2p_model_name) {
+      formData.append('g2p_model_name', taskData.g2p_model_name)
+    }
+    if (taskData.g2p_model_version) {
+      formData.append('g2p_model_version', taskData.g2p_model_version)
+    }
+
+    const response = await this.api.post<AlignmentTaskResponse>('/alignment/', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+    return response.data
+  }
+
+  async updateAlignmentTask(taskId: number, updateData: AlignmentTaskUpdate): Promise<AlignmentTaskResponse> {
+    const response = await this.api.put<AlignmentTaskResponse>(`/alignment/${taskId}`, updateData)
+    return response.data
+  }
+
+  async deleteAlignmentTask(taskId: number): Promise<void> {
+    await this.api.delete(`/alignment/${taskId}`)
+  }
+
+  async getAlignmentTasksByStatus(status: AlignmentStatus): Promise<AlignmentTaskResponse[]> {
+    const response = await this.api.get<AlignmentTaskResponse[]>(`/alignment/status/${status}`)
+    return response.data
+  }
+
+  // MFA Models endpoints
+  async getMFAModels(params?: { skip?: number; limit?: number; language?: string }): Promise<MFAModelResponse[]> {
+    const response = await this.api.get<MFAModelResponse[]>('/models/', { params })
+    return response.data
+  }
+
+  async getMFAModelsByType(modelType: ModelType, language?: string): Promise<MFAModelResponse[]> {
+    const params = language ? { language } : {}
+    const response = await this.api.get<MFAModelResponse[]>(`/models/by-type/${modelType}`, { params })
+    return response.data
+  }
+
+  async getSupportedLanguages(params?: { skip?: number; limit?: number }): Promise<LanguageResponse[]> {
+    const response = await this.api.get<LanguageResponse[]>('/models/languages', { params })
+    return response.data
+  }
+
+  async updateModelsFromGitHub(): Promise<ModelsUpdateResponse> {
+    const response = await this.api.post<ModelsUpdateResponse>('/models/update')
     return response.data
   }
 }

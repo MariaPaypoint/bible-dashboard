@@ -136,6 +136,82 @@ export interface PaginatedResponse<T> {
   pages: number
 }
 
+// Alignment API types
+export type AlignmentStatus = 'pending' | 'processing' | 'completed' | 'failed'
+
+export type ModelType = 'acoustic' | 'g2p' | 'dictionary'
+
+export interface ModelParameter {
+  name: string
+  version: string
+}
+
+export interface LanguageResponse {
+  code: string
+  name: string
+  id: number
+  created_at: string
+  updated_at: string
+}
+
+export interface MFAModelResponse {
+  name: string
+  model_type: ModelType
+  version: string
+  variant?: string | null
+  description?: string | null
+  id: number
+  language_id: number
+  language: LanguageResponse
+  created_at: string
+  updated_at: string
+}
+
+export interface AlignmentTaskResponse {
+  original_audio_filename: string
+  original_text_filename: string
+  id: number
+  audio_file_path: string
+  text_file_path: string
+  acoustic_model: ModelParameter
+  dictionary_model: ModelParameter
+  g2p_model?: ModelParameter | null
+  status: AlignmentStatus
+  result_path?: string | null
+  error_message?: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface AlignmentTaskUpdate {
+  status?: AlignmentStatus | null
+  result_path?: string | null
+  error_message?: string | null
+}
+
+export interface CreateAlignmentTaskRequest {
+  audio_file: File
+  text_file: File
+  acoustic_model_name: string
+  acoustic_model_version: string
+  dictionary_model_name: string
+  dictionary_model_version: string
+  g2p_model_name?: string
+  g2p_model_version?: string
+}
+
+export interface AlignmentTaskListParams {
+  skip?: number
+  limit?: number
+  status?: AlignmentStatus
+}
+
+export interface ModelsUpdateResponse {
+  message: string
+  updated_models: number
+  updated_languages: number
+}
+
 // Excerpt API types
 export interface ExcerptBookModel {
   code: number
