@@ -23,7 +23,6 @@
           <Button 
             @click="showCreateDialog = true" 
             severity="success" 
-            size="small"
             class="h-8"
           >
             <PlusIcon class="w-4 h-4 mr-1" />
@@ -32,7 +31,6 @@
           <Button 
             @click="refreshTasks" 
             severity="info" 
-            size="small"
             class="h-8"
             :loading="loading"
           >
@@ -119,41 +117,39 @@
         
         <Column header="Actions" :style="{ width: '10%' }">
           <template #body="slotProps">
-            <div class="flex gap-1">
+            <div class="flex gap-2">
               <!-- Download Result -->
               <Button 
                 v-if="slotProps.data.status === 'completed' && slotProps.data.result_path"
                 @click="downloadResult(slotProps.data)"
                 severity="success"
-                size="small"
-                class="w-8 h-8"
+                class="w-9 h-9"
                 v-tooltip.top="'Download Result'"
               >
-                <DownloadIcon class="w-3 h-3" />
+                <DownloadIcon class="-m-1" />
               </Button>
               
               <!-- View Details -->
               <Button 
                 @click="viewTaskDetails(slotProps.data)"
                 severity="info"
-                size="small"
-                class="w-8 h-8"
+                class="w-9 h-9"
                 v-tooltip.top="'View Details'"
               >
-                <EyeIcon class="w-3 h-3" />
+                <EyeIcon class="-m-1" />
               </Button>
               
               <!-- Delete Task -->
               <Button 
                 @click="confirmDeleteTask(slotProps.data)"
                 severity="danger"
-                size="small"
-                class="w-8 h-8"
+                class="w-9 h-9"
                 v-tooltip.top="'Delete Task'"
                 :disabled="slotProps.data.status === 'processing'"
               >
-                <TrashIcon class="w-3 h-3" />
+                <TrashIcon class="-m-1" />
               </Button>
+
             </div>
           </template>
         </Column>
@@ -170,6 +166,15 @@
         </p>
       </div>
     </div>
+
+    <!-- Create Task Dialog -->
+    <AlignmentTaskDialog 
+      v-model:visible="showCreateDialog"
+      @task-created="onTaskCreated"
+    />
+
+    <!-- Confirm Dialog -->
+    <ConfirmDialog />
   </div>
 </template>
 
@@ -181,6 +186,8 @@ import Column from 'primevue/column'
 import Button from 'primevue/button'
 import Select from 'primevue/select'
 import Tag from 'primevue/tag'
+import ConfirmDialog from 'primevue/confirmdialog'
+import { useConfirm } from 'primevue/useconfirm'
 import { 
   PlusIcon, 
   RefreshCwIcon, 
@@ -190,6 +197,7 @@ import {
   EyeIcon, 
   TrashIcon 
 } from 'lucide-vue-next'
+import AlignmentTaskDialog from './AlignmentTaskDialog.vue'
 import { alignmentApiService } from '../services/api'
 import type { 
   AlignmentTaskResponse, 
@@ -198,6 +206,7 @@ import type {
 
 // Composables
 const toast = useToast()
+const confirm = useConfirm()
 
 // Reactive state
 const tasks = ref<AlignmentTaskResponse[]>([])
@@ -244,8 +253,58 @@ const viewTaskDetails = (task: AlignmentTaskResponse) => {
 }
 
 const confirmDeleteTask = (task: AlignmentTaskResponse) => {
-  console.log('Delete task:', task)
-  // TODO: Implement delete confirmation dialog
+  confirm.require({
+    message: `Are you sure you want to delete task #${String(task.id).padStart(4, '0')}?`,
+    header: 'Delete Confirmation',
+    icon: 'pi pi-exclamation-triangle',
+    rejectProps: {
+      label: 'Cancel',
+      severity: 'secondary',
+      outlined: true
+    },
+    acceptProps: {
+      label: 'Delete',
+      severity: 'danger'
+    },
+    accept: () => {
+      deleteTask(task)
+    }
+  })
+}
+
+const deleteTask = async (task: AlignmentTaskResponse) => {
+  try {
+    await alignmentApiService.deleteAlignmentTask(task.id)
+    
+    // Remove task from the list
+    const index = tasks.value.findIndex(t => t.id === task.id)
+    if (index !== -1) {
+      tasks.value.splice(index, 1)
+    }
+    
+    toast.add({
+      severity: 'success',
+      summary: 'Успех',
+      detail: `Задание #${String(task.id).padStart(4, '0')} успешно удалено`,
+      life: 3000
+    })
+  } catch (error: any) {
+    console.error('Error deleting task:', error)
+    
+    let errorMessage = 'Не удалось удалить задание'
+    if (error.response?.data?.detail) {
+      errorMessage = error.response.data.detail
+    } else if (error.response?.status === 404) {
+      errorMessage = 'Задание не найдено'
+    }
+    
+    toast.add({
+      severity: 'error',
+      summary: 'Ошибка',
+      detail: errorMessage,
+      life: 3000
+    })
+  }
 }
 
 const downloadResult = async (task: AlignmentTaskResponse) => {
@@ -309,6 +368,18 @@ const formatDate = (dateString: string): string => {
     year: '2-digit',
     hour: '2-digit',
     minute: '2-digit'
+  })
+}
+
+const onTaskCreated = (task: AlignmentTaskResponse) => {
+  // Add the new task to the beginning of the list
+  tasks.value.unshift(task)
+  
+  toast.add({
+    severity: 'success',
+    summary: 'Задание создано',
+    detail: `Задание #${String(task.id).padStart(4, '0')} успешно добавлено в очередь`,
+    life: 3000
   })
 }
 

@@ -159,13 +159,13 @@
         <template #body="slotProps">
           <div class="flex gap-1">
             <!-- Dynamic Play/Pause button -->
-            <Button v-if="currentPlayingId === slotProps.data.code && isPlaying" severity="primary" class="w-8 h-8"
+            <Button v-if="currentPlayingId === slotProps.data.code && isPlaying" severity="primary" class="w-9 h-9"
               v-tooltip.top="'Pause'" @click="togglePlayPause()">
-              <PauseIcon class="w-5 h-5 -m-1.5" />
+              <PauseIcon class="-m-1" />
             </Button>
-            <Button v-else severity="info" class="w-8 h-8" v-tooltip.top="'Play Verse'"
+            <Button v-else severity="info" class="w-9 h-9" v-tooltip.top="'Play Verse'"
               @click="playVerse(slotProps.data)">
-              <PlayIcon class="w-5 h-5 -m-1.5" />
+              <PlayIcon class="-m-1" />
             </Button>
           </div>
         </template>
