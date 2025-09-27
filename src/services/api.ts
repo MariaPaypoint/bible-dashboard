@@ -136,6 +136,17 @@ export class ApiService {
     return response.data
   }
 
+  // Get chapter with alignment endpoint
+  async getChapterWithAlignment(params: {
+    translation: number
+    book_number: number
+    chapter_number: number
+    voice?: number
+  }): Promise<ExcerptResponse> {
+    const response = await this.api.get<ExcerptResponse>('/chapter_with_alignment', { params })
+    return response.data
+  }
+
   // Health check
   async healthCheck(): Promise<{ status: string; timestamp: string }> {
     const response = await this.api.get<{ status: string; timestamp: string }>('/health')
