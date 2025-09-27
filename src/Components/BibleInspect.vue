@@ -48,9 +48,24 @@
           </Select>
         </div>
         <div class="flex-1 min-w-0" style="flex: 1;">
-          <InputNumber id="chapterFilter" v-model="selectedChapter" :min="1" :max="150" 
-            placeholder="Chapter" class="w-full" :disabled="!selectedBookNumber"
-            @blur="onChapterChange" @keyup.enter="onChapterChange" />
+          <InputGroup>
+            <InputGroupAddon>
+              <Button @click="decrementChapter" :disabled="!selectedBookNumber || (!selectedChapter && selectedChapter !== 0) || selectedChapter <= 1" 
+                severity="secondary" size="small" class="!border-0 !bg-transparent" v-tooltip.top="'Previous Chapter'">
+                <span class="text-lg font-bold leading-none">-</span>
+              </Button>
+            </InputGroupAddon>
+            <InputNumber id="chapterFilter" v-model="selectedChapter" :min="1" :max="150" 
+              placeholder="Chapter" :disabled="!selectedBookNumber"
+              @blur="onChapterChange" @keyup.enter="onChapterChange"
+              class="text-center" />
+            <InputGroupAddon>
+              <Button @click="incrementChapter" :disabled="!selectedBookNumber" 
+                severity="secondary" size="small" class="!border-0 !bg-transparent" v-tooltip.top="'Next Chapter'">
+                <span class="text-lg font-bold leading-none">+</span>
+              </Button>
+            </InputGroupAddon>
+          </InputGroup>
         </div>
         <div class="flex gap-3">
           <Button @click="refreshData" :disabled="!canLoadData" :loading="excerptState.loading" title="Refresh">
@@ -346,6 +361,8 @@ import Column from 'primevue/column'
 import Button from 'primevue/button'
 import Select from 'primevue/select'
 import InputNumber from 'primevue/inputnumber'
+import InputGroup from 'primevue/inputgroup'
+import InputGroupAddon from 'primevue/inputgroupaddon'
 import Checkbox from 'primevue/checkbox'
 import Toast from 'primevue/toast'
 import type { ExcerptResponse, ExcerptVerseModel, BookModel } from '../types/api'
@@ -390,6 +407,10 @@ const excerptState = ref({
 })
 const currentExcerpt = ref<ExcerptResponse | null>(null)
 const excerptVerses = ref<ExcerptVerseModel[]>([])
+
+// Error handling state
+let lastErrorTime = 0
+const ERROR_DEBOUNCE_TIME = 1000 // 1 second
 
 // Audio player state
 const showPlayer = ref(false)
@@ -529,6 +550,22 @@ const calculatePauseToNext = (verse: ExcerptVerseModel): number | null => {
   if (!nextVerse) return null
   
   return nextVerse.begin - verse.end
+}
+
+// Show error with debouncing to prevent duplicates
+const showError = (summary: string, detail: string) => {
+  const now = Date.now()
+  if (now - lastErrorTime < ERROR_DEBOUNCE_TIME) {
+    return // Skip if too soon after last error
+  }
+  
+  lastErrorTime = now
+  toast.add({
+    severity: 'error',
+    summary,
+    detail,
+    life: 5000
+  })
 }
 
 // Verse correction functions
@@ -684,12 +721,7 @@ const applyCorrectionChanges = async () => {
     showCorrectionInterface.value = false
   } catch (error) {
     console.error('Error applying correction:', error)
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: 'Failed to apply timing correction',
-      life: 5000
-    })
+    showError('Error', 'Failed to apply timing correction')
   }
 }
 
@@ -718,6 +750,28 @@ const onBookChange = () => {
 }
 
 const onChapterChange = () => {
+  if (canLoadData.value) {
+    loadExcerptData()
+  }
+}
+
+const decrementChapter = () => {
+  if (selectedChapter.value && selectedChapter.value > 1) {
+    selectedChapter.value--
+    if (canLoadData.value) {
+      loadExcerptData()
+    }
+  }
+}
+
+const incrementChapter = () => {
+  if (!selectedChapter.value) {
+    // Если глава не введена, устанавливаем первую
+    selectedChapter.value = 1
+  } else if (selectedChapter.value < 150) {
+    selectedChapter.value++
+  }
+  
   if (canLoadData.value) {
     loadExcerptData()
   }
@@ -771,12 +825,7 @@ const loadExcerptData = async () => {
   } catch (error) {
     console.error('Error loading chapter data:', error)
     excerptState.value.error = 'Failed to load chapter data'
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: 'Failed to load chapter data',
-      life: 5000
-    })
+    showError('Error', 'Failed to load chapter data')
   } finally {
     excerptState.value.loading = false
   }
@@ -837,12 +886,7 @@ const playVerse = async (verse: ExcerptVerseModel) => {
 
     audioElement.value.addEventListener('error', (e) => {
       console.error('Audio error:', e)
-      toast.add({
-        severity: 'error',
-        summary: 'Audio Error',
-        detail: 'Failed to load audio',
-        life: 3000
-      })
+      showError('Audio Error', 'Failed to load audio')
       stopPlaying(false) // error, not completed
     })
 
@@ -851,12 +895,7 @@ const playVerse = async (verse: ExcerptVerseModel) => {
 
   } catch (error) {
     console.error('Error playing verse:', error)
-    toast.add({
-      severity: 'error',
-      summary: 'Playback Error',
-      detail: 'Failed to play verse',
-      life: 3000
-    })
+    showError('Playback Error', 'Failed to play verse')
     stopPlaying(false) // error, not completed
   }
 }
@@ -963,5 +1002,10 @@ onUnmounted(() => {
 
 .compact-table :deep(.start-paragraph-row td) {
   padding-top: 3rem !important;
+}
+
+/* Центрирование текста в поле ввода главы */
+:deep(.p-inputnumber-input) {
+  text-align: center;
 }
 </style>
