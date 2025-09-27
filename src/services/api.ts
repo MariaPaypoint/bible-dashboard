@@ -147,6 +147,20 @@ export class ApiService {
     return response.data
   }
 
+  // Manual timing fixes endpoint
+  async createManualFix(fixData: {
+    voice: number
+    book_number: number
+    chapter_number: number
+    verse_number: number
+    begin: number
+    end: number
+    info: string
+  }): Promise<any> {
+    const response = await this.api.post('/voices/manual-fixes', fixData)
+    return response.data
+  }
+
   // Health check
   async healthCheck(): Promise<{ status: string; timestamp: string }> {
     const response = await this.api.get<{ status: string; timestamp: string }>('/health')

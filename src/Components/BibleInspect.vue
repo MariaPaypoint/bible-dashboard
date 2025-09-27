@@ -125,6 +125,10 @@
               @click="playVerse(slotProps.data)">
               <PlayIcon class="-m-1" />
             </Button>
+            <Button severity="secondary" class="w-9 h-9" v-tooltip.top="'Adjust Timing'"
+              @click="initializeCorrectionInterface(slotProps.data)">
+              <InfoIcon class="-m-1" />
+            </Button>
           </div>
         </template>
       </Column>
@@ -209,6 +213,124 @@
             <span class="text-sm text-surface-700 dark:text-surface-200">сек</span>
           </div>
         </div>
+
+        <!-- Verse Correction Interface -->
+        <div v-if="showCorrectionInterface"
+          class="pt-4 mt-2 border-t border-surface-200 dark:border-surface-700 space-y-3">
+          <div class="text-sm font-medium text-surface-900 dark:text-surface-0 mb-3">
+            Adjust Verse Timing
+          </div>
+
+          <!-- Start Time Controls -->
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-surface-700 dark:text-surface-200">Start Time:</span>
+            <div class="flex items-center gap-2">
+              <div class="flex items-center gap-1">
+                <!-- Very fast decrease -->
+                <Button @click="adjustStartTime(-1.0)" severity="secondary" size="small"
+                  class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'-1.0s'">
+                  <span class="text-2xl font-bold leading-none" style="margin-top: -2px;">-</span>
+                </Button>
+                <!-- Fast decrease -->
+                <Button @click="adjustStartTime(-0.1)" severity="secondary" size="small"
+                  class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'-0.1s'">
+                  <span class="text-lg font-bold leading-none" style="margin-top: -1px;">-</span>
+                </Button>
+                <!-- Fine decrease -->
+                <Button @click="adjustStartTime(-0.01)" severity="secondary" size="small"
+                  class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'-0.01s'">
+                  <span class="text-xs font-bold leading-none">-</span>
+                </Button>
+                <!-- Time display -->
+                <span
+                  class="text-sm font-mono min-w-[80px] text-center bg-surface-100 dark:bg-surface-800 px-2 py-1 rounded mx-1">{{
+                    formatTimeWithMs(correctionStartTime) }}</span>
+                <!-- Fine increase -->
+                <Button @click="adjustStartTime(0.01)" severity="secondary" size="small"
+                  class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'+0.01s'">
+                  <span class="text-xs font-bold leading-none">+</span>
+                </Button>
+                <!-- Fast increase -->
+                <Button @click="adjustStartTime(0.1)" severity="secondary" size="small"
+                  class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'+0.1s'">
+                  <span class="text-lg font-bold leading-none" style="margin-top: -1px;">+</span>
+                </Button>
+                <!-- Very fast increase -->
+                <Button @click="adjustStartTime(1.0)" severity="secondary" size="small"
+                  class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'+1.0s'">
+                  <span class="text-2xl font-bold leading-none" style="margin-top: -2px;">+</span>
+                </Button>
+              </div>
+              <!-- Preview button for Start Time -->
+              <Button @click="previewStartTime" severity="info" size="small" class="px-2 py-1"
+                v-tooltip.top="'Preview start time'">
+                <PlayIcon class="w-3 h-3" />
+              </Button>
+            </div>
+          </div>
+
+          <!-- End Time Controls -->
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-surface-700 dark:text-surface-200">End Time:</span>
+            <div class="flex items-center gap-2">
+              <div class="flex items-center gap-1">
+                <!-- Very fast decrease -->
+                <Button @click="adjustEndTime(-1.0)" severity="secondary" size="small"
+                  class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'-1.0s'">
+                  <span class="text-2xl font-bold leading-none" style="margin-top: -2px;">-</span>
+                </Button>
+                <!-- Fast decrease -->
+                <Button @click="adjustEndTime(-0.1)" severity="secondary" size="small"
+                  class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'-0.1s'">
+                  <span class="text-lg font-bold leading-none" style="margin-top: -1px;">-</span>
+                </Button>
+                <!-- Fine decrease -->
+                <Button @click="adjustEndTime(-0.01)" severity="secondary" size="small"
+                  class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'-0.01s'">
+                  <span class="text-xs font-bold leading-none">-</span>
+                </Button>
+                <!-- Time display -->
+                <span
+                  class="text-sm font-mono min-w-[80px] text-center bg-surface-100 dark:bg-surface-800 px-2 py-1 rounded mx-1">{{
+                    formatTimeWithMs(correctionEndTime) }}</span>
+                <!-- Fine increase -->
+                <Button @click="adjustEndTime(0.01)" severity="secondary" size="small"
+                  class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'+0.01s'">
+                  <span class="text-xs font-bold leading-none">+</span>
+                </Button>
+                <!-- Fast increase -->
+                <Button @click="adjustEndTime(0.1)" severity="secondary" size="small"
+                  class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'+0.1s'">
+                  <span class="text-lg font-bold leading-none" style="margin-top: -1px;">+</span>
+                </Button>
+                <!-- Very fast increase -->
+                <Button @click="adjustEndTime(1.0)" severity="secondary" size="small"
+                  class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'+1.0s'">
+                  <span class="text-2xl font-bold leading-none" style="margin-top: -2px;">+</span>
+                </Button>
+              </div>
+              <!-- Preview button for End Time -->
+              <Button @click="previewEndTime" severity="info" size="small" class="px-2 py-1"
+                v-tooltip.top="'Preview end time'">
+                <PlayIcon class="w-3 h-3" />
+              </Button>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex gap-2 pt-2">
+            <Button @click="applyCorrectionChanges" severity="success" size="small" class="flex-1"
+              :disabled="!hasTimingChanges">
+              Apply Corrections
+            </Button>
+            <Button @click="resetCorrectionChanges" severity="secondary" size="small" class="flex-1">
+              Reset
+            </Button>
+            <Button @click="showCorrectionInterface = false" severity="secondary" size="small" class="flex-1">
+              Close
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -283,6 +405,13 @@ const progressUpdateInterval = ref<number | null>(null)
 const autoAdvanceToNext = ref(false)
 const autoAdvancePause = ref(1) // seconds
 
+// Verse correction state
+const showCorrectionInterface = ref(false)
+const correctionStartTime = ref(0)
+const correctionEndTime = ref(0)
+const originalStartTime = ref(0)
+const originalEndTime = ref(0)
+
 // Table settings
 const defaultPageSize = 15
 
@@ -320,6 +449,11 @@ const progressPercentage = computed(() => {
   // Calculate progress within the verse bounds
   const verseDuration = currentVerse.value.end - currentVerse.value.begin
   return (currentTime.value / verseDuration) * 100
+})
+
+const hasTimingChanges = computed(() => {
+  return correctionStartTime.value !== originalStartTime.value ||
+    correctionEndTime.value !== originalEndTime.value
 })
 
 // Methods
@@ -370,6 +504,13 @@ const formatPauseTime = (seconds: number) => {
   return { mainPart, fractionPart }
 }
 
+const formatTimeWithMs = (seconds: number) => {
+  const mins = Math.floor(seconds / 60)
+  const secs = Math.floor(seconds % 60)
+  const ms = Math.round((seconds % 1) * 1000)
+  return `${mins}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`
+}
+
 const getRowClass = (data: ExcerptVerseModel) => {
   return data.start_paragraph ? 'start-paragraph-row' : ''
 }
@@ -388,6 +529,168 @@ const calculatePauseToNext = (verse: ExcerptVerseModel): number | null => {
   if (!nextVerse) return null
   
   return nextVerse.begin - verse.end
+}
+
+// Verse correction functions
+const initializeCorrectionInterface = (verse: ExcerptVerseModel) => {
+  // Store original values
+  originalStartTime.value = verse.begin
+  originalEndTime.value = verse.end
+  // Set current values
+  correctionStartTime.value = verse.begin
+  correctionEndTime.value = verse.end
+  
+  // Set current verse for correction
+  currentVerse.value = verse
+  
+  showCorrectionInterface.value = true
+}
+
+const adjustStartTime = (delta: number) => {
+  const newValue = correctionStartTime.value + delta
+  if (newValue >= 0 && newValue < correctionEndTime.value) {
+    correctionStartTime.value = newValue
+  }
+}
+
+const adjustEndTime = (delta: number) => {
+  const newValue = correctionEndTime.value + delta
+  if (newValue > correctionStartTime.value) {
+    correctionEndTime.value = newValue
+  }
+}
+
+const resetCorrectionChanges = () => {
+  correctionStartTime.value = originalStartTime.value
+  correctionEndTime.value = originalEndTime.value
+}
+
+const previewStartTime = async () => {
+  if (!currentExcerpt.value || !currentVerse.value) return
+  
+  // Find the part containing this verse
+  const part = currentExcerpt.value.parts.find(p => 
+    p.verses.some(v => v.code === currentVerse.value!.code)
+  )
+  if (!part) return
+
+  try {
+    // Stop current playback
+    if (audioElement.value) {
+      audioElement.value.pause()
+      audioElement.value = null
+    }
+
+    // Create new audio element
+    audioElement.value = new Audio(part.audio_link)
+    
+    audioElement.value.addEventListener('loadedmetadata', () => {
+      if (audioElement.value) {
+        // Play from corrected start for 2 seconds
+        const endTime = Math.min(correctionStartTime.value + 2, correctionEndTime.value)
+        audioElement.value.currentTime = correctionStartTime.value
+        audioElement.value.play()
+        
+        // Stop after preview duration
+        setTimeout(() => {
+          if (audioElement.value) {
+            audioElement.value.pause()
+          }
+        }, (endTime - correctionStartTime.value) * 1000)
+      }
+    })
+  } catch (error) {
+    console.error('Error previewing start time:', error)
+  }
+}
+
+const previewEndTime = async () => {
+  if (!currentExcerpt.value || !currentVerse.value) return
+  
+  // Find the part containing this verse
+  const part = currentExcerpt.value.parts.find(p => 
+    p.verses.some(v => v.code === currentVerse.value!.code)
+  )
+  if (!part) return
+
+  try {
+    // Stop current playback
+    if (audioElement.value) {
+      audioElement.value.pause()
+      audioElement.value = null
+    }
+
+    // Create new audio element
+    audioElement.value = new Audio(part.audio_link)
+    
+    audioElement.value.addEventListener('loadedmetadata', () => {
+      if (audioElement.value) {
+        // Play 2 seconds before corrected end until end
+        const startTime = Math.max(correctionEndTime.value - 2, correctionStartTime.value)
+        audioElement.value.currentTime = startTime
+        audioElement.value.play()
+        
+        // Stop at corrected end time
+        setTimeout(() => {
+          if (audioElement.value) {
+            audioElement.value.pause()
+          }
+        }, (correctionEndTime.value - startTime) * 1000)
+      }
+    })
+  } catch (error) {
+    console.error('Error previewing end time:', error)
+  }
+}
+
+const applyCorrectionChanges = async () => {
+  if (!currentVerse.value || !selectedVoice.value || !selectedBookNumber.value || !selectedChapter.value) {
+    return
+  }
+
+  try {
+    const fixData = {
+      voice: selectedVoice.value,
+      book_number: selectedBookNumber.value,
+      chapter_number: selectedChapter.value,
+      verse_number: currentVerse.value.number,
+      begin: correctionStartTime.value,
+      end: correctionEndTime.value,
+      info: `Manual timing correction applied via Bible Inspect interface`
+    }
+
+    await bibleApiService.createManualFix(fixData)
+    
+    // Update the verse in local data
+    if (currentVerse.value) {
+      currentVerse.value.begin = correctionStartTime.value
+      currentVerse.value.end = correctionEndTime.value
+    }
+    
+    // Update in excerptVerses array
+    const verseIndex = excerptVerses.value.findIndex(v => v.code === currentVerse.value!.code)
+    if (verseIndex !== -1) {
+      excerptVerses.value[verseIndex].begin = correctionStartTime.value
+      excerptVerses.value[verseIndex].end = correctionEndTime.value
+    }
+
+    toast.add({
+      severity: 'success',
+      summary: 'Success',
+      detail: 'Timing correction applied successfully',
+      life: 3000
+    })
+
+    showCorrectionInterface.value = false
+  } catch (error) {
+    console.error('Error applying correction:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'Failed to apply timing correction',
+      life: 5000
+    })
+  }
 }
 
 // Event handlers
