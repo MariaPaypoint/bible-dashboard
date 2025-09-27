@@ -85,23 +85,32 @@
           <span class="text-sm font-medium">{{ slotProps.data.number }}</span>
         </template>
       </Column>
-      <Column field="html" header="Text" style="width: 50%">
+      <Column field="html" header="Text" style="width: 45%">
         <template #body="slotProps">
           <div class="text-sm" v-html="slotProps.data.html"></div>
         </template>
       </Column>
-      <Column field="begin" header="Start" style="width: 12%">
+      <Column field="begin" header="Start" style="width: 11%">
         <template #body="slotProps">
           <span class="text-sm font-mono">
             {{ formatTimeWithFraction(slotProps.data.begin).mainPart }}<span class="opacity-50">{{ formatTimeWithFraction(slotProps.data.begin).fractionPart }}</span>
           </span>
         </template>
       </Column>
-      <Column field="end" header="End" style="width: 12%">
+      <Column field="end" header="End" style="width: 11%">
         <template #body="slotProps">
           <span class="text-sm font-mono">
             {{ formatTimeWithFraction(slotProps.data.end).mainPart }}<span class="opacity-50">{{ formatTimeWithFraction(slotProps.data.end).fractionPart }}</span>
           </span>
+        </template>
+      </Column>
+      <Column header="Pause" style="width: 11%">
+        <template #body="slotProps">
+          <span v-if="calculatePauseToNext(slotProps.data) !== null" 
+            class="text-sm font-mono text-surface-500 dark:text-surface-400">
+            {{ formatPauseTime(calculatePauseToNext(slotProps.data)!).mainPart }}<span class="opacity-50">{{ formatPauseTime(calculatePauseToNext(slotProps.data)!).fractionPart }}</span>
+          </span>
+          <span v-else class="text-sm text-surface-400 dark:text-surface-500">—</span>
         </template>
       </Column>
       <Column header="Actions" style="width: 10%">
@@ -354,6 +363,13 @@ const formatTimeWithFraction = (seconds: number) => {
   return { mainPart, fractionPart }
 }
 
+const formatPauseTime = (seconds: number) => {
+  const fractionalPart = Math.round((seconds % 1) * 100)
+  const mainPart = seconds.toFixed(0)
+  const fractionPart = `.${fractionalPart.toString().padStart(2, '0')}`
+  return { mainPart, fractionPart }
+}
+
 const getRowClass = (data: ExcerptVerseModel) => {
   return data.start_paragraph ? 'start-paragraph-row' : ''
 }
@@ -365,6 +381,13 @@ const findNextVerse = (currentVerseCode: number): ExcerptVerseModel | null => {
   if (currentIndex === -1 || currentIndex >= excerptVerses.value.length - 1) return null
   
   return excerptVerses.value[currentIndex + 1]
+}
+
+const calculatePauseToNext = (verse: ExcerptVerseModel): number | null => {
+  const nextVerse = findNextVerse(verse.code)
+  if (!nextVerse) return null
+  
+  return nextVerse.begin - verse.end
 }
 
 // Event handlers
