@@ -243,7 +243,7 @@
           </div>
         </div>
         <div class="text-sm text-surface-700 dark:text-surface-200 leading-relaxed" v-if="currentExcerptVerse?.text"
-          v-html="highlightProblematicWord(currentExcerptVerse.text, currentVerse?.word || null, currentVerse?.position_in_verse || null, currentVerse?.position_from_end || null)">
+          v-html="highlightProblematicWord(currentExcerptVerse.text, currentVerse?.word || null, currentVerse?.position_in_verse || null, currentVerse?.position_from_end || null, getAnomalyTypesArray(currentVerse))">
         </div>
         
         <!-- Timing overlap warnings -->
@@ -1280,36 +1280,103 @@ const formatTimeWithMs = (seconds: number): string => {
   return `${mins}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`
 }
 
-const highlightProblematicWord = (verseText: string, problematicWord: string | null, positionInVerse: number | null, positionFromEnd: number | null): string => {
-  if (!verseText || !problematicWord) return verseText || ''
+// Helper function to get anomaly types as array
+const getAnomalyTypesArray = (anomaly: any): string[] => {
+  if (!anomaly) return []
+  
+  // Check if it's a grouped anomaly with multiple types
+  if (anomaly.anomalyTypes && Array.isArray(anomaly.anomalyTypes)) {
+    return anomaly.anomalyTypes
+  }
+  
+  // Single anomaly type
+  if (anomaly.anomaly_type) {
+    return [anomaly.anomaly_type]
+  }
+  
+  return []
+}
 
-  // If no position data is available, we can't accurately highlight
-  if (positionInVerse === null && positionFromEnd === null) return verseText
-
-  // Escape special regex characters
-  const escapedWord = problematicWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+const highlightProblematicWord = (verseText: string, problematicWord: string | null, positionInVerse: number | null, positionFromEnd: number | null, anomalyTypes: string[]): string => {
+  if (!verseText) return verseText || ''
 
   // Split the verse text into words
   // We'll use a regex that matches words and non-words to preserve everything
   const parts = verseText.split(/([\p{L}\p{N}]+)/u).filter(p => p !== '')
+  const words = parts.filter(p => /[\p{L}\p{N}]/u.test(p))
 
-  // Find the correct word index using position information
-  let targetIndex = -1
+  // Determine which words need special styling
+  const wordStyles = new Map<number, { highlight: boolean, underline: boolean }>()
 
-  if (positionInVerse !== null) {
-    // Position is 1-indexed in the API
-    targetIndex = positionInVerse - 1
-  } else if (positionFromEnd !== null && parts.length > 0) {
-    // Calculate from the end if position_from_end is available
-    // Count only actual words (not spaces/punctuation)
-    const wordCount = parts.filter(p => /[\p{L}\p{N}]/u.test(p)).length
-    targetIndex = wordCount - positionFromEnd
+  // Handle special anomaly types that require underlining or highlighting specific words
+  if (anomalyTypes.includes('fast_previous_verse') && words.length > 0) {
+    // Underline first word for Fast Previous Verse
+    const existingStyle = wordStyles.get(0) || { highlight: false, underline: false }
+    wordStyles.set(0, { ...existingStyle, underline: true })
+  }
+  if (anomalyTypes.includes('fast_next_verse') && words.length > 0) {
+    // Underline last word for Fast Next Verse
+    const lastWordIndex = words.length - 1
+    const existingStyle = wordStyles.get(lastWordIndex) || { highlight: false, underline: false }
+    wordStyles.set(lastWordIndex, { ...existingStyle, underline: true })
+  }
+  if (anomalyTypes.includes('fast_first') && words.length > 0) {
+    // Highlight first word for Fast First
+    const existingStyle = wordStyles.get(0) || { highlight: false, underline: false }
+    wordStyles.set(0, { ...existingStyle, highlight: true })
+  }
+  if (anomalyTypes.includes('fast_last') && words.length > 0) {
+    // Highlight last word for Fast Last
+    const lastWordIndex = words.length - 1
+    const existingStyle = wordStyles.get(lastWordIndex) || { highlight: false, underline: false }
+    wordStyles.set(lastWordIndex, { ...existingStyle, highlight: true })
+  }
+  if (anomalyTypes.includes('slow_first') && words.length > 0) {
+    // Highlight first word for Slow First
+    const existingStyle = wordStyles.get(0) || { highlight: false, underline: false }
+    wordStyles.set(0, { ...existingStyle, highlight: true })
+  }
+  if (anomalyTypes.includes('slow_last') && words.length > 0) {
+    // Highlight last word for Slow Last
+    const lastWordIndex = words.length - 1
+    const existingStyle = wordStyles.get(lastWordIndex) || { highlight: false, underline: false }
+    wordStyles.set(lastWordIndex, { ...existingStyle, highlight: true })
+  }
+  if (anomalyTypes.includes('slow_previous_verse') && words.length > 0) {
+    // Underline first word for Slow Previous Verse
+    const existingStyle = wordStyles.get(0) || { highlight: false, underline: false }
+    wordStyles.set(0, { ...existingStyle, underline: true })
+  }
+  if (anomalyTypes.includes('slow_next_verse') && words.length > 0) {
+    // Underline last word for Slow Next Verse
+    const lastWordIndex = words.length - 1
+    const existingStyle = wordStyles.get(lastWordIndex) || { highlight: false, underline: false }
+    wordStyles.set(lastWordIndex, { ...existingStyle, underline: true })
   }
 
-  // If we couldn't determine a valid index, return the original text
-  if (targetIndex < 0) return verseText
+  // Handle problematic word highlighting
+  if (problematicWord && (positionInVerse !== null || positionFromEnd !== null)) {
+    // Find the correct word index using position information
+    let targetIndex = -1
 
-  // Count actual words until we reach our target
+    if (positionInVerse !== null) {
+      // Position is 1-indexed in the API
+      targetIndex = positionInVerse - 1
+    } else if (positionFromEnd !== null && parts.length > 0) {
+      // Calculate from the end if position_from_end is available
+      // Count only actual words (not spaces/punctuation)
+      const wordCount = parts.filter(p => /[\p{L}\p{N}]/u.test(p)).length
+      targetIndex = wordCount - positionFromEnd
+    }
+
+    if (targetIndex >= 0) {
+      // Add or update styling for the problematic word
+      const existingStyle = wordStyles.get(targetIndex) || { highlight: false, underline: false }
+      wordStyles.set(targetIndex, { ...existingStyle, highlight: true })
+    }
+  }
+
+  // Apply styling to the text
   let wordIndex = -1
   let resultText = ''
 
@@ -1319,10 +1386,50 @@ const highlightProblematicWord = (verseText: string, problematicWord: string | n
     // If this is a word (not punctuation or space)
     if (/[\p{L}\p{N}]/u.test(part)) {
       wordIndex++
+      const style = wordStyles.get(wordIndex)
+
+      if (style) {
+        // Build CSS classes based on required styling
+        const classes = []
+        if (style.highlight) {
+          classes.push('text-red-600', 'font-semibold', 'bg-red-50', 'dark:bg-red-900/20', 'px-1', 'rounded')
+        }
+        if (style.underline) {
+          classes.push('underline', 'decoration-2', 'decoration-blue-500')
+        }
+        
+        resultText += `<span class="${classes.join(' ')}">${part}</span>`
+      } else {
+        resultText += part
+      }
+    } else {
+      // Add non-word parts as is
+      resultText += part
+    }
+  }
+
+  return resultText
+}
+
+// Helper function to highlight specific word by index
+const highlightSpecificWord = (verseText: string, parts: string[], wordIndex: number, style: 'highlight' | 'underline'): string => {
+  let currentWordIndex = -1
+  let resultText = ''
+
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i]
+
+    // If this is a word (not punctuation or space)
+    if (/[\p{L}\p{N}]/u.test(part)) {
+      currentWordIndex++
 
       // If this is our target word
-      if (wordIndex === targetIndex && part.toLowerCase() === problematicWord.toLowerCase()) {
-        resultText += `<span class="text-red-600 font-semibold bg-red-50 dark:bg-red-900/20 px-1 rounded">${part}</span>`
+      if (currentWordIndex === wordIndex) {
+        if (style === 'underline') {
+          resultText += `<span class="underline decoration-2 decoration-blue-500">${part}</span>`
+        } else {
+          resultText += `<span class="text-red-600 font-semibold bg-red-50 dark:bg-red-900/20 px-1 rounded">${part}</span>`
+        }
       } else {
         resultText += part
       }
