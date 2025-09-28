@@ -30,7 +30,7 @@
             </template>
           </Select>
         </div>
-        <div class="flex-1 min-w-0" style="flex: 1;">
+        <div class="flex-1 min-w-0" style="flex: 2;">
           <Select id="bookFilter" v-model="selectedBookNumber" :options="bookOptions" optionLabel="label"
             optionValue="value" placeholder="All books" class="w-full" :disabled="!selectedVoice"
             :loading="booksState.loading" @change="onBookChange" showClear>
