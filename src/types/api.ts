@@ -35,6 +35,7 @@ export interface BookModel {
   alias: string
   chapters_count: number
   anomalies_count?: number
+  anomalies_open_count?: number
 }
 
 // Voice anomaly status types

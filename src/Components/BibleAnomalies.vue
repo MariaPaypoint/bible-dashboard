@@ -39,8 +39,14 @@
                 <span :class="{ 'opacity-50': slotProps.option.anomalies_count === 0 }">
                   {{ slotProps.option.label }}
                 </span>
-                <Tag v-if="selectedVoice" :value="slotProps.option.anomalies_count"
-                  :severity="slotProps.option.anomalies_count === 0 ? 'secondary' : 'info'" class="ml-2" />
+                <div v-if="selectedVoice" class="flex gap-1">
+                  <Tag :value="slotProps.option.anomalies_open_count || 0"
+                    :severity="(slotProps.option.anomalies_open_count || 0) === 0 ? 'success' : 'warn'"
+                    :title="'Open anomalies (detected/confirmed)'" />
+                  <Tag :value="slotProps.option.anomalies_count"
+                    :severity="slotProps.option.anomalies_count === 0 ? 'secondary' : 'info'"
+                    :title="'Total anomalies'" />
+                </div>
               </div>
             </template>
             <template #value="slotProps">
@@ -48,9 +54,14 @@
                 <span>
                   {{ getSelectedBookDisplayName(slotProps.value) }}
                 </span>
-                <Tag :value="getSelectedBookAnomaliesCount(slotProps.value)"
-                  :severity="getSelectedBookAnomaliesCount(slotProps.value) === 0 ? 'secondary' : 'info'"
-                  class="ml-2" />
+                <div class="flex gap-1">
+                  <Tag :value="getSelectedBookOpenAnomaliesCount(slotProps.value)"
+                    :severity="getSelectedBookOpenAnomaliesCount(slotProps.value) === 0 ? 'success' : 'warn'"
+                    :title="'Open anomalies (detected/confirmed)'" />
+                  <Tag :value="getSelectedBookAnomaliesCount(slotProps.value)"
+                    :severity="getSelectedBookAnomaliesCount(slotProps.value) === 0 ? 'secondary' : 'info'"
+                    :title="'Total anomalies'" />
+                </div>
               </div>
               <span v-else-if="slotProps.value">
                 {{ getSelectedBookDisplayName(slotProps.value) }}
@@ -796,11 +807,17 @@ const getSelectedBookAnomaliesCount = (bookNumber: number): number => {
   return book ? book.anomalies_count || 0 : 0
 }
 
+const getSelectedBookOpenAnomaliesCount = (bookNumber: number): number => {
+  const book = books.value.find(b => b.book_number === bookNumber)
+  return book ? book.anomalies_open_count || 0 : 0
+}
+
 const bookOptions = computed(() => {
   return books.value.map((book) => ({
     label: `${book.name} (${book.book_number})`,
     value: book.book_number,
-    anomalies_count: book.anomalies_count || 0
+    anomalies_count: book.anomalies_count || 0,
+    anomalies_open_count: book.anomalies_open_count || 0
   }))
 })
 
