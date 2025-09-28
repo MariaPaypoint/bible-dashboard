@@ -77,8 +77,8 @@
 
     <!-- Excerpt Table -->
     <DataTable :value="excerptVerses" tableStyle="min-width: 50rem" paginator :rows="defaultPageSize"
-      :rowsPerPageOptions="[10, 15, 50, 100]" :totalRecords="excerptVerses?.length || 0" stripedRows
-      :loading="excerptState.loading" :rowClass="getRowClass" class="compact-table">
+      :rowsPerPageOptions="[10, 15, 50, 100]" :loading="excerptState.loading" stripedRows
+      :rowClass="getRowClass" class="compact-table">
       <template #header>
         <div class="flex flex-wrap items-center justify-between gap-2">
           <div class="flex items-center gap-2">
@@ -211,6 +211,14 @@
           </div>
         </div>
         
+        <!-- Correction button at the bottom -->
+        <div v-if="!showCorrectionInterface" class="pt-3 border-t border-surface-200 dark:border-surface-700">
+          <Button @click="openCorrectionFromPlayer" severity="info" size="small" class="w-full text-xs">
+            <InfoIcon class="w-3 h-3 mr-1" />
+            Выполнить коррекцию
+          </Button>
+        </div>
+        
         <!-- Auto-advance settings -->
         <div class="pt-4 mt-2 border-t border-surface-200 dark:border-surface-700">
           <div class="flex items-center gap-2 mb-3">
@@ -341,7 +349,7 @@
             <Button @click="resetCorrectionChanges" severity="secondary" size="small" class="flex-1">
               Reset
             </Button>
-            <Button @click="showCorrectionInterface = false" severity="secondary" size="small" class="flex-1">
+            <Button @click="closeCorrectionInterface" severity="secondary" size="small" class="flex-1">
               Close
             </Button>
           </div>
@@ -533,7 +541,14 @@ const formatTimeWithMs = (seconds: number) => {
 }
 
 const getRowClass = (data: ExcerptVerseModel) => {
-  return data.start_paragraph ? 'start-paragraph-row' : ''
+  const classes = []
+  if (data.start_paragraph) {
+    classes.push('start-paragraph-row')
+  }
+  if (currentPlayingId.value === data.code) {
+    classes.push('playing-row')
+  }
+  return classes.join(' ')
 }
 
 const findNextVerse = (currentVerseCode: number): ExcerptVerseModel | null => {
@@ -718,7 +733,7 @@ const applyCorrectionChanges = async () => {
       life: 3000
     })
 
-    showCorrectionInterface.value = false
+    closeCorrectionInterface()
   } catch (error) {
     console.error('Error applying correction:', error)
     showError('Error', 'Failed to apply timing correction')
@@ -842,6 +857,11 @@ const playVerse = async (verse: ExcerptVerseModel) => {
   
   if (!part) return
 
+  // Close correction interface if it's open
+  if (showCorrectionInterface.value) {
+    showCorrectionInterface.value = false
+  }
+
   currentVerse.value = verse
   currentPlayingId.value = verse.code
   showPlayer.value = true
@@ -926,19 +946,23 @@ const stopPlaying = (verseCompleted = false) => {
   isPlaying.value = false
   
   // If verse completed and auto-advance is enabled, try to play next verse
-  if (verseCompleted && autoAdvanceToNext.value && currentVerse.value) {
+  // But don't auto-advance if correction interface is open
+  if (verseCompleted && autoAdvanceToNext.value && currentVerse.value && !showCorrectionInterface.value) {
     const nextVerse = findNextVerse(currentVerse.value.code)
     if (nextVerse) {
       // Wait for the specified pause duration, then play next verse
       setTimeout(() => {
-        playVerse(nextVerse)
+        // Double-check that correction interface is still closed before advancing
+        if (!showCorrectionInterface.value) {
+          playVerse(nextVerse)
+        }
       }, autoAdvancePause.value * 1000)
       return // Don't close player immediately
     }
   }
   
-  // Wait 500ms before closing player (or close immediately if manually stopped)
-  const closeDelay = verseCompleted ? 500 : 0
+  // Wait 2000ms before closing player (or close immediately if manually stopped)
+  const closeDelay = verseCompleted ? 2000 : 0
   setTimeout(() => {
     showPlayer.value = false
     currentVerse.value = null
@@ -946,6 +970,36 @@ const stopPlaying = (verseCompleted = false) => {
     currentTime.value = 0
     duration.value = 0
   }, closeDelay)
+}
+
+const openCorrectionFromPlayer = () => {
+  if (!currentVerse.value) return
+  
+  // Stop audio but keep player open
+  if (audioElement.value) {
+    audioElement.value.pause()
+    audioElement.value = null
+  }
+  
+  if (progressUpdateInterval.value) {
+    clearInterval(progressUpdateInterval.value)
+    progressUpdateInterval.value = null
+  }
+  
+  isPlaying.value = false
+  
+  // Initialize correction interface with current verse
+  initializeCorrectionInterface(currentVerse.value)
+}
+
+const closeCorrectionInterface = () => {
+  showCorrectionInterface.value = false
+  // Also close the player when correction interface is closed
+  showPlayer.value = false
+  currentVerse.value = null
+  currentPlayingId.value = null
+  currentTime.value = 0
+  duration.value = 0
 }
 
 const seekToPosition = (event: MouseEvent) => {
@@ -1007,5 +1061,37 @@ onUnmounted(() => {
 /* Центрирование текста в поле ввода главы */
 :deep(.p-inputnumber-input) {
   text-align: center;
+}
+
+/* Подсветка проигрываемой строки с PrimeVue цветами */
+:deep(.playing-row) {
+  background-color: var(--p-primary-50) !important;
+  border-left: 4px solid var(--p-primary-500) !important;
+  box-shadow: inset 0 0 0 1px var(--p-primary-200) !important;
+}
+
+:deep(.playing-row:hover) {
+  background-color: var(--p-primary-100) !important;
+}
+
+:deep(.playing-row td) {
+  background-color: var(--p-primary-50) !important;
+  border-color: var(--p-primary-200) !important;
+}
+
+/* Темная тема */
+.dark :deep(.playing-row) {
+  background-color: var(--p-primary-900) !important;
+  border-left: 4px solid var(--p-primary-400) !important;
+  box-shadow: inset 0 0 0 1px var(--p-primary-700) !important;
+}
+
+.dark :deep(.playing-row:hover) {
+  background-color: var(--p-primary-800) !important;
+}
+
+.dark :deep(.playing-row td) {
+  background-color: var(--p-primary-900) !important;
+  border-color: var(--p-primary-700) !important;
 }
 </style>

@@ -80,7 +80,8 @@
     </div>
 
     <!-- Anomalies Table -->
-    <DataTable :value="groupedAnomalies" tableStyle="min-width: 50rem" paginator :rows="defaultPageSize"
+    <DataTable :value="groupedAnomalies" tableStyle="min-width: 50rem" paginator :rows="pageSize"
+      :first="(currentPage - 1) * pageSize"
       :rowsPerPageOptions="[10, 15, 50, 100]" :totalRecords="totalCount" :lazy="true" stripedRows
       :loading="anomaliesState.loading" @page="onPageChange" @sort="onSort" sortMode="single" :rowClass="getRowClass"
       :rowStyle="getRowStyle" class="compact-table">
@@ -857,14 +858,17 @@ const onVoiceChange = async () => {
 }
 
 const onAnomalyTypeChange = async () => {
+  currentPage.value = 1
   await setAnomalyTypeFilter(selectedAnomalyType.value)
 }
 
 const onBookChange = async () => {
+  currentPage.value = 1
   await setBookFilter(selectedBookNumber.value)
 }
 
 const onStatusChange = async () => {
+  currentPage.value = 1
   await setStatusFilter(selectedStatus.value)
 }
 
