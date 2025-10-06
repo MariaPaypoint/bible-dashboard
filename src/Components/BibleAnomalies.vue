@@ -2205,6 +2205,9 @@ const applyCorrectionChanges = async () => {
 
       // Refresh the anomalies list to reflect the status change
       await refreshAnomalies()
+      
+      // Advance to next verse if auto-advance is enabled
+      await advanceToNextVerse()
     } else {
       toast.add({
         severity: 'error',
