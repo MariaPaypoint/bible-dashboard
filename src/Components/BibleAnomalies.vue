@@ -1923,16 +1923,34 @@ const stopPlaying = () => {
 
 // Function to find next anomaly in the list with status 'detected'
 const findNextAnomaly = (): VoiceAnomalyModel | null => {
-  if (!currentVerse.value || !anomalies.value.length) {
+  if (!currentVerse.value || !groupedAnomalies.value.length) {
     return null
   }
 
-  const currentIndex = anomalies.value.findIndex(anomaly => anomaly.code === currentVerse.value!.code)
-  if (currentIndex >= 0) {
-    // Search for next anomaly with status 'detected' starting from current index + 1
-    for (let i = currentIndex + 1; i < anomalies.value.length; i++) {
-      if (anomalies.value[i].status === 'detected') {
-        return anomalies.value[i]
+  // Get current verse coordinates
+  const currentVerseKey = `${currentVerse.value.book_number}-${currentVerse.value.chapter_number}-${currentVerse.value.verse_number}`
+  
+  // Find current verse group in grouped anomalies
+  const currentGroupIndex = groupedAnomalies.value.findIndex(group => {
+    const groupKey = `${group.book_number}-${group.chapter_number}-${group.verse_number}`
+    return groupKey === currentVerseKey
+  })
+
+  if (currentGroupIndex >= 0) {
+    // Search for next verse group with at least one anomaly with status 'detected'
+    for (let i = currentGroupIndex + 1; i < groupedAnomalies.value.length; i++) {
+      const group = groupedAnomalies.value[i]
+      
+      // Check if this group has any anomalies with status 'detected'
+      if (group.anomalies && Array.isArray(group.anomalies)) {
+        const hasDetectedAnomaly = group.anomalies.some((a: VoiceAnomalyModel) => a.status === 'detected')
+        if (hasDetectedAnomaly) {
+          // Return the first anomaly from this group (or the group itself)
+          return group
+        }
+      } else if (group.status === 'detected') {
+        // Single anomaly (not grouped)
+        return group
       }
     }
   }
@@ -2026,6 +2044,38 @@ const playNextVerse = async () => {
   }
 }
 
+// Helper function to update status for all anomalies in a group
+const handleGroupStatusChange = async (anomalyOrGroup: any, newStatus: AnomalyStatus, showToast: boolean = true) => {
+  // Check if this is a grouped anomaly (has 'anomalies' array)
+  if (anomalyOrGroup.anomalies && Array.isArray(anomalyOrGroup.anomalies) && anomalyOrGroup.anomalies.length > 1) {
+    // Update status for all anomalies in the group
+    for (const anomaly of anomalyOrGroup.anomalies) {
+      await handleStatusChange(anomaly, newStatus, false) // Don't show toast for each one
+    }
+    
+    // Update the group object itself to reflect the new status
+    anomalyOrGroup.status = newStatus
+    if (anomalyOrGroup.anomalies) {
+      anomalyOrGroup.anomalies.forEach((a: VoiceAnomalyModel) => {
+        a.status = newStatus
+      })
+    }
+    
+    // Show single toast for the group
+    if (showToast) {
+      toast.add({
+        severity: 'success',
+        summary: 'Status Updated',
+        detail: `${anomalyOrGroup.anomalies.length} anomalies status changed to ${getStatusLabel(newStatus)}`,
+        life: 3000
+      })
+    }
+  } else {
+    // Single anomaly - update normally
+    await handleStatusChange(anomalyOrGroup, newStatus, showToast)
+  }
+}
+
 // Functions for anomaly status change from mini-player
 const confirmAnomaly = async () => {
   if (currentVerse.value) {
@@ -2038,7 +2088,7 @@ const confirmAnomaly = async () => {
     }
     
     console.log('Before handleStatusChange - currentVerse.status:', currentVerse.value.status)
-    await handleStatusChange(currentVerse.value, 'confirmed', !autoAdvanceToNext.value)
+    await handleGroupStatusChange(currentVerse.value, 'confirmed', !autoAdvanceToNext.value)
     console.log('After handleStatusChange - currentVerse.status:', currentVerse.value.status)
     // Initialize correction interface after confirming anomaly
     console.log('confirmAnomaly: currentExcerptVerse exists:', !!currentExcerptVerse.value)
@@ -2052,7 +2102,7 @@ const confirmAnomaly = async () => {
 const disproveAnomaly = async () => {
   if (currentVerse.value) {
     showButtonAnimation.value = false
-    await handleStatusChange(currentVerse.value, 'disproved', !autoAdvanceToNext.value)
+    await handleGroupStatusChange(currentVerse.value, 'disproved', !autoAdvanceToNext.value)
     await advanceToNextVerse()
   }
 }
