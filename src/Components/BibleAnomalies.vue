@@ -578,6 +578,7 @@ import type { VoiceAnomalyModel, BookModel, AnomalyStatus, AnomalyType, ExcerptR
 import { useVoiceAnomalies, useTranslations, useBooks, type VoiceWithTranslation } from '../composables/useApi'
 import { bibleApiService } from '../services/api'
 import { useToast } from 'primevue/usetoast'
+import { createAudioUrlWithAuth, fetchWithAuth } from '../utils/audio'
 // Lucide imports
 import {
   RotateCcw as RefreshIcon,
@@ -1476,7 +1477,7 @@ const highlightSpecificWord = (verseText: string, parts: string[], wordIndex: nu
 // Function to get alternative audio URL from structured API error response
 const getAlternativeAudioUrl = async (originalUrl: string): Promise<string | null> => {
   try {
-    const response = await fetch(originalUrl)
+    const response = await fetchWithAuth(originalUrl)
     if (response.status === 404) {
       const errorData = await response.json()
       if (errorData.detail && errorData.detail.alternative_url) {
@@ -1611,7 +1612,7 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
     adjacentVerses.value = excerptResult.excerpt.parts[0].verses
 
     // Create audio element with URL from excerpt
-    const audio = new Audio(excerptResult.audioUrl)
+    const audio = new Audio(createAudioUrlWithAuth(excerptResult.audioUrl))
     audioElement.value = audio
 
     // Add load error handler
@@ -1691,7 +1692,7 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
           audio.src = ''
 
           // Create new audio with alternative URL
-          const newAudio = new Audio(alternativeUrl)
+          const newAudio = new Audio(createAudioUrlWithAuth(alternativeUrl))
           audioElement.value = newAudio
 
           // Set up same event listeners for new audio
@@ -2355,7 +2356,7 @@ const previewStartTime = async () => {
       console.log('No audio URL available')
       return
     }
-    audioElement.value = new Audio(audioUrl)
+    audioElement.value = new Audio(createAudioUrlWithAuth(audioUrl))
     audioElement.value.preload = 'metadata'
     console.log('Audio element created with URL:', audioUrl)
   }
@@ -2418,7 +2419,7 @@ const previewEndTime = async () => {
       console.log('No audio URL available')
       return
     }
-    audioElement.value = new Audio(audioUrl)
+    audioElement.value = new Audio(createAudioUrlWithAuth(audioUrl))
     audioElement.value.preload = 'metadata'
     console.log('Audio element created with URL:', audioUrl)
   }

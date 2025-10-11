@@ -1,6 +1,6 @@
 <template>
     <div class="h-screen flex relative lg:static bg-surface-50 dark:bg-surface-950">
-        <div id="app-sidebar-13"
+        <div v-if="activeComponent !== 'login'" id="app-sidebar-13"
             class="w-[280px] bg-surface-50 dark:bg-surface-950 h-screen hidden lg:block flex-shrink-0 absolute lg:fixed left-0 top-0 z-10 select-none shadow-lg lg:shadow-none">
             <div class="flex flex-col h-full lg:py-8">
                 <div class="flex items-center justify-start px-4 py-4">
@@ -170,6 +170,23 @@
                                                 class="w-4 h-4 text-primary-600 dark:text-primary-400 ml-auto" />
                                         </a>
                                     </li>
+                                    <li class="h-px bg-surface-200 dark:bg-surface-700 my-1" />
+                                    <li v-if="isAuthenticated">
+                                        <a @click="handleLogout"
+                                            class="flex items-center cursor-pointer p-2 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-150 group">
+                                            <Lock
+                                                class="w-4 h-4" />
+                                            <span class="ml-2 font-medium text-sm">Выйти</span>
+                                        </a>
+                                    </li>
+                                    <li v-else>
+                                        <a @click="activeComponent = 'login'; showSettingsMenu = false"
+                                            class="flex items-center cursor-pointer p-2 rounded-lg text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors duration-150 group">
+                                            <Lock
+                                                class="w-4 h-4" />
+                                            <span class="ml-2 font-medium text-sm">Войти</span>
+                                        </a>
+                                    </li>
                                 </ul>
                             </div>
                         </li>
@@ -179,8 +196,17 @@
         </div>
 
         <div
-            class="h-screen flex flex-col flex-auto bg-surface-50 dark:bg-surface-950 p-5 md:p-8 lg:pl-2 lg:ml-[280px] overflow-hidden">
-            <div
+            :class="[
+                'h-screen flex flex-col flex-auto bg-surface-50 dark:bg-surface-950 overflow-hidden',
+                activeComponent !== 'login' ? 'p-5 md:p-8 lg:pl-2 lg:ml-[280px]' : ''
+            ]">
+            <!-- Login Page - Full Screen -->
+            <Login v-if="activeComponent === 'login'" 
+                @login-success="handleLoginSuccess" 
+                @skip-login="handleSkipLogin" />
+            
+            <!-- Main App Content -->
+            <div v-else
                 class="bg-surface-0 dark:bg-surface-900 flex flex-col flex-auto rounded-xl shadow-md border border-surface-200 dark:border-surface-700 overflow-hidden">
                 <!-- Main Content Area - full height scrollable -->
                 <div class="flex-auto overflow-y-auto p-5 md:p-8">
@@ -239,8 +265,11 @@ import InputText from 'primevue/inputtext'
 import Toast from 'primevue/toast'
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import type { ActiveComponent } from '../types/components'
+import { useAuth } from '../composables/useAuth'
+import { useToast } from 'primevue/usetoast'
 
 // Import components
+import Login from './Login.vue'
 import Welcome from './Welcome.vue'
 import BibleVoices from './BibleVoices.vue'
 import BibleAnomalies from './BibleAnomalies.vue'
@@ -275,6 +304,9 @@ import {
 const isDarkMode = ref<boolean>(false)
 const activeComponent = ref<ActiveComponent>('welcome')
 const showSettingsMenu = ref<boolean>(false)
+
+const { isAuthenticated, logout } = useAuth()
+const toast = useToast()
 
 // Dynamic page title based on active component
 const pageTitle = computed(() => {
@@ -326,6 +358,17 @@ onMounted(() => {
 
     // Add click outside listener
     document.addEventListener('click', handleClickOutside)
+    
+    // Слушаем событие неавторизованного доступа
+    window.addEventListener('auth:unauthorized', () => {
+        toast.add({
+            severity: 'warn',
+            summary: 'Сессия истекла',
+            detail: 'Пожалуйста, войдите снова',
+            life: 5000
+        })
+        activeComponent.value = 'login'
+    })
 });
 
 onUnmounted(() => {
@@ -355,4 +398,30 @@ function setTheme(theme: 'light' | 'dark'): void {
     isDarkMode.value = document.documentElement.classList.contains('dark')
     showSettingsMenu.value = false // Close menu after selection
 }
+
+function handleLoginSuccess(): void {
+    toast.add({
+        severity: 'success',
+        summary: 'Успешная авторизация',
+        detail: 'Вы успешно вошли в систему',
+        life: 3000
+    })
+    activeComponent.value = 'welcome'
+}
+
+function handleSkipLogin(): void {
+    activeComponent.value = 'welcome'
+}
+
+function handleLogout(): void {
+    logout()
+    toast.add({
+        severity: 'info',
+        summary: 'Выход',
+        detail: 'Вы вышли из системы',
+        life: 3000
+    })
+    activeComponent.value = 'login'
+}
+
 </script>

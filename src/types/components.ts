@@ -22,7 +22,7 @@ export type StatusSeverity = 'success' | 'warn' | 'danger' | 'secondary' | 'info
 export type ErrorTypeSeverity = 'danger' | 'warn' | 'info' | 'secondary'
 
 // Navigation types
-export type ActiveComponent = 'welcome' | 'bible_voices' | 'bible_anomalies' | 'bible_inspect' | 'alignment_tasks'
+export type ActiveComponent = 'welcome' | 'bible_voices' | 'bible_anomalies' | 'bible_inspect' | 'alignment_tasks' | 'login'
 
 // Theme types
 export interface ThemeState {

@@ -377,6 +377,7 @@ import type { ExcerptResponse, ExcerptVerseModel, BookModel } from '../types/api
 import { useTranslations, useBooks, type VoiceWithTranslation } from '../composables/useApi'
 import { bibleApiService } from '../services/api'
 import { useToast } from 'primevue/usetoast'
+import { createAudioUrlWithAuth } from '../utils/audio'
 // Lucide imports
 import {
   RotateCcw as RefreshIcon,
@@ -634,7 +635,7 @@ const previewStartTime = async () => {
     }
 
     // Create new audio element
-    audioElement.value = new Audio(part.audio_link)
+    audioElement.value = new Audio(createAudioUrlWithAuth(part.audio_link))
     
     audioElement.value.addEventListener('loadedmetadata', () => {
       if (audioElement.value) {
@@ -673,7 +674,7 @@ const previewEndTime = async () => {
     }
 
     // Create new audio element
-    audioElement.value = new Audio(part.audio_link)
+    audioElement.value = new Audio(createAudioUrlWithAuth(part.audio_link))
     
     audioElement.value.addEventListener('loadedmetadata', () => {
       if (audioElement.value) {
@@ -874,7 +875,7 @@ const playVerse = async (verse: ExcerptVerseModel) => {
     }
 
     // Create new audio element
-    audioElement.value = new Audio(part.audio_link)
+    audioElement.value = new Audio(createAudioUrlWithAuth(part.audio_link))
     
     audioElement.value.addEventListener('loadedmetadata', () => {
       if (audioElement.value) {

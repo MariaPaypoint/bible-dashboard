@@ -1,129 +1,76 @@
-# Bible Dashboard
+# Forced Alignments Dashboard
 
-A modern web application for analyzing Bible forced alignments data. Built with Vue 3, PrimeVue, and Tailwind CSS, this dashboard provides comprehensive tools for managing and analyzing voice data and anomalies in Bible translations.
+Веб-приложение для управления и анализа данных принудительного выравнивания аудио и текста Библии. Поддерживает работу с голосами, аномалиями, задачами выравнивания и авторизацию.
 
-![Bible Dashboard](public/dashboard-preview-light.png)
-
-## 🚀 Features
-
-### Core Functionality
-- 🎤 **Voice Management** - Browse and manage Bible voice data with advanced filtering
-- ⚠️ **Anomaly Detection** - View and analyze forced alignment anomalies
-- 🔍 **Advanced Search** - Filter voices by code and alias simultaneously
-- 📊 **Data Tables** - Sortable and filterable data presentation
-- 🌐 **Multi-language Support** - Handle multiple Bible translations
-
-### UI/UX Features
-- 📎 Modern UI based on [PrimeVue](https://primevue.org/)
-- 🎨 Light and dark theme support with smooth transitions
-- 📱 Fully responsive design for desktop and mobile devices
-- 🧭 Dynamic navigation with contextual headers
-- 🔧 Fixed sidebar with always-visible settings
-- ⚡ Optimized scrolling - sidebar stays fixed, content scrolls independently
-
-## 🛠️ Tech Stack
-
-### Frontend
-- **Vue 3** - Progressive JavaScript framework with Composition API
-- **TypeScript** - Type-safe JavaScript development
-- **Vite** - Fast build tool and development server
-- **Tailwind CSS 3** - Utility-first CSS framework
-- **PrimeVue 4** - Comprehensive UI component library
-- **PrimeIcons** - Icon set for modern interfaces
-
-### Data & API
-- **Custom Composables** - Reusable logic for translations, languages, and API calls
-- **RESTful API Integration** - Seamless data fetching and management
-- **Reactive State Management** - Vue 3 reactivity system
-
-## 🔧 Development Setup
+## 🚀 Быстрый старт
 
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd bible-dashboard
-
-# Install dependencies
+# Установка зависимостей
 npm install
 
-# Start development server
+# Настройка API ключа
+cp .env.example .env
+# Отредактируйте .env и укажите VITE_API_KEY
+
+# Запуск dev сервера
 npm run dev
 ```
 
-The application will be available at `http://localhost:5173`
+Приложение будет доступно на `http://localhost:5173`
 
-## 📦 Production Build
+## 📋 Основные функции
+
+- **🎧 Управление голосами** - просмотр и управление голосами переводов
+- **⚠️ Работа с аномалиями** - анализ и исправление аномалий выравнивания
+- **🔍 Инспектор Библии** - просмотр глав с аудио и таймингом
+- **⏱️ Задачи выравнивания** - создание и мониторинг задач MFA
+- **🔐 Авторизация** - API ключ для чтения, JWT для изменений
+- **🎨 Темная тема** - автоматическое определение системной темы
+
+## 🛠️ Технологии
+
+- Vue 3 + TypeScript
+- Vite 5.4.19
+- PrimeVue 4 + TailwindCSS
+- Axios для API
+- Lucide для иконок
+
+## 📦 Сборка
 
 ```bash
+# Production сборка
 npm run build
+
+# Preview сборки
+npm run preview
 ```
 
-Built files will be placed in the `dist` directory.
-
-## 🧩 Project Structure
+## 📁 Структура
 
 ```
-├── public/                    # Static files and assets
-├── src/
-│   ├── assets/                # Images, logos, and static resources
-│   ├── Components/            # Vue components
-│   │   ├── BaseLayout.vue     # Main layout with sidebar and navigation
-│   │   ├── BibleVoices.vue    # Voice data management interface
-│   │   ├── BibleAnomalies.vue # Anomaly detection and analysis
-│   │   └── Welcome.vue        # Dashboard welcome screen
-│   ├── composables/           # Reusable composition functions
-│   │   ├── useApi.ts          # API integration utilities
-│   │   ├── useTranslations.ts # Translation data management
-│   │   └── useLanguages.ts    # Language data handling
-│   ├── App.vue                # Root application component
-│   └── main.ts                # Application entry point
-├── index.html                 # HTML template
-├── tailwind.config.js         # Tailwind CSS configuration
-├── tsconfig.json              # TypeScript configuration
-└── vite.config.ts             # Vite build configuration
+/src
+  /Components       - Vue компоненты
+  /composables      - Composables (useApi, useAuth, useAlignmentTasks)
+  /services         - API сервисы (api.ts, auth.ts)
+  /config           - Конфигурация (api.ts)
+  /utils            - Утилиты (audio.ts)
+  /types            - TypeScript типы
+/docs               - Документация
 ```
 
-## 📋 Key Components
+## 📚 Документация
 
-### 🎤 Voices Management
-- **Advanced Filtering**: Search voices by code and alias simultaneously
-- **Multi-column Sorting**: Sort by language, translation, name, code, or alias
-- **Pagination**: Configurable rows per page (15, 50, 100)
-- **Active Status Toggle**: Filter active/inactive voices
-- **Bulk Operations**: Activate/deactivate multiple voices
+Полная документация находится в папке **[docs/](docs/)**:
 
-### ⚠️ Anomaly Detection
-- **Comprehensive Analysis**: View forced alignment anomalies across translations
-- **Reference Tracking**: Track specific Bible references with anomalies
-- **Ratio Analysis**: Analyze anomaly ratios and patterns
-- **Filterable Data**: Search and filter anomalies by various criteria
-- **Export Capabilities**: Export anomaly data for further analysis
+- **[AUTH.md](docs/AUTH.md)** - Авторизация (API ключ и JWT)
+- **[DEVELOPMENT.md](docs/DEVELOPMENT.md)** - Разработка и структура проекта
+- **[CHANGELOG.md](docs/CHANGELOG.md)** - История изменений
+- **[EXCERPT_API.md](docs/EXCERPT_API.md)** - API отрывков
 
-### 🧭 Navigation & UX
-- **Fixed Sidebar**: Always-visible navigation with Settings access
-- **Dynamic Headers**: Context-aware page titles and icons
-- **Responsive Design**: Optimized for desktop and mobile devices
-- **Dark/Light Theme**: Seamless theme switching with persistence
-- **Optimized Scrolling**: Independent content scrolling for better UX
+## 🔑 Авторизация
 
-## 🔧 Technical Features
+Два уровня доступа:
+- **API ключ** → чтение данных (языки, переводы, аудио)
+- **JWT токен** → изменение данных (голоса, аномалии)
 
-### Performance Optimizations
-- **Lazy Loading**: Components loaded on demand
-- **Reactive Filtering**: Real-time data filtering without API calls
-- **Computed Properties**: Efficient data transformations
-- **Memory Management**: Optimized state management
-
-### API Integration
-- **RESTful Endpoints**: Clean API integration
-- **Error Handling**: Comprehensive error management
-- **Loading States**: User-friendly loading indicators
-- **Data Caching**: Efficient data retrieval and caching
-
-## 📚 Documentation
-
-- [Vue 3](https://v3.vuejs.org/)
-- [Tailwind CSS](https://tailwindcss.com/)
-- [PrimeVue](https://primevue.org/)
-- [TypeScript](https://www.typescriptlang.org/)
-- [Vite](https://vitejs.dev/)
+Настройка: создайте `.env` и укажите `VITE_API_KEY`

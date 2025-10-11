@@ -24,12 +24,17 @@ import type {
   ModelType,
   ModelsUpdateResponse
 } from '../types/api'
+import { authService } from './auth'
+import { API_CONFIG, isPublicEndpoint, isAdminEndpoint } from '../config/api'
 
 // Exported to allow creating multiple API instances (e.g., general and Bible alignment)
 export class ApiService {
   private api: AxiosInstance
+  private isBibleApi: boolean
 
   constructor(baseURL: string = '/alignment-api') {
+    this.isBibleApi = baseURL.includes('bible-api')
+    
     this.api = axios.create({
       baseURL,
       timeout: 10000,
@@ -41,7 +46,26 @@ export class ApiService {
     // Request interceptor
     this.api.interceptors.request.use(
       (config) => {
-        // API Request logging removed
+        // Добавляем заголовки авторизации только для Bible API
+        if (this.isBibleApi) {
+          const url = config.url || ''
+          
+          // Для публичных эндпоинтов добавляем API ключ
+          if (isPublicEndpoint(url)) {
+            if (API_CONFIG.API_KEY) {
+              config.headers['X-API-Key'] = API_CONFIG.API_KEY
+            }
+          }
+          
+          // Для административных эндпоинтов добавляем JWT токен
+          if (isAdminEndpoint(url)) {
+            const authHeader = authService.getAuthHeader()
+            if (authHeader) {
+              config.headers['Authorization'] = authHeader
+            }
+          }
+        }
+        
         return config
       },
       (error) => {
@@ -58,7 +82,17 @@ export class ApiService {
       },
       (error) => {
         console.error('API Response Error:', error.response?.data || error.message)
-        if (error.response?.status === 422) {
+        
+        // Обработка ошибок авторизации
+        if (error.response?.status === 401) {
+          // Токен истек или отсутствует
+          authService.clearToken()
+          // Можно добавить редирект на страницу логина
+          window.dispatchEvent(new CustomEvent('auth:unauthorized'))
+        } else if (error.response?.status === 403) {
+          // Неверный API ключ
+          console.error('Invalid or missing API Key')
+        } else if (error.response?.status === 422) {
           console.error('422 Error Details:', {
             status: error.response.status,
             data: error.response.data,
@@ -69,6 +103,7 @@ export class ApiService {
             }
           })
         }
+        
         return Promise.reject(error)
       }
     )
