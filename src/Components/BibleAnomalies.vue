@@ -323,11 +323,19 @@
           </template>
         </div>
         <!-- Auto-advance checkbox -->
-        <div class="flex items-center gap-2 pt-4 mt-2 border-t border-surface-200 dark:border-surface-700">
-          <Checkbox v-model="autoAdvanceToNext" inputId="autoAdvance" binary />
-          <label for="autoAdvance" class="text-sm text-surface-700 dark:text-surface-200 cursor-pointer">
-            Automatically advance to next verse
-          </label>
+        <div class="flex flex-col gap-2 pt-4 mt-2 border-t border-surface-200 dark:border-surface-700">
+          <div class="flex items-center gap-2">
+            <Checkbox v-model="autoAdvanceToNext" inputId="autoAdvance" binary />
+            <label for="autoAdvance" class="text-sm text-surface-700 dark:text-surface-200 cursor-pointer">
+              Automatically advance to next verse
+            </label>
+          </div>
+          <div class="flex items-center gap-2">
+            <Checkbox v-model="quickCheckMode" inputId="quickCheck" binary />
+            <label for="quickCheck" class="text-sm text-surface-700 dark:text-surface-200 cursor-pointer">
+              Quick Check
+            </label>
+          </div>
         </div>
 
         <!-- Verse Correction Interface - Variant 1: Compact Inline -->
@@ -629,6 +637,8 @@ const currentTime = ref(0)
 const duration = ref(0)
 const progressUpdateInterval = ref<number | null>(null)
 const autoAdvanceToNext = ref(false) // Auto-advance to next verse checkbox
+const quickCheckMode = ref(false) // Quick check mode: play first 2s, pause 0.5s, play last 2s
+const isQuickCheckActive = ref(false) // Whether quick check is actually running (for verses >= 6s)
 const currentVerseType = ref<'original' | 'previous' | 'next'>('original') // Type of currently playing verse
 const originalVerseNumber = ref<number | null>(null) // Store original verse number with anomaly
 
@@ -1637,6 +1647,11 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
       // NOW show the player since audio loaded successfully
       showPlayer.value = true
       isPlaying.value = true
+
+      // If quick check mode is enabled, handle special playback
+      if (quickCheckMode.value) {
+        handleQuickCheckPlayback(audio)
+      }
     })
 
     audio.addEventListener('timeupdate', () => {
@@ -1653,8 +1668,8 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
       const verseCurrentTime = audio.currentTime - currentExcerptVerse.value.begin
       currentTime.value = Math.max(0, verseCurrentTime)
 
-      // Stop when reaching verse end
-      if (audio.currentTime >= currentExcerptVerse.value.end) {
+      // Stop when reaching verse end (skip if in quick check mode, handled separately)
+      if (!isQuickCheckActive.value && audio.currentTime >= currentExcerptVerse.value.end) {
         onAudioComplete()
       }
     })
@@ -1697,6 +1712,11 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
             duration.value = currentExcerptVerse.value.end - currentExcerptVerse.value.begin
             showPlayer.value = true
             isPlaying.value = true
+
+            // If quick check mode is enabled, handle special playback
+            if (quickCheckMode.value) {
+              handleQuickCheckPlayback(newAudio)
+            }
           })
 
           newAudio.addEventListener('timeupdate', () => {
@@ -1711,7 +1731,8 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
 
             const verseCurrentTime = newAudio.currentTime - currentExcerptVerse.value.begin
             currentTime.value = Math.max(0, verseCurrentTime)
-            if (newAudio.currentTime >= currentExcerptVerse.value.end) {
+            // Stop when reaching verse end (skip if in quick check mode, handled separately)
+            if (!isQuickCheckActive.value && newAudio.currentTime >= currentExcerptVerse.value.end) {
               onAudioComplete()
             }
           })
@@ -1874,6 +1895,72 @@ const seekToPosition = (event: MouseEvent) => {
   currentTime.value = newTime
 }
 
+// Function to handle quick check playback: first 2s, pause 0.5s, last 2s
+const handleQuickCheckPlayback = async (audio: HTMLAudioElement) => {
+  if (!currentExcerptVerse.value) return
+
+  const verseBegin = currentExcerptVerse.value.begin
+  const verseEnd = currentExcerptVerse.value.end
+  const verseDuration = verseEnd - verseBegin
+
+  // If verse is shorter than 6 seconds, play normally
+  if (verseDuration < 6) {
+    isQuickCheckActive.value = false
+    return
+  }
+
+  // Mark quick check as active
+  isQuickCheckActive.value = true
+
+  try {
+    // Play first 2 seconds
+    audio.currentTime = verseBegin
+    await audio.play()
+
+    // Wait for 2 seconds
+    await new Promise<void>((resolve) => {
+      const checkTime = () => {
+        if (audio.currentTime >= verseBegin + 2) {
+          audio.removeEventListener('timeupdate', checkTime)
+          resolve()
+        }
+      }
+      audio.addEventListener('timeupdate', checkTime)
+    })
+
+    // Pause audio
+    audio.pause()
+
+    // Wait 0.5 seconds
+    await new Promise(resolve => setTimeout(resolve, 500))
+
+    // Play last 2 seconds
+    const lastSegmentStart = Math.max(verseBegin, verseEnd - 2)
+    audio.currentTime = lastSegmentStart
+
+    await audio.play()
+
+    // Wait until the end
+    await new Promise<void>((resolve) => {
+      const checkEnd = () => {
+        if (audio.currentTime >= verseEnd) {
+          audio.removeEventListener('timeupdate', checkEnd)
+          resolve()
+        }
+      }
+      audio.addEventListener('timeupdate', checkEnd)
+    })
+
+    // Complete playback
+    isQuickCheckActive.value = false
+    onAudioComplete()
+  } catch (error) {
+    console.error('Error in quick check playback:', error)
+    isQuickCheckActive.value = false
+    onAudioComplete()
+  }
+}
+
 // Function to handle audio completion without closing player
 const onAudioComplete = () => {
   if (audioElement.value) {
@@ -1909,6 +1996,7 @@ const stopPlaying = () => {
   currentTime.value = 0
   duration.value = 0
   showButtonAnimation.value = false
+  isQuickCheckActive.value = false
   currentVerseType.value = 'original' // Reset to original verse type
   originalVerseNumber.value = null // Clear original verse number
 
