@@ -6,9 +6,9 @@
  */
 
 export const API_CONFIG = {
-  // API ключ для публичных эндпоинтов
+  // API ключ для публичных эндпоинтов Bible API
   // Замените на ваш реальный API ключ
-  API_KEY: import.meta.env.VITE_API_KEY || '',
+  API_KEY: import.meta.env.VITE_BIBLE_API_KEY || '',
   
   // Базовые URL для API
   BIBLE_API_URL: '/bible-api',

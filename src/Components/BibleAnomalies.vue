@@ -14,8 +14,14 @@
                   :title="slotProps.option.displayName">
                   {{ truncateText(slotProps.option.displayName) }}
                 </span>
-                <Tag :value="slotProps.option.anomalies_count"
-                  :severity="slotProps.option.anomalies_count === 0 ? 'secondary' : 'info'" class="ml-2" />
+                <div class="flex gap-1">
+                  <Tag :value="slotProps.option.anomalies_open_count || 0"
+                    :severity="(slotProps.option.anomalies_open_count || 0) === 0 ? 'success' : 'warn'"
+                    :title="'Open anomalies (detected/confirmed)'" />
+                  <Tag :value="slotProps.option.anomalies_count"
+                    :severity="slotProps.option.anomalies_count === 0 ? 'secondary' : 'info'"
+                    :title="'Total anomalies'" />
+                </div>
               </div>
             </template>
             <template #value="slotProps">
@@ -23,9 +29,14 @@
                 <span :title="getSelectedVoiceDisplayName(slotProps.value)">
                   {{ truncateText(getSelectedVoiceDisplayName(slotProps.value)) }}
                 </span>
-                <Tag :value="getSelectedVoiceAnomaliesCount(slotProps.value)"
-                  :severity="getSelectedVoiceAnomaliesCount(slotProps.value) === 0 ? 'secondary' : 'info'"
-                  class="ml-2" />
+                <div class="flex gap-1">
+                  <Tag :value="getSelectedVoiceOpenAnomaliesCount(slotProps.value)"
+                    :severity="getSelectedVoiceOpenAnomaliesCount(slotProps.value) === 0 ? 'success' : 'warn'"
+                    :title="'Open anomalies (detected/confirmed)'" />
+                  <Tag :value="getSelectedVoiceAnomaliesCount(slotProps.value)"
+                    :severity="getSelectedVoiceAnomaliesCount(slotProps.value) === 0 ? 'secondary' : 'info'"
+                    :title="'Total anomalies'" />
+                </div>
               </div>
             </template>
           </Select>
@@ -787,7 +798,8 @@ const availableVoices = computed(() => {
   return voices.value.map(voice => ({
     ...voice,
     displayName: `${voice.name} (${voice.translation.name} - ${voice.translation.language})`,
-    anomalies_count: voice.anomalies_count || 0
+    anomalies_count: voice.anomalies_count || 0,
+    anomalies_open_count: voice.anomalies_open_count || 0
   }))
 })
 
@@ -805,6 +817,11 @@ const getSelectedVoiceDisplayName = (voiceCode: number): string => {
 const getSelectedVoiceAnomaliesCount = (voiceCode: number): number => {
   const voice = voices.value.find(v => v.code === voiceCode)
   return voice ? voice.anomalies_count || 0 : 0
+}
+
+const getSelectedVoiceOpenAnomaliesCount = (voiceCode: number): number => {
+  const voice = voices.value.find(v => v.code === voiceCode)
+  return voice ? voice.anomalies_open_count || 0 : 0
 }
 
 // Functions for selected book display

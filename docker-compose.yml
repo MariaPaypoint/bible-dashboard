@@ -1,0 +1,30 @@
+services:
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bible-dashboard
+    ports:
+      - "5173:5173"
+    volumes:
+      # Монтируем исходный код для hot reload
+      - ./src:/app/src
+      - ./index.html:/app/index.html
+      - ./vite.config.js:/app/vite.config.js
+      - ./tailwind.config.js:/app/tailwind.config.js
+      - ./postcss.config.js:/app/postcss.config.js
+      - ./.env:/app/.env
+      # Исключаем node_modules из монтирования
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - VITE_ALIGNMENT_API_TARGET=${VITE_ALIGNMENT_API_TARGET:-http://localhost:8002}
+      - VITE_BIBLE_API_TARGET=${VITE_BIBLE_API_TARGET:-https://localhost:8001/api}
+    stdin_open: true
+    tty: true
+    networks:
+      - dashboard-network
+
+networks:
+  dashboard-network:
+    driver: bridge

@@ -15,8 +15,9 @@ npm install
 
 Создайте `.env` файл:
 ```env
-VITE_API_KEY=your_api_key_here
+cp .env.example .env
 ```
+и сконфигурируйте его. 
 
 ## Запуск
 

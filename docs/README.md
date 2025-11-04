@@ -25,7 +25,7 @@ npm install
 
 # 2. Конфигурация
 cp .env.example .env
-# Укажите VITE_API_KEY в .env
+# Укажите VITE_BIBLE_API_KEY в .env
 
 # 3. Запуск
 npm run dev

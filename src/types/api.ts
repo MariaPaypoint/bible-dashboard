@@ -7,6 +7,7 @@ export interface VoiceModel {
   is_music: boolean
   active: boolean
   anomalies_count: number
+  anomalies_open_count?: number
 }
 
 // Translation model from API

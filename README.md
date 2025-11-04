@@ -10,7 +10,7 @@ npm install
 
 # Настройка API ключа
 cp .env.example .env
-# Отредактируйте .env и укажите VITE_API_KEY
+# Отредактируйте .env и укажите VITE_BIBLE_API_KEY
 
 # Запуск dev сервера
 npm run dev
@@ -73,4 +73,4 @@ npm run preview
 - **API ключ** → чтение данных (языки, переводы, аудио)
 - **JWT токен** → изменение данных (голоса, аномалии)
 
-Настройка: создайте `.env` и укажите `VITE_API_KEY`
+Настройка: создайте `.env` и укажите `VITE_BIBLE_API_KEY`

@@ -9,7 +9,7 @@
 
 2. **Укажите API ключ:**
    ```env
-   VITE_API_KEY=your_api_key_here
+   VITE_BIBLE_API_KEY=your_api_key_here
    ```
 
 3. **Запустите приложение:**
