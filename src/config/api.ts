@@ -1,22 +1,22 @@
 /**
- * Конфигурация API
+ * API Configuration
  * 
- * API_KEY используется для публичных эндпоинтов (чтение данных)
- * JWT токены используются для административных эндпоинтов (изменение данных)
+ * API_KEY is used for public endpoints (reading data)
+ * JWT tokens are used for administrative endpoints (modifying data)
  */
 
 export const API_CONFIG = {
-  // API ключ для публичных эндпоинтов Bible API
-  // Замените на ваш реальный API ключ
+  // API key for public Bible API endpoints
+  // Replace with your actual API key
   API_KEY: import.meta.env.VITE_BIBLE_API_KEY || '',
   
-  // Базовые URL для API
+  // Base URLs for APIs
   BIBLE_API_URL: '/bible-api',
   ALIGNMENT_API_URL: '/alignment-api',
 }
 
 /**
- * Публичные эндпоинты, требующие только API ключ
+ * Public endpoints requiring only API key
  */
 export const PUBLIC_ENDPOINTS = [
   '/languages',
@@ -29,7 +29,7 @@ export const PUBLIC_ENDPOINTS = [
 ]
 
 /**
- * Административные эндпоинты, требующие JWT токен
+ * Administrative endpoints requiring JWT token
  */
 export const ADMIN_ENDPOINTS = [
   '/voices/',
@@ -40,14 +40,14 @@ export const ADMIN_ENDPOINTS = [
 ]
 
 /**
- * Проверить, является ли эндпоинт публичным
+ * Check if endpoint is public
  */
 export function isPublicEndpoint(url: string): boolean {
   return PUBLIC_ENDPOINTS.some(endpoint => url.includes(endpoint))
 }
 
 /**
- * Проверить, является ли эндпоинт административным
+ * Check if endpoint is administrative
  */
 export function isAdminEndpoint(url: string): boolean {
   return ADMIN_ENDPOINTS.some(endpoint => url.includes(endpoint))

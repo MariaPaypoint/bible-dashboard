@@ -1110,11 +1110,11 @@ const getStatusLabel = (status: AnomalyStatus): string => {
 
 const getStatusSeverity = (status: AnomalyStatus): 'success' | 'info' | 'warn' | 'danger' | 'secondary' => {
   const severityMap = {
-    'detected': 'warn' as const,     // желтый
-    'confirmed': 'danger' as const,  // красный
-    'disproved': 'success' as const, // зеленый
-    'corrected': 'success' as const, // зеленый
-    'already_resolved': 'success' as const // зеленый
+    'detected': 'warn' as const,     // yellow
+    'confirmed': 'danger' as const,  // red
+    'disproved': 'success' as const, // green
+    'corrected': 'success' as const, // green
+    'already_resolved': 'success' as const // green
   }
   return severityMap[status] || 'secondary'
 }
@@ -1210,7 +1210,7 @@ const getRowClass = (data: VoiceAnomalyModel) => {
 // Function to apply inline styles to the currently playing row
 const getRowStyle = (data: VoiceAnomalyModel) => {
   if (currentPlayingId.value === data.code) {
-    // Определяем темную тему по классу документа
+    // Determine dark theme by document class
     const isDarkTheme = document.documentElement.classList.contains('dark')
 
     if (isDarkTheme) {

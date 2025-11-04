@@ -782,7 +782,7 @@ const decrementChapter = () => {
 
 const incrementChapter = () => {
   if (!selectedChapter.value) {
-    // Если глава не введена, устанавливаем первую
+    // If chapter is not entered, set to first
     selectedChapter.value = 1
   } else if (selectedChapter.value < 150) {
     selectedChapter.value++
@@ -1059,12 +1059,12 @@ onUnmounted(() => {
   padding-top: 3rem !important;
 }
 
-/* Центрирование текста в поле ввода главы */
+/* Center text in chapter input field */
 :deep(.p-inputnumber-input) {
   text-align: center;
 }
 
-/* Подсветка проигрываемой строки с PrimeVue цветами */
+/* Highlight playing row with PrimeVue colors */
 :deep(.playing-row) {
   background-color: var(--p-primary-50) !important;
   border-left: 4px solid var(--p-primary-500) !important;
@@ -1080,7 +1080,7 @@ onUnmounted(() => {
   border-color: var(--p-primary-200) !important;
 }
 
-/* Темная тема */
+/* Dark theme */
 .dark :deep(.playing-row) {
   background-color: var(--p-primary-900) !important;
   border-left: 4px solid var(--p-primary-400) !important;

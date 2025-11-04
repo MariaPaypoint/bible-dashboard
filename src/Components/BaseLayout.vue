@@ -335,31 +335,32 @@ const handleClickOutside = (event: Event) => {
 }
 
 onMounted(() => {
-    // Проверяем системные настройки темы
+    // Check system theme settings
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
-    // Если тема еще не выбрана, устанавливаем системную
+    // If theme is not selected yet, set system theme
     if (prefersDark && !document.documentElement.classList.contains('dark')) {
         document.documentElement.classList.add('dark');
     }
 
-    // Обновляем состояние иконки
+    // Update icon state
     isDarkMode.value = document.documentElement.classList.contains('dark');
 
-    // Добавляем отслеживание изменений системной темы
+    // Add system theme change tracking
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
         if (!e.matches) {
             document.documentElement.classList.remove('dark');
+            isDarkMode.value = false;
         } else {
             document.documentElement.classList.add('dark');
+            isDarkMode.value = true;
         }
-        isDarkMode.value = document.documentElement.classList.contains('dark');
     });
 
     // Add click outside listener
     document.addEventListener('click', handleClickOutside)
     
-    // Слушаем событие неавторизованного доступа
+    // Listen for unauthorized access event
     window.addEventListener('auth:unauthorized', () => {
         toast.add({
             severity: 'warn',
@@ -377,7 +378,7 @@ onUnmounted(() => {
 
 function toggleDarkMode(): void {
     document.documentElement.classList.toggle('dark')
-    // Обновляем состояние для иконки
+    // Update state for icon
     isDarkMode.value = document.documentElement.classList.contains('dark')
 }
 

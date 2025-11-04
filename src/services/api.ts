@@ -46,18 +46,18 @@ export class ApiService {
     // Request interceptor
     this.api.interceptors.request.use(
       (config) => {
-        // Добавляем заголовки авторизации только для Bible API
+        // Add authorization headers only for Bible API
         if (this.isBibleApi) {
           const url = config.url || ''
           
-          // Для публичных эндпоинтов добавляем API ключ
+          // Add API key for public endpoints
           if (isPublicEndpoint(url)) {
             if (API_CONFIG.API_KEY) {
               config.headers['X-API-Key'] = API_CONFIG.API_KEY
             }
           }
           
-          // Для административных эндпоинтов добавляем JWT токен
+          // Add JWT token for administrative endpoints
           if (isAdminEndpoint(url)) {
             const authHeader = authService.getAuthHeader()
             if (authHeader) {
@@ -83,14 +83,14 @@ export class ApiService {
       (error) => {
         console.error('API Response Error:', error.response?.data || error.message)
         
-        // Обработка ошибок авторизации
+        // Handle authorization errors
         if (error.response?.status === 401) {
-          // Токен истек или отсутствует
+          // Token expired or missing
           authService.clearToken()
-          // Можно добавить редирект на страницу логина
+          // Can add redirect to login page
           window.dispatchEvent(new CustomEvent('auth:unauthorized'))
         } else if (error.response?.status === 403) {
-          // Неверный API ключ
+          // Invalid API key
           console.error('Invalid or missing API Key')
         } else if (error.response?.status === 422) {
           console.error('422 Error Details:', {

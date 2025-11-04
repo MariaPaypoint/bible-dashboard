@@ -1,38 +1,38 @@
 import { API_CONFIG } from '../config/api'
 
 /**
- * Создает URL с API ключом для аудио файлов
- * Поскольку HTML Audio элемент не поддерживает кастомные заголовки,
- * добавляем API ключ как query параметр
+ * Creates URL with API key for audio files
+ * Since HTML Audio element doesn't support custom headers,
+ * we add API key as query parameter
  * 
- * ПРИМЕЧАНИЕ: Это работает только если API поддерживает API ключ в query параметрах
+ * NOTE: This only works if API supports API key in query parameters
  */
 export function createAudioUrlWithAuth(url: string): string {
   if (!url) return url
   
-  // Если API ключ не настроен, возвращаем URL как есть
+  // If API key is not configured, return URL as is
   if (!API_CONFIG.API_KEY) {
-    console.warn('API_KEY не настроен. Аудио может не загрузиться.')
+    console.warn('API_KEY is not configured. Audio may not load.')
     return url
   }
   
-  // Проверяем, является ли это аудио URL
+  // Check if this is an audio URL
   if (!url.includes('/audio/')) {
     return url
   }
   
-  // Добавляем API ключ как query параметр
+  // Add API key as query parameter
   const separator = url.includes('?') ? '&' : '?'
   return `${url}${separator}api_key=${encodeURIComponent(API_CONFIG.API_KEY)}`
 }
 
 /**
- * Выполняет fetch запрос с API ключом в заголовке
+ * Performs fetch request with API key in header
  */
 export async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
   const headers = new Headers(options.headers)
   
-  // Добавляем API ключ для публичных эндпоинтов
+  // Add API key for public endpoints
   if (API_CONFIG.API_KEY && url.includes('/audio/')) {
     headers.set('X-API-Key', API_CONFIG.API_KEY)
   }
@@ -44,18 +44,18 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}): Pro
 }
 
 /**
- * Загружает аудио файл с авторизацией и создает Blob URL
+ * Loads audio file with authorization and creates Blob URL
  * 
- * ВНИМАНИЕ: Это временное решение с недостатками:
- * - Загружает весь файл в память
- * - Не работает стриминг
- * - Большое потребление памяти
+ * WARNING: This is a temporary solution with drawbacks:
+ * - Loads entire file into memory
+ * - Streaming doesn't work
+ * - High memory consumption
  * 
- * Используйте только если API не поддерживает API ключ в query параметрах
+ * Use only if API doesn't support API key in query parameters
  */
 export async function createAuthenticatedAudioBlob(url: string): Promise<string> {
   if (!API_CONFIG.API_KEY) {
-    console.warn('API_KEY не настроен. Возвращаем оригинальный URL.')
+    console.warn('API_KEY is not configured. Returning original URL.')
     return url
   }
   
@@ -77,7 +77,7 @@ export async function createAuthenticatedAudioBlob(url: string): Promise<string>
 }
 
 /**
- * Очищает Blob URL для освобождения памяти
+ * Cleans up Blob URL to free memory
  */
 export function revokeBlobUrl(blobUrl: string): void {
   if (blobUrl.startsWith('blob:')) {
