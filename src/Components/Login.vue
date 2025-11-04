@@ -10,7 +10,7 @@
           Forced Alignments
         </h1>
         <p class="text-surface-600 dark:text-surface-400">
-          Войдите для доступа к административным функциям
+          Log in to access administrative functions
         </p>
       </div>
 
@@ -20,13 +20,13 @@
           <!-- Username Field -->
           <div>
             <label for="username" class="block text-sm font-medium text-surface-900 dark:text-surface-0 mb-2">
-              Имя пользователя
+              Username
             </label>
             <InputText
               id="username"
               v-model="username"
               type="text"
-              placeholder="Введите имя пользователя"
+              placeholder="Enter username"
               class="w-full"
               :class="{ 'p-invalid': error }"
               :disabled="isLoading"
@@ -38,12 +38,12 @@
           <!-- Password Field -->
           <div>
             <label for="password" class="block text-sm font-medium text-surface-900 dark:text-surface-0 mb-2">
-              Пароль
+              Password
             </label>
             <Password
               id="password"
               v-model="password"
-              placeholder="Введите пароль"
+              placeholder="Enter password"
               :feedback="false"
               toggleMask
               class="w-full"
@@ -63,7 +63,7 @@
           <!-- Submit Button -->
           <Button
             type="submit"
-            label="Войти"
+            label="Login"
             icon="pi pi-sign-in"
             class="w-full"
             :loading="isLoading"
@@ -77,10 +77,10 @@
             @click="handleSkip"
             class="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 cursor-pointer transition-colors"
           >
-            Продолжить без авторизации
+            Continue without authorization
           </a>
           <p class="text-xs text-surface-500 dark:text-surface-400 mt-2">
-            Доступны только функции просмотра
+            Only viewing functions available
           </p>
         </div>
       </div>
@@ -94,7 +94,7 @@
         >
           <component :is="isDarkMode ? Sun : Moon" class="w-5 h-5" />
           <span class="text-sm font-medium">
-            {{ isDarkMode ? 'Светлая тема' : 'Темная тема' }}
+            {{ isDarkMode ? 'Light theme' : 'Dark theme' }}
           </span>
         </button>
       </div>
@@ -148,7 +148,7 @@ const toggleTheme = () => {
 </script>
 
 <style scoped>
-/* Дополнительные стили для Password компонента */
+/* Additional styles for Password component */
 :deep(.p-password) {
   width: 100%;
 }

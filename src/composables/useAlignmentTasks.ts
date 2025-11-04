@@ -49,8 +49,8 @@ export function useAlignmentTasks() {
       console.error('Error loading tasks:', error)
       toast.add({
         severity: 'error',
-        summary: 'Ошибка',
-        detail: 'Не удалось загрузить задачи выравнивания',
+        summary: 'Error',
+        detail: 'Failed to load alignment tasks',
         life: 3000
       })
     } finally {
@@ -65,8 +65,8 @@ export function useAlignmentTasks() {
       console.error('Error loading languages:', error)
       toast.add({
         severity: 'error',
-        summary: 'Ошибка',
-        detail: 'Не удалось загрузить языки',
+        summary: 'Error',
+        detail: 'Failed to load languages',
         life: 3000
       })
     }
@@ -104,8 +104,8 @@ export function useAlignmentTasks() {
       console.error('Error loading models:', error)
       toast.add({
         severity: 'error',
-        summary: 'Ошибка',
-        detail: 'Не удалось загрузить модели для выбранного языка',
+        summary: 'Error',
+        detail: 'Failed to load models for selected language',
         life: 3000
       })
     }
@@ -118,15 +118,15 @@ export function useAlignmentTasks() {
       
       toast.add({
         severity: 'success',
-        summary: 'Успех',
-        detail: 'Задача выравнивания создана успешно',
+        summary: 'Success',
+        detail: 'Alignment task created successfully',
         life: 3000
       })
       
       return newTask
     } catch (error: any) {
       console.error('Error creating task:', error)
-      let errorMessage = 'Не удалось создать задачу выравнивания'
+      let errorMessage = 'Failed to create alignment task'
       
       if (error.response?.data?.detail) {
         errorMessage = error.response.data.detail
@@ -138,7 +138,7 @@ export function useAlignmentTasks() {
       
       toast.add({
         severity: 'error',
-        summary: 'Ошибка',
+        summary: 'Error',
         detail: errorMessage,
         life: 5000
       })
@@ -154,13 +154,13 @@ export function useAlignmentTasks() {
       
       toast.add({
         severity: 'success',
-        summary: 'Успех',
-        detail: 'Задача удалена успешно',
+        summary: 'Success',
+        detail: 'Task deleted successfully',
         life: 3000
       })
     } catch (error: any) {
       console.error('Error deleting task:', error)
-      let errorMessage = 'Не удалось удалить задачу'
+      let errorMessage = 'Failed to delete task'
       
       if (error.response?.data?.detail) {
         errorMessage = error.response.data.detail
@@ -172,7 +172,7 @@ export function useAlignmentTasks() {
       
       toast.add({
         severity: 'error',
-        summary: 'Ошибка',
+        summary: 'Error',
         detail: errorMessage,
         life: 3000
       })
@@ -188,8 +188,8 @@ export function useAlignmentTasks() {
       console.error('Error getting task:', error)
       toast.add({
         severity: 'error',
-        summary: 'Ошибка',
-        detail: 'Не удалось загрузить детали задачи',
+        summary: 'Error',
+        detail: 'Failed to load task details',
         life: 3000
       })
       throw error

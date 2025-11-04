@@ -284,23 +284,23 @@ const deleteTask = async (task: AlignmentTaskResponse) => {
     
     toast.add({
       severity: 'success',
-      summary: 'Успех',
-      detail: `Задание #${String(task.id).padStart(4, '0')} успешно удалено`,
+      summary: 'Success',
+      detail: `Task #${String(task.id).padStart(4, '0')} successfully deleted`,
       life: 3000
     })
   } catch (error: any) {
     console.error('Error deleting task:', error)
     
-    let errorMessage = 'Не удалось удалить задание'
+    let errorMessage = 'Failed to delete task'
     if (error.response?.data?.detail) {
       errorMessage = error.response.data.detail
     } else if (error.response?.status === 404) {
-      errorMessage = 'Задание не найдено'
+      errorMessage = 'Task not found'
     }
     
     toast.add({
       severity: 'error',
-      summary: 'Ошибка',
+      summary: 'Error',
       detail: errorMessage,
       life: 3000
     })
@@ -377,8 +377,8 @@ const onTaskCreated = (task: AlignmentTaskResponse) => {
   
   toast.add({
     severity: 'success',
-    summary: 'Задание создано',
-    detail: `Задание #${String(task.id).padStart(4, '0')} успешно добавлено в очередь`,
+    summary: 'Task created',
+    detail: `Task #${String(task.id).padStart(4, '0')} successfully added to queue`,
     life: 3000
   })
 }

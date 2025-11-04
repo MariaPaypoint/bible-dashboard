@@ -15,7 +15,7 @@ export function useAuth() {
       isAuthenticated.value = true
       return true
     } catch (err: any) {
-      error.value = err.message || 'Ошибка авторизации'
+      error.value = err.message || 'Authorization error'
       isAuthenticated.value = false
       return false
     } finally {

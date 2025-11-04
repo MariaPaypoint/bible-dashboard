@@ -2,7 +2,7 @@
   <Dialog 
     v-model:visible="visible" 
     modal 
-    :header="'Создать новое задание выравнивания'"
+    :header="'Create new alignment task'"
     :style="{ width: '50rem' }" 
     :breakpoints="{ '1199px': '75vw', '575px': '90vw' }"
     class="p-fluid"
@@ -15,7 +15,7 @@
         <!-- Audio File -->
         <div class="flex flex-col gap-2">
           <label class="text-sm font-medium text-surface-900 dark:text-surface-0">
-            Аудиофайл <span class="text-red-500">*</span>
+            Audio file <span class="text-red-500">*</span>
           </label>
           <FileUpload
             ref="audioFileUpload"
@@ -24,20 +24,20 @@
             :multiple="false"
             accept="audio/mp3,audio/wav,.mp3,.wav"
             :maxFileSize="100000000"
-            chooseLabel="Выбрать аудиофайл"
+            chooseLabel="Choose audio file"
             class="w-full"
             @select="onAudioFileSelect"
             @clear="formData.audio_file = null"
             :class="{ 'p-invalid': errors.audio_file }"
           />
           <small v-if="errors.audio_file" class="text-red-500">{{ errors.audio_file }}</small>
-          <small class="text-surface-500">Поддерживаемые форматы: MP3, WAV (макс. 100MB)</small>
+          <small class="text-surface-500">Supported formats: MP3, WAV (max. 100MB)</small>
         </div>
 
         <!-- Text File -->
         <div class="flex flex-col gap-2">
           <label class="text-sm font-medium text-surface-900 dark:text-surface-0">
-            Текстовый файл <span class="text-red-500">*</span>
+            Text file <span class="text-red-500">*</span>
           </label>
           <FileUpload
             ref="textFileUpload"
@@ -46,33 +46,33 @@
             :multiple="false"
             accept="text/plain,.txt"
             :maxFileSize="10000000"
-            chooseLabel="Выбрать текстовый файл"
+            chooseLabel="Choose text file"
             class="w-full"
             @select="onTextFileSelect"
             @clear="formData.text_file = null"
             :class="{ 'p-invalid': errors.text_file }"
           />
           <small v-if="errors.text_file" class="text-red-500">{{ errors.text_file }}</small>
-          <small class="text-surface-500">Поддерживаемые форматы: TXT (макс. 10MB)</small>
+          <small class="text-surface-500">Supported formats: TXT (max. 10MB)</small>
         </div>
       </div>
 
       <!-- Language Selection -->
       <div class="flex flex-col gap-2">
         <label class="text-sm font-medium text-surface-900 dark:text-surface-0">
-          Язык <span class="text-red-500">*</span>
+          Language <span class="text-red-500">*</span>
         </label>
         <Select
           v-model="selectedLanguage"
           :options="languages"
           optionLabel="name"
           optionValue="code"
-          placeholder="Выберите язык"
+          placeholder="Select language"
           :loading="loadingLanguages"
           @change="onLanguageChange"
           :class="{ 'p-invalid': errors.language }"
           filter
-          filterPlaceholder="Поиск языка..."
+          filterPlaceholder="Search language..."
         />
         <small v-if="errors.language" class="text-red-500">{{ errors.language }}</small>
       </div>
@@ -82,13 +82,13 @@
         <!-- Acoustic Model -->
         <div class="flex flex-col gap-2">
           <label class="text-sm font-medium text-surface-900 dark:text-surface-0">
-            Акустическая модель <span class="text-red-500">*</span>
+            Acoustic model <span class="text-red-500">*</span>
           </label>
           <Select
             v-model="selectedAcousticModel"
             :options="acousticModels"
             :optionLabel="(model) => `${model.name} v${model.version}`"
-            placeholder="Выберите акустическую модель"
+            placeholder="Select acoustic model"
             :loading="loadingModels"
             :disabled="!selectedLanguage"
             :class="{ 'p-invalid': errors.acoustic_model }"
@@ -108,13 +108,13 @@
         <!-- Dictionary Model -->
         <div class="flex flex-col gap-2">
           <label class="text-sm font-medium text-surface-900 dark:text-surface-0">
-            Словарная модель <span class="text-red-500">*</span>
+            Dictionary model <span class="text-red-500">*</span>
           </label>
           <Select
             v-model="selectedDictionaryModel"
             :options="dictionaryModels"
             :optionLabel="(model) => `${model.name} v${model.version}`"
-            placeholder="Выберите словарную модель"
+            placeholder="Select dictionary model"
             :loading="loadingModels"
             :disabled="!selectedLanguage"
             :class="{ 'p-invalid': errors.dictionary_model }"
@@ -135,13 +135,13 @@
       <!-- G2P Model (Optional) -->
       <div class="flex flex-col gap-2">
         <label class="text-sm font-medium text-surface-900 dark:text-surface-0">
-          G2P модель (опционально)
+          G2P model (optional)
         </label>
         <Select
           v-model="selectedG2PModel"
           :options="g2pModels"
           :optionLabel="(model) => `${model.name} v${model.version}`"
-          placeholder="Выберите G2P модель (опционально)"
+          placeholder="Select G2P model (optional)"
           :loading="loadingModels"
           :disabled="!selectedLanguage"
           showClear
@@ -155,20 +155,20 @@
             </div>
           </template>
         </Select>
-        <small class="text-surface-500">G2P модель используется для генерации произношения неизвестных слов</small>
+        <small class="text-surface-500">G2P model is used to generate pronunciation for unknown words</small>
       </div>
     </form>
 
     <template #footer>
       <div class="flex justify-end gap-2">
         <Button 
-          label="Отмена" 
+          label="Cancel" 
           severity="secondary" 
           @click="handleCancel"
           :disabled="loading"
         />
         <Button 
-          label="Создать задание" 
+          label="Create task" 
           @click="handleSubmit"
           :loading="loading"
           :disabled="!isFormValid"
@@ -270,8 +270,8 @@ const loadLanguages = async () => {
     console.error('Error loading languages:', error)
     toast.add({
       severity: 'error',
-      summary: 'Ошибка',
-      detail: 'Не удалось загрузить список языков',
+      summary: 'Error',
+      detail: 'Failed to load language list',
       life: 3000
     })
   } finally {
@@ -297,8 +297,8 @@ const loadModels = async (language: string) => {
     console.error('Error loading models:', error)
     toast.add({
       severity: 'error',
-      summary: 'Ошибка',
-      detail: 'Не удалось загрузить модели для выбранного языка',
+      summary: 'Error',
+      detail: 'Failed to load models for selected language',
       life: 3000
     })
   } finally {
@@ -348,23 +348,23 @@ const validateForm = () => {
   errors.value = {}
   
   if (!formData.value.audio_file) {
-    errors.value.audio_file = 'Аудиофайл обязателен'
+    errors.value.audio_file = 'Audio file is required'
   }
   
   if (!formData.value.text_file) {
-    errors.value.text_file = 'Текстовый файл обязателен'
+    errors.value.text_file = 'Text file is required'
   }
   
   if (!selectedLanguage.value) {
-    errors.value.language = 'Выберите язык'
+    errors.value.language = 'Select language'
   }
   
   if (!selectedAcousticModel.value) {
-    errors.value.acoustic_model = 'Выберите акустическую модель'
+    errors.value.acoustic_model = 'Select acoustic model'
   }
   
   if (!selectedDictionaryModel.value) {
-    errors.value.dictionary_model = 'Выберите словарную модель'
+    errors.value.dictionary_model = 'Select dictionary model'
   }
 }
 
@@ -402,8 +402,8 @@ const handleSubmit = async () => {
   if (!isFormValid.value) {
     toast.add({
       severity: 'warn',
-      summary: 'Внимание',
-      detail: 'Пожалуйста, заполните все обязательные поля',
+      summary: 'Warning',
+      detail: 'Please fill in all required fields',
       life: 3000
     })
     return
@@ -433,8 +433,8 @@ const handleSubmit = async () => {
     
     toast.add({
       severity: 'success',
-      summary: 'Успех',
-      detail: 'Задание выравнивания успешно создано',
+      summary: 'Success',
+      detail: 'Alignment task successfully created',
       life: 3000
     })
     
@@ -445,7 +445,7 @@ const handleSubmit = async () => {
   } catch (error: any) {
     console.error('Error creating alignment task:', error)
     
-    let errorMessage = 'Не удалось создать задание выравнивания'
+    let errorMessage = 'Failed to create alignment task'
     if (error.response?.data?.detail) {
       if (Array.isArray(error.response.data.detail)) {
         errorMessage = error.response.data.detail.map((err: any) => err.msg).join(', ')
@@ -456,7 +456,7 @@ const handleSubmit = async () => {
     
     toast.add({
       severity: 'error',
-      summary: 'Ошибка',
+      summary: 'Error',
       detail: errorMessage,
       life: 5000
     })

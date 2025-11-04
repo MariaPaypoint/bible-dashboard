@@ -176,7 +176,7 @@
                                             class="flex items-center cursor-pointer p-2 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-150 group">
                                             <Lock
                                                 class="w-4 h-4" />
-                                            <span class="ml-2 font-medium text-sm">Выйти</span>
+                                            <span class="ml-2 font-medium text-sm">Logout</span>
                                         </a>
                                     </li>
                                     <li v-else>
@@ -184,7 +184,7 @@
                                             class="flex items-center cursor-pointer p-2 rounded-lg text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors duration-150 group">
                                             <Lock
                                                 class="w-4 h-4" />
-                                            <span class="ml-2 font-medium text-sm">Войти</span>
+                                            <span class="ml-2 font-medium text-sm">Login</span>
                                         </a>
                                     </li>
                                 </ul>
@@ -364,8 +364,8 @@ onMounted(() => {
     window.addEventListener('auth:unauthorized', () => {
         toast.add({
             severity: 'warn',
-            summary: 'Сессия истекла',
-            detail: 'Пожалуйста, войдите снова',
+            summary: 'Session expired',
+            detail: 'Please log in again',
             life: 5000
         })
         activeComponent.value = 'login'
@@ -403,8 +403,8 @@ function setTheme(theme: 'light' | 'dark'): void {
 function handleLoginSuccess(): void {
     toast.add({
         severity: 'success',
-        summary: 'Успешная авторизация',
-        detail: 'Вы успешно вошли в систему',
+        summary: 'Login successful',
+        detail: 'You have successfully logged in',
         life: 3000
     })
     activeComponent.value = 'welcome'
@@ -418,8 +418,8 @@ function handleLogout(): void {
     logout()
     toast.add({
         severity: 'info',
-        summary: 'Выход',
-        detail: 'Вы вышли из системы',
+        summary: 'Logout',
+        detail: 'You have logged out',
         life: 3000
     })
     activeComponent.value = 'login'

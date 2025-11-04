@@ -71,7 +71,7 @@ export async function createAuthenticatedAudioBlob(url: string): Promise<string>
     
     return blobUrl
   } catch (error) {
-    console.error('Ошибка загрузки аудио с авторизацией:', error)
+    console.error('Error loading audio with authorization:', error)
     throw error
   }
 }

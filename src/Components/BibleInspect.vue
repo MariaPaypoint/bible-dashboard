@@ -215,7 +215,7 @@
         <div v-if="!showCorrectionInterface" class="pt-3 border-t border-surface-200 dark:border-surface-700">
           <Button @click="openCorrectionFromPlayer" severity="info" size="small" class="w-full text-xs">
             <InfoIcon class="w-3 h-3 mr-1" />
-            Выполнить коррекцию
+            Perform correction
           </Button>
         </div>
         
@@ -224,16 +224,16 @@
           <div class="flex items-center gap-2 mb-3">
             <Checkbox v-model="autoAdvanceToNext" inputId="autoAdvance" binary />
             <label for="autoAdvance" class="text-sm text-surface-700 dark:text-surface-200 cursor-pointer">
-              Автоматически переходить к следующему стиху
+              Automatically advance to next verse
             </label>
           </div>
           
           <div v-if="autoAdvanceToNext" class="flex items-center gap-2">
-            <span class="text-sm text-surface-700 dark:text-surface-200">Пауза:</span>
+            <span class="text-sm text-surface-700 dark:text-surface-200">Pause:</span>
             <InputNumber v-model="autoAdvancePause" :min="0.5" :max="10" :step="0.5" 
               :minFractionDigits="1" :maxFractionDigits="1" 
               class="w-20" size="small" />
-            <span class="text-sm text-surface-700 dark:text-surface-200">сек</span>
+            <span class="text-sm text-surface-700 dark:text-surface-200">sec</span>
           </div>
         </div>
 

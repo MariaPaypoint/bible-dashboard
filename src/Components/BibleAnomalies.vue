@@ -250,13 +250,13 @@
                   class="w-full px-4 py-3 text-left text-sm text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-700 flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
                   :disabled="!canPlayPreviousVerse" @click="playPreviousVerse">
                   <SkipBackIcon class="w-5 h-5 flex-shrink-0" />
-                  Воспроизвести предыдущий стих
+                  Play previous verse
                 </button>
                 <button
                   class="w-full px-4 py-3 text-left text-sm text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-700 flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
                   :disabled="!canPlayNextVerse" @click="playNextVerse">
                   <SkipForwardIcon class="w-5 h-5 flex-shrink-0" />
-                  Воспроизвести следующий стих
+                  Play next verse
                 </button>
               </div>
             </div>
@@ -2823,38 +2823,38 @@ const createNewAnomaly = async () => {
   animation: pulse-glow 1.5s ease-in-out infinite;
 }
 
-/* Стили для подсветки воспроизводимой строки */
+/* Styles for highlighting playing row */
 .p-datatable .p-datatable-tbody>tr.playing-row {
   position: relative;
   border-bottom: none !important;
-  /* Убираем стандартную нижнюю границу */
+  /* Remove standard bottom border */
 }
 
-/* Стили для светлой темы */
+/* Styles for light theme */
 :root:not(.dark) .p-datatable .p-datatable-tbody>tr.playing-row {
   background-color: #e3f2fd !important;
   box-shadow: inset 4px 0 0 #2196f3, 0 1px 0 0 #e3f2fd !important;
-  /* Левая граница и нижняя тень */
+  /* Left border and bottom shadow */
 }
 
 :root:not(.dark) .p-datatable .p-datatable-tbody>tr.playing-row>td {
   background-color: #e3f2fd !important;
   border-bottom-color: #bbdefb !important;
-  /* Светлее нижняя граница */
+  /* Lighter bottom border */
 }
 
-/* Стили для темной темы */
+/* Styles for dark theme */
 .dark .p-datatable .p-datatable-tbody>tr.playing-row {
   background-color: rgba(25, 118, 210, 0.2) !important;
-  /* Более насыщенный синий для темной темы */
+  /* More saturated blue for dark theme */
   box-shadow: inset 4px 0 0 #42a5f5, 0 1px 0 0 rgba(25, 118, 210, 0.2) !important;
-  /* Левая граница и нижняя тень */
+  /* Left border and bottom shadow */
 }
 
 .dark .p-datatable .p-datatable-tbody>tr.playing-row>td {
   background-color: rgba(25, 118, 210, 0.2) !important;
   border-bottom-color: rgba(66, 165, 245, 0.3) !important;
-  /* Светлее нижняя граница для темной темы */
+  /* Lighter bottom border for dark theme */
 }
 
 /* Custom anomaly type colors */
