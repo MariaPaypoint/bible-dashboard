@@ -334,18 +334,77 @@
           </template>
         </div>
         <!-- Auto-advance checkbox -->
-        <div class="flex flex-col gap-2 pt-4 mt-2 border-t border-surface-200 dark:border-surface-700">
-          <div class="flex items-center gap-2">
-            <Checkbox v-model="autoAdvanceToNext" inputId="autoAdvance" binary />
-            <label for="autoAdvance" class="text-sm text-surface-700 dark:text-surface-200 cursor-pointer">
-              Automatically advance to next verse
-            </label>
+        <div class="relative flex pt-4 mt-2 border-t border-surface-200 dark:border-surface-700">
+          <!-- Left side: Checkboxes and settings -->
+          <div class="flex-1 flex flex-col gap-2">
+            <div class="flex items-center gap-2">
+              <Checkbox v-model="quickCheckMode" inputId="quickCheck" binary />
+              <label for="quickCheck" class="text-sm text-surface-700 dark:text-surface-200 cursor-pointer">
+                Quick Check
+              </label>
+            </div>
+            <div class="flex items-center gap-2">
+              <Checkbox v-model="autoAdvanceToNext" inputId="autoAdvance" binary />
+              <label for="autoAdvance" class="text-sm text-surface-700 dark:text-surface-200 cursor-pointer">
+                Automatically advance to next verse
+              </label>
+            </div>
+            <div class="flex items-center gap-2">
+              <Checkbox v-model="autoAcceptOnTimer" inputId="autoAcceptTimer" binary :disabled="!autoAdvanceToNext" />
+              <label for="autoAcceptTimer" class="text-sm text-surface-700 dark:text-surface-200 cursor-pointer" :class="{ 'opacity-50': !autoAdvanceToNext }">
+                Auto-accept on timer
+              </label>
+            </div>
+            <div v-if="autoAcceptOnTimer && autoAdvanceToNext" class="flex items-center gap-2 ml-6">
+              <span class="text-sm text-surface-700 dark:text-surface-200">Timer:</span>
+              <InputNumber v-model="autoAcceptTimerDuration" :min="1" :max="30" :step="1" 
+                class="w-20" size="small" :disabled="autoAcceptTimeRemaining > 0" />
+              <span class="text-sm text-surface-700 dark:text-surface-200">sec</span>
+            </div>
           </div>
-          <div class="flex items-center gap-2">
-            <Checkbox v-model="quickCheckMode" inputId="quickCheck" binary />
-            <label for="quickCheck" class="text-sm text-surface-700 dark:text-surface-200 cursor-pointer">
-              Quick Check
-            </label>
+          
+          <!-- Right side: Circular timer indicator -->
+          <div v-if="autoAcceptTimeRemaining > 0" class="flex items-center justify-end pl-4 shrink-0">
+            <div class="relative flex items-center justify-center" style="width: 70px; height: 70px;">
+              <svg viewBox="0 0 70 70" class="w-full h-full transform -rotate-90">
+                <!-- Background circle -->
+                <circle
+                  cx="35"
+                  cy="35"
+                  r="30"
+                  stroke="currentColor"
+                  stroke-width="6"
+                  fill="none"
+                  class="text-surface-200 dark:text-surface-700"
+                />
+                <!-- Progress circle -->
+                <circle
+                  cx="35"
+                  cy="35"
+                  r="30"
+                  stroke="url(#gradient)"
+                  stroke-width="6"
+                  fill="none"
+                  stroke-linecap="round"
+                  :stroke-dasharray="188.5"
+                  :stroke-dashoffset="188.5 * (1 - autoAcceptTimeRemaining / (autoAcceptTimerDuration * 10))"
+                  class="transition-all duration-100 ease-linear"
+                />
+                <!-- Gradient definition -->
+                <defs>
+                  <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:rgb(59, 130, 246);stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:rgb(34, 197, 94);stop-opacity:1" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <!-- Timer text in center -->
+              <div class="absolute inset-0 flex items-center justify-center">
+                <span class="text-xl font-bold text-primary-600 dark:text-primary-400">
+                  {{ Math.ceil(autoAcceptTimeRemaining / 10) }}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -653,6 +712,10 @@ const quickCheckMode = ref(false) // Quick check mode: play first 2s, pause 0.5s
 const isQuickCheckActive = ref(false) // Whether quick check is actually running (for verses >= 6s)
 const currentVerseType = ref<'original' | 'previous' | 'next'>('original') // Type of currently playing verse
 const originalVerseNumber = ref<number | null>(null) // Store original verse number with anomaly
+const autoAcceptOnTimer = ref(false) // Auto-accept verse on timer after playback
+const autoAcceptTimerDuration = ref(5) // Timer duration in seconds (default 5s)
+const autoAcceptTimerId = ref<number | null>(null) // Timer ID for auto-accept
+const autoAcceptTimeRemaining = ref(0) // Remaining time for auto-accept timer
 
 // Excerpt data state
 const currentExcerpt = ref<ExcerptResponse | null>(null)
@@ -1580,6 +1643,9 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
     // Reset correction interface when switching verses
     showCorrectionInterface.value = false
     
+    // Clear auto-accept timer when starting new verse playback
+    clearAutoAcceptTimer()
+    
     // Ensure translations are loaded
     if (voices.value.length === 0) {
       await fetchTranslations()
@@ -1994,6 +2060,9 @@ const onAudioComplete = () => {
 
   // Start button animation to prompt user action
   showButtonAnimation.value = true
+  
+  // Start auto-accept timer if enabled
+  startAutoAcceptTimer()
 }
 
 const stopPlaying = () => {
@@ -2006,6 +2075,9 @@ const stopPlaying = () => {
     clearInterval(progressUpdateInterval.value)
     progressUpdateInterval.value = null
   }
+  
+  // Clear auto-accept timer
+  clearAutoAcceptTimer()
 
   showPlayer.value = false
   isPlaying.value = false
@@ -2080,6 +2152,40 @@ const advanceToNextVerse = async () => {
   } else {
     stopPlaying()
   }
+}
+
+// Auto-accept timer functions
+const startAutoAcceptTimer = () => {
+  // Clear any existing timer
+  clearAutoAcceptTimer()
+  
+  // Only start timer if auto-accept is enabled and auto-advance is enabled
+  if (!autoAcceptOnTimer.value || !autoAdvanceToNext.value || !currentVerse.value) {
+    return
+  }
+  
+  // Initialize remaining time in deciseconds (tenths of a second)
+  // Multiply by 10 to get smooth animation with 100ms intervals
+  autoAcceptTimeRemaining.value = autoAcceptTimerDuration.value * 10
+  
+  // Start countdown timer with 100ms intervals
+  autoAcceptTimerId.value = window.setInterval(() => {
+    autoAcceptTimeRemaining.value -= 1
+    
+    if (autoAcceptTimeRemaining.value <= 0) {
+      clearAutoAcceptTimer()
+      // Auto-accept the verse as correct
+      disproveAnomaly()
+    }
+  }, 100)
+}
+
+const clearAutoAcceptTimer = () => {
+  if (autoAcceptTimerId.value !== null) {
+    clearInterval(autoAcceptTimerId.value)
+    autoAcceptTimerId.value = null
+  }
+  autoAcceptTimeRemaining.value = 0
 }
 
 // Navigation menu functions
@@ -2187,6 +2293,9 @@ const confirmAnomaly = async () => {
   if (currentVerse.value) {
     showButtonAnimation.value = false
     
+    // Clear auto-accept timer when user manually confirms
+    clearAutoAcceptTimer()
+    
     // Stop audio playback if it's currently playing
     if (isPlaying.value && audioElement.value) {
       audioElement.value.pause()
@@ -2208,6 +2317,10 @@ const confirmAnomaly = async () => {
 const disproveAnomaly = async () => {
   if (currentVerse.value) {
     showButtonAnimation.value = false
+    
+    // Clear auto-accept timer when user manually disproves
+    clearAutoAcceptTimer()
+    
     await handleGroupStatusChange(currentVerse.value, 'disproved', !autoAdvanceToNext.value)
     await advanceToNextVerse()
   }
@@ -2512,6 +2625,14 @@ watch(currentExcerptVerse, (newVerse) => {
   }
 }, { deep: true })
 
+// Watch for changes in autoAdvanceToNext and disable autoAcceptOnTimer if it's turned off
+watch(autoAdvanceToNext, (newValue) => {
+  if (!newValue) {
+    autoAcceptOnTimer.value = false
+    clearAutoAcceptTimer()
+  }
+})
+
 // Initialize data on mount
 onMounted(async () => {
   if (voices.value.length === 0) {
@@ -2545,6 +2666,9 @@ onUnmounted(() => {
     clearInterval(progressUpdateInterval.value)
     progressUpdateInterval.value = null
   }
+  
+  // Clear auto-accept timer
+  clearAutoAcceptTimer()
 })
 
 // Functions for adding anomalies to adjacent verses
