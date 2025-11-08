@@ -365,7 +365,12 @@
           
           <!-- Right side: Circular timer indicator -->
           <div v-if="autoAcceptTimeRemaining > 0" class="flex items-center justify-end pl-4 shrink-0">
-            <div class="relative flex items-center justify-center" style="width: 70px; height: 70px;">
+            <div 
+              class="relative flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity" 
+              style="width: 70px; height: 70px;"
+              @click="toggleAutoAcceptTimer"
+              title="Click to pause/resume timer"
+            >
               <svg viewBox="0 0 70 70" class="w-full h-full transform -rotate-90">
                 <!-- Background circle -->
                 <circle
@@ -382,13 +387,13 @@
                   cx="35"
                   cy="35"
                   r="30"
-                  stroke="url(#gradient)"
+                  :stroke="autoAcceptTimerPaused ? 'currentColor' : 'url(#gradient)'"
                   stroke-width="6"
                   fill="none"
                   stroke-linecap="round"
                   :stroke-dasharray="188.5"
                   :stroke-dashoffset="188.5 * (1 - autoAcceptTimeRemaining / (autoAcceptTimerDuration * 10))"
-                  class="transition-all duration-100 ease-linear"
+                  :class="autoAcceptTimerPaused ? 'text-orange-500' : 'transition-all duration-100 ease-linear'"
                 />
                 <!-- Gradient definition -->
                 <defs>
@@ -400,7 +405,7 @@
               </svg>
               <!-- Timer text in center -->
               <div class="absolute inset-0 flex items-center justify-center">
-                <span class="text-xl font-bold text-primary-600 dark:text-primary-400">
+                <span class="text-xl font-bold" :class="autoAcceptTimerPaused ? 'text-orange-500' : 'text-primary-600 dark:text-primary-400'">
                   {{ Math.ceil(autoAcceptTimeRemaining / 10) }}
                 </span>
               </div>
@@ -716,6 +721,7 @@ const autoAcceptOnTimer = ref(false) // Auto-accept verse on timer after playbac
 const autoAcceptTimerDuration = ref(5) // Timer duration in seconds (default 5s)
 const autoAcceptTimerId = ref<number | null>(null) // Timer ID for auto-accept
 const autoAcceptTimeRemaining = ref(0) // Remaining time for auto-accept timer
+const autoAcceptTimerPaused = ref(false) // Whether the timer is paused
 
 // Excerpt data state
 const currentExcerpt = ref<ExcerptResponse | null>(null)
@@ -2159,17 +2165,23 @@ const startAutoAcceptTimer = () => {
   // Clear any existing timer
   clearAutoAcceptTimer()
   
-  // Only start timer if auto-accept is enabled and auto-advance is enabled
-  if (!autoAcceptOnTimer.value || !autoAdvanceToNext.value || !currentVerse.value) {
+  // Only start timer if auto-accept is enabled, auto-advance is enabled, and verse status is 'detected'
+  if (!autoAcceptOnTimer.value || !autoAdvanceToNext.value || !currentVerse.value || currentVerse.value.status !== 'detected') {
     return
   }
   
   // Initialize remaining time in deciseconds (tenths of a second)
   // Multiply by 10 to get smooth animation with 100ms intervals
   autoAcceptTimeRemaining.value = autoAcceptTimerDuration.value * 10
+  autoAcceptTimerPaused.value = false
   
   // Start countdown timer with 100ms intervals
   autoAcceptTimerId.value = window.setInterval(() => {
+    // Skip countdown if paused
+    if (autoAcceptTimerPaused.value) {
+      return
+    }
+    
     autoAcceptTimeRemaining.value -= 1
     
     if (autoAcceptTimeRemaining.value <= 0) {
@@ -2180,12 +2192,18 @@ const startAutoAcceptTimer = () => {
   }, 100)
 }
 
+const toggleAutoAcceptTimer = () => {
+  // Toggle pause state
+  autoAcceptTimerPaused.value = !autoAcceptTimerPaused.value
+}
+
 const clearAutoAcceptTimer = () => {
   if (autoAcceptTimerId.value !== null) {
     clearInterval(autoAcceptTimerId.value)
     autoAcceptTimerId.value = null
   }
   autoAcceptTimeRemaining.value = 0
+  autoAcceptTimerPaused.value = false
 }
 
 // Navigation menu functions
