@@ -2329,8 +2329,15 @@ const confirmAnomaly = async () => {
     clearAutoAcceptTimer()
     
     // Stop audio playback if it's currently playing
-    if (isPlaying.value && audioElement.value) {
+    if (audioElement.value) {
       audioElement.value.pause()
+      audioElement.value = null
+    }
+    if (progressUpdateInterval.value) {
+      clearInterval(progressUpdateInterval.value)
+      progressUpdateInterval.value = null
+    }
+    if (isPlaying.value) {
       isPlaying.value = false
     }
     
@@ -2352,6 +2359,19 @@ const disproveAnomaly = async () => {
     
     // Clear auto-accept timer when user manually disproves
     clearAutoAcceptTimer()
+    
+    // Stop audio playback immediately before advancing
+    if (audioElement.value) {
+      audioElement.value.pause()
+      audioElement.value = null
+    }
+    if (progressUpdateInterval.value) {
+      clearInterval(progressUpdateInterval.value)
+      progressUpdateInterval.value = null
+    }
+    if (isPlaying.value) {
+      isPlaying.value = false
+    }
     
     await handleGroupStatusChange(currentVerse.value, 'disproved', !autoAdvanceToNext.value)
     await advanceToNextVerse()
@@ -2705,7 +2725,12 @@ onUnmounted(() => {
 
 // Functions for adding anomalies to adjacent verses
 const addAnomalyToPreviousVerse = async () => {
-  if (!currentVerse.value || !currentExcerptVerse.value || !originalVerseNumber.value || !adjacentVerses.value) {
+  if (!currentVerse.value || !currentExcerptVerse.value || !adjacentVerses.value) {
+    console.error('Missing data:', {
+      currentVerse: !!currentVerse.value,
+      currentExcerptVerse: !!currentExcerptVerse.value,
+      adjacentVerses: !!adjacentVerses.value
+    })
     toast.add({
       severity: 'error',
       summary: 'Error',
@@ -2716,7 +2741,14 @@ const addAnomalyToPreviousVerse = async () => {
   }
 
   try {
-    const previousVerseNumber = originalVerseNumber.value - 1
+    // Use current excerpt verse number instead of originalVerseNumber
+    const previousVerseNumber = currentExcerptVerse.value.number - 1
+    
+    console.log('Looking for previous verse:', {
+      currentVerseNumber: currentExcerptVerse.value.number,
+      previousVerseNumber,
+      availableVerses: adjacentVerses.value.map(v => v.number)
+    })
     
     // Find previous verse data in adjacent verses
     const previousVerse = adjacentVerses.value.find(v => v.number === previousVerseNumber)
@@ -2724,7 +2756,7 @@ const addAnomalyToPreviousVerse = async () => {
       toast.add({
         severity: 'error',
         summary: 'Error',
-        detail: 'Previous verse not found',
+        detail: `Previous verse (${previousVerseNumber}) not found in loaded data. Available verses: ${adjacentVerses.value.map(v => v.number).join(', ')}`,
         life: 5000
       })
       return
@@ -2779,7 +2811,12 @@ const addAnomalyToPreviousVerse = async () => {
 }
 
 const addAnomalyToNextVerse = async () => {
-  if (!currentVerse.value || !currentExcerptVerse.value || !originalVerseNumber.value || !adjacentVerses.value) {
+  if (!currentVerse.value || !currentExcerptVerse.value || !adjacentVerses.value) {
+    console.error('Missing data:', {
+      currentVerse: !!currentVerse.value,
+      currentExcerptVerse: !!currentExcerptVerse.value,
+      adjacentVerses: !!adjacentVerses.value
+    })
     toast.add({
       severity: 'error',
       summary: 'Error',
@@ -2790,7 +2827,14 @@ const addAnomalyToNextVerse = async () => {
   }
 
   try {
-    const nextVerseNumber = originalVerseNumber.value + 1
+    // Use current excerpt verse number instead of originalVerseNumber
+    const nextVerseNumber = currentExcerptVerse.value.number + 1
+    
+    console.log('Looking for next verse:', {
+      currentVerseNumber: currentExcerptVerse.value.number,
+      nextVerseNumber,
+      availableVerses: adjacentVerses.value.map(v => v.number)
+    })
     
     // Find next verse data in adjacent verses
     const nextVerse = adjacentVerses.value.find(v => v.number === nextVerseNumber)
@@ -2798,7 +2842,7 @@ const addAnomalyToNextVerse = async () => {
       toast.add({
         severity: 'error',
         summary: 'Error',
-        detail: 'Next verse not found',
+        detail: `Next verse (${nextVerseNumber}) not found in loaded data. Available verses: ${adjacentVerses.value.map(v => v.number).join(', ')}`,
         life: 5000
       })
       return
