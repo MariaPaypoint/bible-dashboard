@@ -1032,6 +1032,16 @@ const onSort = async (event: DataTableSortEvent) => {
 
 const refreshData = async () => {
   if (selectedVoice.value) {
+    // Refresh translations/voices to update anomaly counts
+    await fetchTranslations()
+    
+    // Refresh books for selected voice to update anomaly counts
+    const selectedVoiceData = availableVoices.value.find(v => v.code === selectedVoice.value)
+    if (selectedVoiceData) {
+      await fetchBooks(selectedVoiceData.translation.code, selectedVoice.value)
+    }
+    
+    // Refresh anomalies table
     await refreshAnomalies()
   }
 }
