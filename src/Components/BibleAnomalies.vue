@@ -215,7 +215,8 @@
 
     <!-- Mini Audio Player Popup -->
     <div v-if="showPlayer"
-      class="fixed top-4 right-4 w-[420px] bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-2xl shadow-lg p-7 z-50 transition-all duration-500 ease-in-out">
+      class="fixed top-4 right-4 w-[420px] bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-2xl shadow-lg p-7 transition-all duration-500 ease-in-out"
+      style="z-index: 1200;">
       <div class="flex flex-col gap-3">
         <div class="flex items-start justify-between">
           <div class="flex items-center gap-3">
@@ -245,7 +246,8 @@
               </Button>
               <!-- Navigation dropdown menu -->
               <div v-if="showNavigationMenu"
-                class="absolute top-12 right-0 w-56 bg-surface-0 dark:bg-surface-800 border border-surface-200 dark:border-surface-700 rounded-lg shadow-lg z-50 py-1">
+                class="absolute top-12 right-0 w-56 bg-surface-0 dark:bg-surface-800 border border-surface-200 dark:border-surface-700 rounded-lg shadow-lg py-1"
+                style="z-index: 1210;">
                 <button
                   class="w-full px-4 py-3 text-left text-sm text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-700 flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
                   :disabled="!canPlayPreviousVerse" @click="playPreviousVerse">
@@ -631,7 +633,7 @@
     </Dialog>
 
     <!-- Toast notifications -->
-    <Toast />
+    <Toast :position="showPlayer ? 'top-left' : 'top-right'" :pt="{ root: { style: showPlayer ? 'top: 1rem; left: 1rem;' : '' } }" />
   </div>
 </template>
 
