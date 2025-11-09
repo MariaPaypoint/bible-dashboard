@@ -538,10 +538,16 @@
                 <div class="font-semibold mb-1">Begin Time Overlap</div>
                 <div>{{ correctedTimingAnalysis.beginOverlapMessage }}</div>
               </div>
-              <Button @click="correctBeginOverlap" severity="danger" size="small" class="px-2 py-1 text-xs h-6"
-                v-tooltip.top="'Auto-correct begin time overlap'">
-                Correct
-              </Button>
+              <div class="flex flex-col gap-1">
+                <Button @click="correctBeginOverlap" severity="danger" size="small" class="px-2 py-1 text-xs h-6 whitespace-nowrap"
+                  v-tooltip.top="'Auto-correct begin time overlap'">
+                  Correct
+                </Button>
+                <Button @click="addAnomalyToPreviousVerse" severity="warn" size="small" class="px-2 py-1 text-xs h-6 whitespace-nowrap"
+                  v-tooltip.top="'Add manual anomaly to previous verse'">
+                  Add to prev
+                </Button>
+              </div>
             </div>
             
             <div v-if="correctedTimingAnalysis.hasEndOverlap" 
@@ -553,10 +559,16 @@
                 <div class="font-semibold mb-1">End Time Overlap</div>
                 <div>{{ correctedTimingAnalysis.endOverlapMessage }}</div>
               </div>
-              <Button @click="correctEndOverlap" severity="warn" size="small" class="px-2 py-1 text-xs h-6"
-                v-tooltip.top="'Auto-correct end time overlap'">
-                Correct
-              </Button>
+              <div class="flex flex-col gap-1">
+                <Button @click="correctEndOverlap" severity="warn" size="small" class="px-2 py-1 text-xs h-6 whitespace-nowrap"
+                  v-tooltip.top="'Auto-correct end time overlap'">
+                  Correct
+                </Button>
+                <Button @click="addAnomalyToNextVerse" severity="warn" size="small" class="px-2 py-1 text-xs h-6 whitespace-nowrap"
+                  v-tooltip.top="'Add manual anomaly to next verse'">
+                  Add to next
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -2693,7 +2705,7 @@ onUnmounted(() => {
 
 // Functions for adding anomalies to adjacent verses
 const addAnomalyToPreviousVerse = async () => {
-  if (!currentVerse.value || !currentExcerptVerse.value || !originalVerseNumber.value) {
+  if (!currentVerse.value || !currentExcerptVerse.value || !originalVerseNumber.value || !adjacentVerses.value) {
     toast.add({
       severity: 'error',
       summary: 'Error',
@@ -2704,7 +2716,19 @@ const addAnomalyToPreviousVerse = async () => {
   }
 
   try {
-    const previousVerseNumber = currentExcerptVerse.value.number
+    const previousVerseNumber = originalVerseNumber.value - 1
+    
+    // Find previous verse data in adjacent verses
+    const previousVerse = adjacentVerses.value.find(v => v.number === previousVerseNumber)
+    if (!previousVerse) {
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Previous verse not found',
+        life: 5000
+      })
+      return
+    }
     
     // Create anomaly data for previous verse
     const anomalyData: CreateAnomalyRequest = {
@@ -2713,10 +2737,10 @@ const addAnomalyToPreviousVerse = async () => {
       book_number: currentVerse.value.book_number,
       chapter_number: currentVerse.value.chapter_number,
       verse_number: previousVerseNumber,
-      word: currentExcerptVerse.value.text.split(' ')[0] || 'Unknown', // First word of the verse
+      word: previousVerse.text.split(' ')[0] || 'Unknown', // First word of the verse
       position_in_verse: 1,
-      position_from_end: currentExcerptVerse.value.text.split(' ').length,
-      duration: currentExcerptVerse.value.end - currentExcerptVerse.value.begin,
+      position_from_end: previousVerse.text.split(' ').length,
+      duration: previousVerse.end - previousVerse.begin,
       speed: 1.0, // Default speed
       ratio: 1.0, // Default ratio
       anomaly_type: 'manual',
@@ -2732,9 +2756,6 @@ const addAnomalyToPreviousVerse = async () => {
         detail: `Anomaly added to previous verse (${currentVerse.value.book_number}:${currentVerse.value.chapter_number}:${previousVerseNumber})`,
         life: 3000
       })
-      
-      // Close the player
-      stopPlaying()
     }
   } catch (error: any) {
     console.error('Error adding anomaly to previous verse:', error)
@@ -2758,7 +2779,7 @@ const addAnomalyToPreviousVerse = async () => {
 }
 
 const addAnomalyToNextVerse = async () => {
-  if (!currentVerse.value || !currentExcerptVerse.value || !originalVerseNumber.value) {
+  if (!currentVerse.value || !currentExcerptVerse.value || !originalVerseNumber.value || !adjacentVerses.value) {
     toast.add({
       severity: 'error',
       summary: 'Error',
@@ -2769,7 +2790,19 @@ const addAnomalyToNextVerse = async () => {
   }
 
   try {
-    const nextVerseNumber = currentExcerptVerse.value.number
+    const nextVerseNumber = originalVerseNumber.value + 1
+    
+    // Find next verse data in adjacent verses
+    const nextVerse = adjacentVerses.value.find(v => v.number === nextVerseNumber)
+    if (!nextVerse) {
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Next verse not found',
+        life: 5000
+      })
+      return
+    }
     
     // Create anomaly data for next verse
     const anomalyData: CreateAnomalyRequest = {
@@ -2778,10 +2811,10 @@ const addAnomalyToNextVerse = async () => {
       book_number: currentVerse.value.book_number,
       chapter_number: currentVerse.value.chapter_number,
       verse_number: nextVerseNumber,
-      word: currentExcerptVerse.value.text.split(' ')[0] || 'Unknown', // First word of the verse
+      word: nextVerse.text.split(' ')[0] || 'Unknown', // First word of the verse
       position_in_verse: 1,
-      position_from_end: currentExcerptVerse.value.text.split(' ').length,
-      duration: currentExcerptVerse.value.end - currentExcerptVerse.value.begin,
+      position_from_end: nextVerse.text.split(' ').length,
+      duration: nextVerse.end - nextVerse.begin,
       speed: 1.0, // Default speed
       ratio: 1.0, // Default ratio
       anomaly_type: 'manual',
@@ -2797,9 +2830,6 @@ const addAnomalyToNextVerse = async () => {
         detail: `Anomaly added to next verse (${currentVerse.value.book_number}:${currentVerse.value.chapter_number}:${nextVerseNumber})`,
         life: 3000
       })
-      
-      // Close the player
-      stopPlaying()
     }
   } catch (error: any) {
     console.error('Error adding anomaly to next verse:', error)
