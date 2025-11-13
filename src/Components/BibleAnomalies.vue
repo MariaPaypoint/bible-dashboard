@@ -2735,12 +2735,7 @@ onUnmounted(() => {
 
 // Functions for adding anomalies to adjacent verses
 const addAnomalyToPreviousVerse = async () => {
-  if (!currentVerse.value || !currentExcerptVerse.value || !adjacentVerses.value) {
-    console.error('Missing data:', {
-      currentVerse: !!currentVerse.value,
-      currentExcerptVerse: !!currentExcerptVerse.value,
-      adjacentVerses: !!adjacentVerses.value
-    })
+  if (!currentVerse.value || !currentExcerptVerse.value) {
     toast.add({
       severity: 'error',
       summary: 'Error',
@@ -2751,38 +2746,20 @@ const addAnomalyToPreviousVerse = async () => {
   }
 
   try {
-    // Use current excerpt verse number instead of originalVerseNumber
-    const previousVerseNumber = currentExcerptVerse.value.number - 1
+    // Add anomaly to the currently playing verse (which is the "previous" verse relative to original)
+    const targetVerseNumber = currentExcerptVerse.value.number
     
-    console.log('Looking for previous verse:', {
-      currentVerseNumber: currentExcerptVerse.value.number,
-      previousVerseNumber,
-      availableVerses: adjacentVerses.value.map(v => v.number)
-    })
-    
-    // Find previous verse data in adjacent verses
-    const previousVerse = adjacentVerses.value.find(v => v.number === previousVerseNumber)
-    if (!previousVerse) {
-      toast.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: `Previous verse (${previousVerseNumber}) not found in loaded data. Available verses: ${adjacentVerses.value.map(v => v.number).join(', ')}`,
-        life: 5000
-      })
-      return
-    }
-    
-    // Create anomaly data for previous verse
+    // Create anomaly data for current playing verse
     const anomalyData: CreateAnomalyRequest = {
       voice: currentVerse.value.voice,
       translation: currentVerse.value.translation,
       book_number: currentVerse.value.book_number,
       chapter_number: currentVerse.value.chapter_number,
-      verse_number: previousVerseNumber,
-      word: previousVerse.text.split(' ')[0] || 'Unknown', // First word of the verse
+      verse_number: targetVerseNumber,
+      word: currentExcerptVerse.value.text.split(' ')[0] || 'Unknown', // First word of the verse
       position_in_verse: 1,
-      position_from_end: previousVerse.text.split(' ').length,
-      duration: previousVerse.end - previousVerse.begin,
+      position_from_end: currentExcerptVerse.value.text.split(' ').length,
+      duration: currentExcerptVerse.value.end - currentExcerptVerse.value.begin,
       speed: 1.0, // Default speed
       ratio: 1.0, // Default ratio
       anomaly_type: 'manual',
@@ -2795,7 +2772,7 @@ const addAnomalyToPreviousVerse = async () => {
       toast.add({
         severity: 'success',
         summary: 'Success',
-        detail: `Anomaly added to previous verse (${currentVerse.value.book_number}:${currentVerse.value.chapter_number}:${previousVerseNumber})`,
+        detail: `Anomaly added to verse (${currentVerse.value.book_number}:${currentVerse.value.chapter_number}:${targetVerseNumber})`,
         life: 3000
       })
     }
@@ -2821,12 +2798,7 @@ const addAnomalyToPreviousVerse = async () => {
 }
 
 const addAnomalyToNextVerse = async () => {
-  if (!currentVerse.value || !currentExcerptVerse.value || !adjacentVerses.value) {
-    console.error('Missing data:', {
-      currentVerse: !!currentVerse.value,
-      currentExcerptVerse: !!currentExcerptVerse.value,
-      adjacentVerses: !!adjacentVerses.value
-    })
+  if (!currentVerse.value || !currentExcerptVerse.value) {
     toast.add({
       severity: 'error',
       summary: 'Error',
@@ -2837,38 +2809,20 @@ const addAnomalyToNextVerse = async () => {
   }
 
   try {
-    // Use current excerpt verse number instead of originalVerseNumber
-    const nextVerseNumber = currentExcerptVerse.value.number + 1
+    // Add anomaly to the currently playing verse (which is the "next" verse relative to original)
+    const targetVerseNumber = currentExcerptVerse.value.number
     
-    console.log('Looking for next verse:', {
-      currentVerseNumber: currentExcerptVerse.value.number,
-      nextVerseNumber,
-      availableVerses: adjacentVerses.value.map(v => v.number)
-    })
-    
-    // Find next verse data in adjacent verses
-    const nextVerse = adjacentVerses.value.find(v => v.number === nextVerseNumber)
-    if (!nextVerse) {
-      toast.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: `Next verse (${nextVerseNumber}) not found in loaded data. Available verses: ${adjacentVerses.value.map(v => v.number).join(', ')}`,
-        life: 5000
-      })
-      return
-    }
-    
-    // Create anomaly data for next verse
+    // Create anomaly data for current playing verse
     const anomalyData: CreateAnomalyRequest = {
       voice: currentVerse.value.voice,
       translation: currentVerse.value.translation,
       book_number: currentVerse.value.book_number,
       chapter_number: currentVerse.value.chapter_number,
-      verse_number: nextVerseNumber,
-      word: nextVerse.text.split(' ')[0] || 'Unknown', // First word of the verse
+      verse_number: targetVerseNumber,
+      word: currentExcerptVerse.value.text.split(' ')[0] || 'Unknown', // First word of the verse
       position_in_verse: 1,
-      position_from_end: nextVerse.text.split(' ').length,
-      duration: nextVerse.end - nextVerse.begin,
+      position_from_end: currentExcerptVerse.value.text.split(' ').length,
+      duration: currentExcerptVerse.value.end - currentExcerptVerse.value.begin,
       speed: 1.0, // Default speed
       ratio: 1.0, // Default ratio
       anomaly_type: 'manual',
@@ -2881,7 +2835,7 @@ const addAnomalyToNextVerse = async () => {
       toast.add({
         severity: 'success',
         summary: 'Success',
-        detail: `Anomaly added to next verse (${currentVerse.value.book_number}:${currentVerse.value.chapter_number}:${nextVerseNumber})`,
+        detail: `Anomaly added to verse (${currentVerse.value.book_number}:${currentVerse.value.chapter_number}:${targetVerseNumber})`,
         life: 3000
       })
     }
