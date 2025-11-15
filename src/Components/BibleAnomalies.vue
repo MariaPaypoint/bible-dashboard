@@ -729,6 +729,7 @@ const progressUpdateInterval = ref<number | null>(null)
 const autoAdvanceToNext = ref(false) // Auto-advance to next verse checkbox
 const quickCheckMode = ref(false) // Quick check mode: play first 2s, pause 0.5s, play last 2s
 const isQuickCheckActive = ref(false) // Whether quick check is actually running (for verses >= 6s)
+const shouldStopQuickCheck = ref(false) // Flag to interrupt quick check playback
 const currentVerseType = ref<'original' | 'previous' | 'next'>('original') // Type of currently playing verse
 const originalVerseNumber = ref<number | null>(null) // Store original verse number with anomaly
 const autoAcceptOnTimer = ref(false) // Auto-accept verse on timer after playback
@@ -1676,6 +1677,10 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
     // Clear auto-accept timer when starting new verse playback
     clearAutoAcceptTimer()
     
+    // Reset quick check flags
+    isQuickCheckActive.value = false
+    shouldStopQuickCheck.value = false
+    
     // Ensure translations are loaded
     if (voices.value.length === 0) {
       await fetchTranslations()
@@ -1974,6 +1979,11 @@ const togglePlayPause = () => {
   if (!audioElement.value) return
 
   if (isPlaying.value) {
+    // Interrupt quick check playback if active
+    if (isQuickCheckActive.value) {
+      shouldStopQuickCheck.value = true
+      isQuickCheckActive.value = false
+    }
     audioElement.value.pause()
     isPlaying.value = false
   } else {
@@ -2023,8 +2033,9 @@ const handleQuickCheckPlayback = async (audio: HTMLAudioElement) => {
     return
   }
 
-  // Mark quick check as active
+  // Mark quick check as active and reset stop flag
   isQuickCheckActive.value = true
+  shouldStopQuickCheck.value = false
 
   try {
     // Play first 2 seconds
@@ -2032,8 +2043,13 @@ const handleQuickCheckPlayback = async (audio: HTMLAudioElement) => {
     await audio.play()
 
     // Wait for 2 seconds
-    await new Promise<void>((resolve) => {
+    await new Promise<void>((resolve, reject) => {
       const checkTime = () => {
+        if (shouldStopQuickCheck.value) {
+          audio.removeEventListener('timeupdate', checkTime)
+          reject(new Error('Quick check interrupted'))
+          return
+        }
         if (audio.currentTime >= verseBegin + 2) {
           audio.removeEventListener('timeupdate', checkTime)
           resolve()
@@ -2042,11 +2058,31 @@ const handleQuickCheckPlayback = async (audio: HTMLAudioElement) => {
       audio.addEventListener('timeupdate', checkTime)
     })
 
+    // Check if we should stop
+    if (shouldStopQuickCheck.value) {
+      isQuickCheckActive.value = false
+      return
+    }
+
     // Pause audio
     audio.pause()
 
     // Wait 0.5 seconds
-    await new Promise(resolve => setTimeout(resolve, 500))
+    await new Promise((resolve, reject) => {
+      const timeoutId = setTimeout(() => {
+        if (shouldStopQuickCheck.value) {
+          reject(new Error('Quick check interrupted'))
+        } else {
+          resolve(undefined)
+        }
+      }, 500)
+    })
+
+    // Check if we should stop
+    if (shouldStopQuickCheck.value) {
+      isQuickCheckActive.value = false
+      return
+    }
 
     // Play last 2 seconds
     const lastSegmentStart = Math.max(verseBegin, verseEnd - 2)
@@ -2055,8 +2091,13 @@ const handleQuickCheckPlayback = async (audio: HTMLAudioElement) => {
     await audio.play()
 
     // Wait until the end
-    await new Promise<void>((resolve) => {
+    await new Promise<void>((resolve, reject) => {
       const checkEnd = () => {
+        if (shouldStopQuickCheck.value) {
+          audio.removeEventListener('timeupdate', checkEnd)
+          reject(new Error('Quick check interrupted'))
+          return
+        }
         if (audio.currentTime >= verseEnd) {
           audio.removeEventListener('timeupdate', checkEnd)
           resolve()
@@ -2067,11 +2108,16 @@ const handleQuickCheckPlayback = async (audio: HTMLAudioElement) => {
 
     // Complete playback
     isQuickCheckActive.value = false
-    onAudioComplete()
+    if (!shouldStopQuickCheck.value) {
+      onAudioComplete()
+    }
   } catch (error) {
     console.error('Error in quick check playback:', error)
     isQuickCheckActive.value = false
-    onAudioComplete()
+    // Only call onAudioComplete if it wasn't interrupted by user action
+    if (!shouldStopQuickCheck.value) {
+      onAudioComplete()
+    }
   }
 }
 
@@ -2096,6 +2142,12 @@ const onAudioComplete = () => {
 }
 
 const stopPlaying = () => {
+  // Interrupt quick check playback if active
+  if (isQuickCheckActive.value) {
+    shouldStopQuickCheck.value = true
+    isQuickCheckActive.value = false
+  }
+  
   if (audioElement.value) {
     audioElement.value.pause()
     audioElement.value = null
@@ -2116,7 +2168,7 @@ const stopPlaying = () => {
   currentTime.value = 0
   duration.value = 0
   showButtonAnimation.value = false
-  isQuickCheckActive.value = false
+  shouldStopQuickCheck.value = false
   currentVerseType.value = 'original' // Reset to original verse type
   originalVerseNumber.value = null // Clear original verse number
 
@@ -2168,6 +2220,12 @@ const findNextAnomaly = (): VoiceAnomalyModel | null => {
 
 // Function to advance to next verse if auto-advance is enabled
 const advanceToNextVerse = async () => {
+  // Interrupt quick check playback if active
+  if (isQuickCheckActive.value) {
+    shouldStopQuickCheck.value = true
+    isQuickCheckActive.value = false
+  }
+  
   if (autoAdvanceToNext.value) {
     const nextAnomaly = findNextAnomaly()
     if (nextAnomaly) {
@@ -2253,6 +2311,12 @@ const determineVerseType = (verseNumber: number): 'original' | 'previous' | 'nex
 const playPreviousVerse = async () => {
   if (!canPlayPreviousVerse.value || !currentExcerptVerse.value) return
 
+  // Interrupt quick check playback if active
+  if (isQuickCheckActive.value) {
+    shouldStopQuickCheck.value = true
+    isQuickCheckActive.value = false
+  }
+
   // Find previous verse in adjacent verses
   const previousVerse = adjacentVerses.value
     .filter(verse => verse.number < currentExcerptVerse.value!.number)
@@ -2276,6 +2340,12 @@ const playPreviousVerse = async () => {
 
 const playNextVerse = async () => {
   if (!canPlayNextVerse.value || !currentExcerptVerse.value) return
+
+  // Interrupt quick check playback if active
+  if (isQuickCheckActive.value) {
+    shouldStopQuickCheck.value = true
+    isQuickCheckActive.value = false
+  }
 
   // Find next verse in adjacent verses
   const nextVerse = adjacentVerses.value
@@ -2338,6 +2408,12 @@ const confirmAnomaly = async () => {
     // Clear auto-accept timer when user manually confirms
     clearAutoAcceptTimer()
     
+    // Interrupt quick check playback if active
+    if (isQuickCheckActive.value) {
+      shouldStopQuickCheck.value = true
+      isQuickCheckActive.value = false
+    }
+    
     // Stop audio playback if it's currently playing
     if (audioElement.value) {
       audioElement.value.pause()
@@ -2369,6 +2445,12 @@ const disproveAnomaly = async () => {
     
     // Clear auto-accept timer when user manually disproves
     clearAutoAcceptTimer()
+    
+    // Interrupt quick check playback if active
+    if (isQuickCheckActive.value) {
+      shouldStopQuickCheck.value = true
+      isQuickCheckActive.value = false
+    }
     
     // Stop audio playback immediately before advancing
     if (audioElement.value) {
@@ -2745,6 +2827,25 @@ const addAnomalyToPreviousVerse = async () => {
     return
   }
 
+  // Interrupt quick check playback if active
+  if (isQuickCheckActive.value) {
+    shouldStopQuickCheck.value = true
+    isQuickCheckActive.value = false
+  }
+
+  // Stop audio playback
+  if (audioElement.value) {
+    audioElement.value.pause()
+    audioElement.value = null
+  }
+  if (progressUpdateInterval.value) {
+    clearInterval(progressUpdateInterval.value)
+    progressUpdateInterval.value = null
+  }
+  if (isPlaying.value) {
+    isPlaying.value = false
+  }
+
   try {
     // Add anomaly to the currently playing verse (which is the "previous" verse relative to original)
     const targetVerseNumber = currentExcerptVerse.value.number
@@ -2806,6 +2907,25 @@ const addAnomalyToNextVerse = async () => {
       life: 5000
     })
     return
+  }
+
+  // Interrupt quick check playback if active
+  if (isQuickCheckActive.value) {
+    shouldStopQuickCheck.value = true
+    isQuickCheckActive.value = false
+  }
+
+  // Stop audio playback
+  if (audioElement.value) {
+    audioElement.value.pause()
+    audioElement.value = null
+  }
+  if (progressUpdateInterval.value) {
+    clearInterval(progressUpdateInterval.value)
+    progressUpdateInterval.value = null
+  }
+  if (isPlaying.value) {
+    isPlaying.value = false
   }
 
   try {
