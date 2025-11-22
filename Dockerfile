@@ -2,17 +2,17 @@ FROM node:18.19.1-alpine
 
 WORKDIR /app
 
-# Копируем package files
+# Copy package files
 COPY package*.json ./
 
-# Устанавливаем зависимости
-RUN npm ci
+# Install dependencies
+RUN npm install
 
-# Копируем остальные файлы
+# Copy remaining files
 COPY . .
 
-# Открываем порт Vite
+# Expose Vite port
 EXPOSE 5173
 
-# Запускаем dev сервер
+# Start dev server
 CMD ["npm", "run", "dev"]

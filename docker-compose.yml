@@ -7,14 +7,14 @@ services:
     ports:
       - "5173:5173"
     volumes:
-      # Монтируем исходный код для hot reload
+      # Mount source code for hot reload
       - ./src:/app/src
       - ./index.html:/app/index.html
       - ./vite.config.js:/app/vite.config.js
       - ./tailwind.config.js:/app/tailwind.config.js
       - ./postcss.config.js:/app/postcss.config.js
       - ./.env:/app/.env
-      # Исключаем node_modules из монтирования
+      # Exclude node_modules from mounting
       - /app/node_modules
     environment:
       - NODE_ENV=development

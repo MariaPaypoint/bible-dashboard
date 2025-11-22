@@ -1,76 +1,76 @@
 # Forced Alignments Dashboard
 
-Веб-приложение для управления и анализа данных принудительного выравнивания аудио и текста Библии. Поддерживает работу с голосами, аномалиями, задачами выравнивания и авторизацию.
+Web application for managing and analyzing forced alignment data of Bible audio and text. Supports working with voices, anomalies, alignment tasks, and authorization.
 
-## 🚀 Быстрый старт
+## 🚀 Quick Start
 
 ```bash
-# Установка зависимостей
+# Install dependencies
 npm install
 
-# Настройка API ключа
+# Setup API key
 cp .env.example .env
-# Отредактируйте .env и укажите VITE_BIBLE_API_KEY
+# Edit .env and specify VITE_BIBLE_API_KEY
 
-# Запуск dev сервера
+# Start dev server
 npm run dev
 ```
 
-Приложение будет доступно на `http://localhost:5173`
+The application will be available at `http://localhost:5173`
 
-## 📋 Основные функции
+## 📋 Main Features
 
-- **🎧 Управление голосами** - просмотр и управление голосами переводов
-- **⚠️ Работа с аномалиями** - анализ и исправление аномалий выравнивания
-- **🔍 Инспектор Библии** - просмотр глав с аудио и таймингом
-- **⏱️ Задачи выравнивания** - создание и мониторинг задач MFA
-- **🔐 Авторизация** - API ключ для чтения, JWT для изменений
-- **🎨 Темная тема** - автоматическое определение системной темы
+- **🎧 Voice Management** - view and manage translation voices
+- **⚠️ Anomaly Handling** - analyze and correct alignment anomalies
+- **🔍 Bible Inspector** - view chapters with audio and timing
+- **⏱️ Alignment Tasks** - create and monitor MFA tasks
+- **🔐 Authorization** - API key for reading, JWT for changes
+- **🎨 Dark Theme** - automatic system theme detection
 
-## 🛠️ Технологии
+## 🛠️ Technologies
 
 - Vue 3 + TypeScript
 - Vite 5.4.19
 - PrimeVue 4 + TailwindCSS
-- Axios для API
-- Lucide для иконок
+- Axios for API
+- Lucide for icons
 
-## 📦 Сборка
+## 📦 Build
 
 ```bash
-# Production сборка
+# Production build
 npm run build
 
-# Preview сборки
+# Preview build
 npm run preview
 ```
 
-## 📁 Структура
+## 📁 Structure
 
 ```
 /src
-  /Components       - Vue компоненты
+  /Components       - Vue components
   /composables      - Composables (useApi, useAuth, useAlignmentTasks)
-  /services         - API сервисы (api.ts, auth.ts)
-  /config           - Конфигурация (api.ts)
-  /utils            - Утилиты (audio.ts)
-  /types            - TypeScript типы
-/docs               - Документация
+  /services         - API services (api.ts, auth.ts)
+  /config           - Configuration (api.ts)
+  /utils            - Utilities (audio.ts)
+  /types            - TypeScript types
+/docs               - Documentation
 ```
 
-## 📚 Документация
+## 📚 Documentation
 
-Полная документация находится в папке **[docs/](docs/)**:
+Full documentation is located in the **[docs/](docs/)** folder:
 
-- **[AUTH.md](docs/AUTH.md)** - Авторизация (API ключ и JWT)
-- **[DEVELOPMENT.md](docs/DEVELOPMENT.md)** - Разработка и структура проекта
-- **[CHANGELOG.md](docs/CHANGELOG.md)** - История изменений
-- **[EXCERPT_API.md](docs/EXCERPT_API.md)** - API отрывков
+- **[AUTH.md](docs/AUTH.md)** - Authorization (API key and JWT)
+- **[DEVELOPMENT.md](docs/DEVELOPMENT.md)** - Development and project structure
+- **[CHANGELOG.md](docs/CHANGELOG.md)** - Change history
+- **[EXCERPT_API.md](docs/EXCERPT_API.md)** - Excerpt API
 
-## 🔑 Авторизация
+## 🔑 Authorization
 
-Два уровня доступа:
-- **API ключ** → чтение данных (языки, переводы, аудио)
-- **JWT токен** → изменение данных (голоса, аномалии)
+Two access levels:
+- **API key** → read data (languages, translations, audio)
+- **JWT token** → modify data (voices, anomalies)
 
-Настройка: создайте `.env` и укажите `VITE_BIBLE_API_KEY`
+Setup: create `.env` and specify `VITE_BIBLE_API_KEY`

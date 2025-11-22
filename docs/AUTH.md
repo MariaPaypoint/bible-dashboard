@@ -1,65 +1,65 @@
-# Авторизация
+# Authorization
 
-## Быстрый старт
+## Quick Start
 
-1. **Создайте `.env` файл:**
+1. **Create `.env` file:**
    ```bash
    cp .env.example .env
    ```
 
-2. **Укажите API ключ:**
+2. **Specify API Key:**
    ```env
    VITE_BIBLE_API_KEY=your_api_key_here
    ```
 
-3. **Запустите приложение:**
+3. **Start the application:**
    ```bash
    npm run dev
    ```
 
-## Типы авторизации
+## Authorization Types
 
-### Публичные эндпоинты (чтение данных)
-Требуют **API ключ**:
-- Языки, переводы, книги
-- Главы и отрывки с выравниванием
-- Аудиофайлы
+### Public Endpoints (Read Data)
+Require **API Key**:
+- Languages, translations, books
+- Chapters and excerpts with alignment
+- Audio files
 
-**Передача ключа:**
-- Обычные запросы: заголовок `X-API-Key`
-- Аудио файлы: query параметр `?api_key=xxx`
+**Key Transmission:**
+- Standard requests: `X-API-Key` header
+- Audio files: `?api_key=xxx` query parameter
 
-### Административные эндпоинты (изменение данных)
-Требуют **JWT токен**:
-- Управление голосами и аномалиями
-- Ручные исправления тайминга
-- Проверка переводов
+### Administrative Endpoints (Modify Data)
+Require **JWT Token**:
+- Voice and anomaly management
+- Manual timing corrections
+- Translation verification
 
-**Получение токена:**
-1. Войдите через меню Settings → "Войти"
-2. Введите учетные данные
-3. Токен сохраняется автоматически (действителен 24 часа)
+**Obtaining a Token:**
+1. Log in via Settings → "Login"
+2. Enter credentials
+3. Token is saved automatically (valid for 24 hours)
 
-## Работа без авторизации
+## Working Without Authorization
 
-Нажмите "Продолжить без авторизации" — доступны все функции просмотра.
+Click "Continue without authorization" — all viewing functions are available.
 
-## Обработка ошибок
+## Error Handling
 
-- **401 Unauthorized** → Токен истек, автоматический редирект на логин
-- **403 Forbidden** → Неверный API ключ, проверьте `.env`
+- **401 Unauthorized** → Token expired, automatic redirect to login
+- **403 Forbidden** → Invalid API key, check `.env`
 
-## Архитектура
+## Architecture
 
 ```
-/src/services/auth.ts       - Управление JWT токенами
-/src/config/api.ts          - Конфигурация API ключа
-/src/utils/audio.ts         - Утилиты для аудио с авторизацией
-/src/composables/useAuth.ts - Vue composable для авторизации
-/src/Components/Login.vue   - Страница входа
+/src/services/auth.ts       - JWT token management
+/src/config/api.ts          - API key configuration
+/src/utils/audio.ts         - Audio utilities with authorization
+/src/composables/useAuth.ts - Vue composable for authorization
+/src/Components/Login.vue   - Login page
 ```
 
-**Interceptors в ApiService:**
-- Автоматически добавляет нужные заголовки
-- Обрабатывает ошибки 401/403
-- Генерирует события для редиректов
+**Interceptors in ApiService:**
+- Automatically adds necessary headers
+- Handles 401/403 errors
+- Generates events for redirects

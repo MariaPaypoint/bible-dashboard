@@ -1,92 +1,92 @@
-# Разработка
+# Development
 
-## Требования
+## Requirements
 
 - Node.js v18.19.1
 - npm
 
-## Установка
+## Installation
 
 ```bash
 npm install
 ```
 
-## Конфигурация
+## Configuration
 
-Создайте `.env` файл:
+Create `.env` file:
 ```env
 cp .env.example .env
 ```
-и сконфигурируйте его. 
+and configure it.
 
-## Запуск
+## Running
 
 ```bash
-# Development сервер (порт 5173)
+# Development server (port 5173)
 npm run dev
 
-# Production сборка
+# Production build
 npm run build
 
-# Preview production сборки
+# Preview production build
 npm run preview
 
-# Форматирование кода
+# Format code
 npm run format
 ```
 
-## Структура проекта
+## Project Structure
 
 ```
 /src
-  /Components       - Vue компоненты
+  /Components       - Vue components
   /composables      - Vue composables (useApi, useAuth, useAlignmentTasks)
-  /services         - API сервисы (api.ts, auth.ts)
-  /config           - Конфигурация (api.ts)
-  /utils            - Утилиты (audio.ts)
-  /types            - TypeScript типы
-  /assets           - Статические ресурсы
+  /services         - API services (api.ts, auth.ts)
+  /config           - Configuration (api.ts)
+  /utils            - Utilities (audio.ts)
+  /types            - TypeScript types
+  /assets           - Static assets
 ```
 
-## Технологии
+## Technologies
 
-- **Vue 3** - фреймворк
-- **TypeScript** - типизация
-- **Vite** - сборщик (v5.4.19)
-- **PrimeVue** - UI компоненты
-- **TailwindCSS** - стилизация
-- **Axios** - HTTP клиент
-- **Lucide** - иконки
+- **Vue 3** - framework
+- **TypeScript** - typing
+- **Vite** - bundler (v5.4.19)
+- **PrimeVue** - UI components
+- **TailwindCSS** - styling
+- **Axios** - HTTP client
+- **Lucide** - icons
 
-## API эндпоинты
+## API Endpoints
 
 ### Bible API (`/bible-api`)
-- Переводы, языки, книги
-- Главы и отрывки с выравниванием
-- Аудиофайлы
-- Управление голосами и аномалиями
+- Translations, languages, books
+- Chapters and excerpts with alignment
+- Audio files
+- Voice and anomaly management
 
 ### Alignment API (`/alignment-api`)
-- Задачи выравнивания
-- MFA модели
-- Поддерживаемые языки
+- Alignment tasks
+- MFA models
+- Supported languages
 
-## Компоненты
+## Components
 
-- **BaseLayout** - основной layout с навигацией
-- **Login** - страница авторизации
-- **BibleVoices** - управление голосами
-- **BibleAnomalies** - работа с аномалиями
-- **BibleInspect** - просмотр и проверка глав
-- **AlignmentTasks** - задачи выравнивания
-- **AlignmentTaskDialog** - создание задач
+- **BaseLayout** - main layout with navigation
+- **Login** - authorization page
+- **BibleVoices** - voice management
+- **BibleAnomalies** - anomaly handling
+- **BibleInspect** - chapter inspection
+- **AlignmentTasks** - alignment tasks
+- **AlignmentTaskDialog** - task creation
 
-## Авторизация
+## Authorization
 
-См. [AUTH.md](./AUTH.md)
+See [AUTH.md](./AUTH.md)
 
-## Известные особенности
+## Known Features
 
-- Аудио файлы используют query параметр для API ключа (ограничение браузера)
-- JWT токены хранятся в localStorage
-- Темная тема определяется автоматически по системным настройкам
+- Audio files use query parameter for API key (browser limitation)
+- JWT tokens are stored in localStorage
+- Dark theme is automatically determined by system settings

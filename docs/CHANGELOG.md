@@ -1,40 +1,40 @@
-# История изменений
+# Changelog
 
-## 2025-10-11 - Добавление авторизации
+## 2025-10-11 - Authorization Added
 
-### Новые возможности
-- ✅ Авторизация через API ключ для публичных эндпоинтов
-- ✅ JWT токены для административных эндпоинтов
-- ✅ Страница входа с поддержкой темной темы
-- ✅ Автоматический редирект при истечении токена
-- ✅ Поддержка работы без авторизации (только просмотр)
+### New Features
+- ✅ API key authorization for public endpoints
+- ✅ JWT tokens for administrative endpoints
+- ✅ Login page with dark theme support
+- ✅ Automatic redirect on token expiration
+- ✅ Support for unauthorized access (view only)
 
-### Исправления
-- ✅ Воспроизведение аудио с авторизацией через query параметр
-- ✅ Обработка ошибок 401/403
-- ✅ Автоматическое добавление заголовков авторизации
+### Fixes
+- ✅ Audio playback with authorization via query parameter
+- ✅ 401/403 error handling
+- ✅ Automatic addition of authorization headers
 
-### Новые файлы
-- `/src/services/auth.ts` - сервис авторизации
-- `/src/config/api.ts` - конфигурация API
-- `/src/utils/audio.ts` - утилиты для аудио
-- `/src/composables/useAuth.ts` - composable для авторизации
-- `/src/Components/Login.vue` - страница входа
+### New Files
+- `/src/services/auth.ts` - authorization service
+- `/src/config/api.ts` - API configuration
+- `/src/utils/audio.ts` - audio utilities
+- `/src/composables/useAuth.ts` - authorization composable
+- `/src/Components/Login.vue` - login page
 
-### Обновленные компоненты
-- `BaseLayout.vue` - интеграция авторизации
-- `BibleAnomalies.vue` - поддержка аудио с авторизацией
-- `BibleInspect.vue` - поддержка аудио с авторизацией
-- `ApiService` - автоматические заголовки авторизации
+### Updated Components
+- `BaseLayout.vue` - authorization integration
+- `BibleAnomalies.vue` - authorized audio support
+- `BibleInspect.vue` - authorized audio support
+- `ApiService` - automatic authorization headers
 
 ---
 
-## Предыдущие версии
+## Previous Versions
 
-### Основной функционал
-- Управление голосами переводов
-- Работа с аномалиями выравнивания
-- Инспектор глав Библии с аудио
-- Задачи выравнивания MFA
-- Темная тема
-- Адаптивный дизайн
+### Core Functionality
+- Translation voice management
+- Alignment anomaly handling
+- Bible chapter inspector with audio
+- MFA alignment tasks
+- Dark theme
+- Responsive design

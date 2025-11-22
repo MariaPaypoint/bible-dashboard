@@ -1,57 +1,57 @@
-# Документация
+# Documentation
 
-## Для разработчиков
+## For Developers
 
-### 🚀 Начало работы
-- **[DEVELOPMENT.md](DEVELOPMENT.md)** - Установка, запуск, структура проекта
+### 🚀 Getting Started
+- **[DEVELOPMENT.md](DEVELOPMENT.md)** - Installation, running, project structure
 
-### 🔐 Авторизация
-- **[AUTH.md](AUTH.md)** - Настройка API ключа и JWT токенов
+### 🔐 Authorization
+- **[AUTH.md](AUTH.md)** - API key and JWT token configuration
 
-### 📝 История изменений
-- **[CHANGELOG.md](CHANGELOG.md)** - История версий и изменений
+### 📝 Changelog
+- **[CHANGELOG.md](CHANGELOG.md)** - Version history and changes
 
-## Справочная информация
+## Reference Information
 
 ### 📡 API
-- **[EXCERPT_API.md](EXCERPT_API.md)** - Документация по API отрывков
+- **[EXCERPT_API.md](EXCERPT_API.md)** - Excerpt API documentation
 
-## Быстрые ссылки
+## Quick Links
 
-### Настройка окружения
+### Environment Setup
 ```bash
-# 1. Установка
+# 1. Installation
 npm install
 
-# 2. Конфигурация
+# 2. Configuration
 cp .env.example .env
-# Укажите VITE_BIBLE_API_KEY в .env
+# Specify VITE_BIBLE_API_KEY in .env
 
-# 3. Запуск
+# 3. Running
 npm run dev
 ```
 
-### Основные команды
+### Main Commands
 ```bash
-npm run dev      # Development сервер
-npm run build    # Production сборка
-npm run preview  # Preview сборки
-npm run format   # Форматирование кода
+npm run dev      # Development server
+npm run build    # Production build
+npm run preview  # Preview build
+npm run format   # Format code
 ```
 
-### Технологии
+### Technologies
 - Vue 3 + TypeScript
 - Vite 5.4.19
 - PrimeVue 4 + TailwindCSS
 - Axios + Lucide
 
-### Структура
+### Structure
 ```
 /src
-  /Components   - Vue компоненты
+  /Components   - Vue components
   /composables  - Composables
-  /services     - API сервисы
-  /config       - Конфигурация
-  /utils        - Утилиты
-  /types        - TypeScript типы
+  /services     - API services
+  /config       - Configuration
+  /utils        - Utilities
+  /types        - TypeScript types
 ```
