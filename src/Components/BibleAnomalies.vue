@@ -1730,16 +1730,22 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
     adjacentVerses.value = excerptResult.excerpt.parts[0].verses
 
     // Create audio element with URL from excerpt
-    const audio = new Audio(createAudioUrlWithAuth(excerptResult.audioUrl))
+    const authUrl = createAudioUrlWithAuth(excerptResult.audioUrl)
+    console.log('Attempting to play audio from URL:', excerptResult.audioUrl)
+    console.log('Authenticated Audio URL:', authUrl)
+    
+    const audio = new Audio(authUrl)
     audioElement.value = audio
 
     // Add load error handler
     audio.addEventListener('loadstart', () => {
       // Audio loading started
+      console.log('Audio load started')
     })
 
     // Set up audio event listeners
     audio.addEventListener('loadedmetadata', () => {
+      console.log('Audio metadata loaded successfully')
       // Check if currentExcerptVerse has valid timing data
       if (!currentExcerptVerse.value || 
           typeof currentExcerptVerse.value.begin !== 'number' || 
@@ -1794,6 +1800,7 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
     })
 
     audio.addEventListener('ended', () => {
+      console.log('Audio playback ended')
       onAudioComplete()
     })
 
@@ -1801,20 +1808,35 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
       if (errorHandled) return // Prevent duplicate error messages
       errorHandled = true
 
+      const failedAudio = e.target as HTMLAudioElement
+      console.error('Audio playback error details:', {
+        error: failedAudio.error,
+        code: failedAudio.error?.code,
+        message: failedAudio.error?.message,
+        src: failedAudio.src,
+        currentSrc: failedAudio.currentSrc
+      })
+
       // Try alternative URL first
+      console.log('Attempting to fetch alternative audio URL...')
       const alternativeUrl = await getAlternativeAudioUrl(excerptResult.audioUrl)
+      
       if (alternativeUrl) {
+        console.log('Found alternative URL:', alternativeUrl)
         try {
           // Stop current audio
           audio.pause()
           audio.src = ''
 
           // Create new audio with alternative URL
-          const newAudio = new Audio(createAudioUrlWithAuth(alternativeUrl))
+          const newAuthUrl = createAudioUrlWithAuth(alternativeUrl)
+          console.log('Authenticated Alternative URL:', newAuthUrl)
+          const newAudio = new Audio(newAuthUrl)
           audioElement.value = newAudio
 
           // Set up same event listeners for new audio
           newAudio.addEventListener('loadedmetadata', () => {
+            console.log('Alternative audio metadata loaded')
             // Check if currentExcerptVerse has valid timing data
             if (!currentExcerptVerse.value || 
                 typeof currentExcerptVerse.value.begin !== 'number' || 
@@ -1860,7 +1882,13 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
             onAudioComplete()
           })
 
-          newAudio.addEventListener('error', () => {
+          newAudio.addEventListener('error', (altE) => {
+            const failedAltAudio = altE.target as HTMLAudioElement
+            console.error('Alternative audio playback error:', {
+              error: failedAltAudio.error,
+              src: failedAltAudio.src
+            })
+            
             // If alternative URL also fails, show error
             console.error('Both original and alternative audio URLs failed')
             toast.add({
@@ -1878,6 +1906,8 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
         } catch (altError) {
           console.error('Error with alternative audio:', altError)
         }
+      } else {
+        console.log('No alternative URL found')
       }
 
       // If no alternative URL or alternative failed, show original error
@@ -1885,7 +1915,6 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
       let errorMessage = 'Failed to load audio file. Please try again.'
 
       // More specific error messages based on error type
-      const failedAudio = e.target as HTMLAudioElement
       if (failedAudio && failedAudio.error) {
         switch (failedAudio.error.code) {
           case failedAudio.error.MEDIA_ERR_ABORTED:
