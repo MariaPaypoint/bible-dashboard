@@ -300,7 +300,7 @@
           <div
             class="relative h-1.5 rounded-lg overflow-hidden cursor-pointer hover:h-2 transition-all duration-200 bg-surface-200 dark:bg-surface-700"
             @click="seekToPosition">
-            <div class="absolute top-0 left-0 bg-primary h-full rounded-lg transition-all duration-500 ease-in-out"
+            <div class="absolute top-0 left-0 bg-primary h-full rounded-lg"
               :style="{ width: progressPercentage + '%' }" />
           </div>
           <div class="text-right text-xs text-surface-900 dark:text-surface-0 leading-tight">
@@ -726,6 +726,14 @@ const audioElement = ref<HTMLAudioElement | null>(null)
 const currentTime = ref(0)
 const duration = ref(0)
 const progressUpdateInterval = ref<number | null>(null)
+
+// Web Audio API state for precise timing control
+const audioContext = ref<AudioContext | null>(null)
+const audioBuffer = ref<AudioBuffer | null>(null)
+const sourceNode = ref<AudioBufferSourceNode | null>(null)
+const audioStartTime = ref(0) // AudioContext time when playback started
+const audioOffset = ref(0) // Offset within the audio buffer (for pause/resume)
+const animationFrameId = ref<number | null>(null) // requestAnimationFrame ID for smooth timeline updates
 const autoAdvanceToNext = ref(false) // Auto-advance to next verse checkbox
 const quickCheckMode = ref(false) // Quick check mode: play first 2s, pause 0.5s, play last 2s
 const isQuickCheckActive = ref(false) // Whether quick check is actually running (for verses >= 6s)
@@ -1667,26 +1675,160 @@ const getExcerptData = async (anomaly: VoiceAnomalyModel): Promise<{ excerpt: Ex
   }
 }
 
-const playVerse = async (anomaly: VoiceAnomalyModel) => {
-  let errorHandled = false // Flag to prevent duplicate error messages
+// Web Audio API helper functions for precise timing control
 
+// Initialize AudioContext (lazy initialization)
+const getAudioContext = (): AudioContext => {
+  if (!audioContext.value) {
+    audioContext.value = new (window.AudioContext || (window as any).webkitAudioContext)()
+  }
+  // Resume if suspended (browser autoplay policy)
+  if (audioContext.value.state === 'suspended') {
+    audioContext.value.resume()
+  }
+  return audioContext.value
+}
+
+// Load audio file into AudioBuffer
+const loadAudioBuffer = async (url: string): Promise<AudioBuffer> => {
+  const ctx = getAudioContext()
+  const authUrl = createAudioUrlWithAuth(url)
+
+  const response = await fetch(authUrl)
+  if (!response.ok) {
+    throw new Error(`Failed to fetch audio: ${response.status} ${response.statusText}`)
+  }
+
+  const arrayBuffer = await response.arrayBuffer()
+  const buffer = await ctx.decodeAudioData(arrayBuffer)
+  return buffer
+}
+
+// Play audio segment with precise timing using Web Audio API
+const playAudioSegment = (
+  buffer: AudioBuffer,
+  startTime: number,
+  endTime: number,
+  onEnded?: () => void
+): AudioBufferSourceNode => {
+  const ctx = getAudioContext()
+
+  // Stop any existing source
+  if (sourceNode.value) {
+    try {
+      sourceNode.value.stop()
+      sourceNode.value.disconnect()
+    } catch (e) {
+      // Ignore errors if already stopped
+    }
+  }
+
+  // Create new source node
+  const source = ctx.createBufferSource()
+  source.buffer = buffer
+  source.connect(ctx.destination)
+
+  // Calculate duration
+  const segmentDuration = endTime - startTime
+
+  // Set up onended callback - this fires EXACTLY when playback ends
+  source.onended = () => {
+    if (onEnded) {
+      onEnded()
+    }
+  }
+
+  // Start playback: start(when, offset, duration)
+  // - when: 0 = start immediately
+  // - offset: startTime = position in buffer to start from
+  // - duration: segmentDuration = how long to play
+  source.start(0, startTime, segmentDuration)
+
+  // Store reference and timing info
+  sourceNode.value = source
+  audioStartTime.value = ctx.currentTime
+  audioOffset.value = startTime
+
+  return source
+}
+
+// Stop current playback
+const stopAudioPlayback = () => {
+  if (sourceNode.value) {
+    try {
+      sourceNode.value.stop()
+      sourceNode.value.disconnect()
+    } catch (e) {
+      // Ignore errors if already stopped
+    }
+    sourceNode.value = null
+  }
+
+  // Cancel animation frame
+  if (animationFrameId.value) {
+    cancelAnimationFrame(animationFrameId.value)
+    animationFrameId.value = null
+  }
+}
+
+// Start requestAnimationFrame loop for updating currentTime display (60 FPS)
+const startTimeUpdateInterval = (verseBegin: number, verseDuration: number) => {
+  // Cancel existing animation frame
+  if (animationFrameId.value) {
+    cancelAnimationFrame(animationFrameId.value)
+  }
+
+  const ctx = getAudioContext()
+
+  const updateTime = () => {
+    if (!sourceNode.value || !isPlaying.value) {
+      animationFrameId.value = null
+      return
+    }
+
+    // Calculate current position within the verse
+    const elapsed = ctx.currentTime - audioStartTime.value
+    const currentPosition = audioOffset.value - verseBegin + elapsed
+    currentTime.value = Math.max(0, Math.min(currentPosition, verseDuration))
+
+    // Schedule next update
+    animationFrameId.value = requestAnimationFrame(updateTime)
+  }
+
+  // Start the animation loop
+  animationFrameId.value = requestAnimationFrame(updateTime)
+}
+
+// Get current playback position
+const getCurrentPlaybackPosition = (): number => {
+  if (!audioContext.value || !sourceNode.value) {
+    return audioOffset.value
+  }
+  const elapsed = audioContext.value.currentTime - audioStartTime.value
+  return audioOffset.value + elapsed
+}
+
+const playVerse = async (anomaly: VoiceAnomalyModel) => {
   try {
     // Reset correction interface when switching verses
     showCorrectionInterface.value = false
-    
+
     // Clear auto-accept timer when starting new verse playback
     clearAutoAcceptTimer()
-    
+
     // Reset quick check flags
     isQuickCheckActive.value = false
     shouldStopQuickCheck.value = false
-    
+
     // Ensure translations are loaded
     if (voices.value.length === 0) {
       await fetchTranslations()
     }
 
-    // Stop current playback if any
+    // Stop current playback if any (Web Audio API)
+    stopAudioPlayback()
+
+    // Also stop HTMLAudioElement if exists (for backward compatibility during transition)
     if (audioElement.value) {
       audioElement.value.pause()
       audioElement.value = null
@@ -1702,12 +1844,12 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
     currentVerse.value = anomaly
     currentPlayingId.value = anomaly.code
     currentVerseType.value = 'original' // Set as original verse
-    
+
     // Store original verse number only if it's not already set (first time playing)
     if (originalVerseNumber.value === null) {
       originalVerseNumber.value = anomaly.verse_number
     }
-    
+
     showPlayer.value = true // Show player immediately to display verse text
     isPlaying.value = false // Set to false initially
 
@@ -1729,236 +1871,92 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
     currentExcerptVerse.value = excerptResult.targetVerse
     adjacentVerses.value = excerptResult.excerpt.parts[0].verses
 
-    // Create audio element with URL from excerpt
-    const authUrl = createAudioUrlWithAuth(excerptResult.audioUrl)
-    console.log('Attempting to play audio from URL:', excerptResult.audioUrl)
-    console.log('Authenticated Audio URL:', authUrl)
-    
-    const audio = new Audio(authUrl)
-    audioElement.value = audio
+    // Validate timing data
+    if (!currentExcerptVerse.value ||
+        typeof currentExcerptVerse.value.begin !== 'number' ||
+        typeof currentExcerptVerse.value.end !== 'number' ||
+        isNaN(currentExcerptVerse.value.begin) ||
+        isNaN(currentExcerptVerse.value.end)) {
+      console.error('Invalid verse timing data:', currentExcerptVerse.value)
+      toast.add({
+        severity: 'error',
+        summary: 'Audio Error',
+        detail: 'Invalid verse timing data. Cannot play specific verse segment.',
+        life: 5000
+      })
+      stopPlaying()
+      return
+    }
 
-    // Add load error handler
-    audio.addEventListener('loadstart', () => {
-      // Audio loading started
-      console.log('Audio load started')
-    })
+    console.log('Loading audio via Web Audio API from URL:', excerptResult.audioUrl)
 
-    // Set up audio event listeners
-    audio.addEventListener('loadedmetadata', () => {
-      console.log('Audio metadata loaded successfully')
-      // Check if currentExcerptVerse has valid timing data
-      if (!currentExcerptVerse.value || 
-          typeof currentExcerptVerse.value.begin !== 'number' || 
-          typeof currentExcerptVerse.value.end !== 'number' ||
-          isNaN(currentExcerptVerse.value.begin) || 
-          isNaN(currentExcerptVerse.value.end)) {
-        console.error('Invalid verse timing data:', currentExcerptVerse.value)
+    // Load audio using Web Audio API
+    let buffer: AudioBuffer
+    try {
+      buffer = await loadAudioBuffer(excerptResult.audioUrl)
+      audioBuffer.value = buffer
+      console.log('Audio buffer loaded successfully, duration:', buffer.duration)
+    } catch (loadError) {
+      console.error('Failed to load audio buffer:', loadError)
+
+      // Try alternative URL
+      console.log('Attempting to fetch alternative audio URL...')
+      const alternativeUrl = await getAlternativeAudioUrl(excerptResult.audioUrl)
+
+      if (alternativeUrl) {
+        console.log('Found alternative URL:', alternativeUrl)
+        try {
+          buffer = await loadAudioBuffer(alternativeUrl)
+          audioBuffer.value = buffer
+          console.log('Alternative audio buffer loaded successfully')
+        } catch (altError) {
+          console.error('Failed to load alternative audio buffer:', altError)
+          toast.add({
+            severity: 'error',
+            summary: 'Audio Error',
+            detail: 'Audio file not available. Please try again later.',
+            life: 5000
+          })
+          stopPlaying()
+          return
+        }
+      } else {
         toast.add({
           severity: 'error',
           summary: 'Audio Error',
-          detail: 'Invalid verse timing data. Cannot play specific verse segment.',
+          detail: 'Failed to load audio file. Please try again.',
           life: 5000
         })
         stopPlaying()
         return
       }
+    }
 
-      // Set current time to verse start and duration to verse length
-      // Use timing data from currentExcerptVerse
-      audio.currentTime = currentExcerptVerse.value.begin
-      currentTime.value = 0 // Reset display time to 0 for verse duration
-      duration.value = currentExcerptVerse.value.end - currentExcerptVerse.value.begin
+    // Set duration for UI
+    const verseBegin = currentExcerptVerse.value.begin
+    const verseEnd = currentExcerptVerse.value.end
+    const verseDuration = verseEnd - verseBegin
 
-      // NOW show the player since audio loaded successfully
-      showPlayer.value = true
-      isPlaying.value = true
+    currentTime.value = 0
+    duration.value = verseDuration
 
-      // If quick check mode is enabled, handle special playback
-      if (quickCheckMode.value) {
-        handleQuickCheckPlayback(audio)
-      }
-    })
+    // Show player and set playing state
+    showPlayer.value = true
+    isPlaying.value = true
 
-    audio.addEventListener('timeupdate', () => {
-      // Check if currentExcerptVerse has valid timing data
-      if (!currentExcerptVerse.value || 
-          typeof currentExcerptVerse.value.begin !== 'number' || 
-          typeof currentExcerptVerse.value.end !== 'number' ||
-          isNaN(currentExcerptVerse.value.begin) || 
-          isNaN(currentExcerptVerse.value.end)) {
-        return // Skip this update if data is invalid
-      }
-
-      // Playing specific verse segment using current excerpt timing data
-      const verseCurrentTime = audio.currentTime - currentExcerptVerse.value.begin
-      currentTime.value = Math.max(0, verseCurrentTime)
-
-      // Stop when reaching verse end (skip if in quick check mode, handled separately)
-      if (!isQuickCheckActive.value && audio.currentTime >= currentExcerptVerse.value.end) {
+    // If quick check mode is enabled, handle special playback
+    if (quickCheckMode.value && verseDuration >= 6) {
+      handleQuickCheckPlayback()
+    } else {
+      // Normal playback: play verse segment with precise timing
+      // The onended callback fires EXACTLY when the segment ends (sub-millisecond precision)
+      playAudioSegment(buffer, verseBegin, verseEnd, () => {
+        // This callback fires exactly when playback ends - no delay!
         onAudioComplete()
-      }
-    })
-
-    audio.addEventListener('ended', () => {
-      console.log('Audio playback ended')
-      onAudioComplete()
-    })
-
-    audio.addEventListener('error', async (e) => {
-      if (errorHandled) return // Prevent duplicate error messages
-      errorHandled = true
-
-      const failedAudio = e.target as HTMLAudioElement
-      console.error('Audio playback error details:', {
-        error: failedAudio.error,
-        code: failedAudio.error?.code,
-        message: failedAudio.error?.message,
-        src: failedAudio.src,
-        currentSrc: failedAudio.currentSrc
       })
 
-      // Try alternative URL first
-      console.log('Attempting to fetch alternative audio URL...')
-      const alternativeUrl = await getAlternativeAudioUrl(excerptResult.audioUrl)
-      
-      if (alternativeUrl) {
-        console.log('Found alternative URL:', alternativeUrl)
-        try {
-          // Stop current audio
-          audio.pause()
-          audio.src = ''
-
-          // Create new audio with alternative URL
-          const newAuthUrl = createAudioUrlWithAuth(alternativeUrl)
-          console.log('Authenticated Alternative URL:', newAuthUrl)
-          const newAudio = new Audio(newAuthUrl)
-          audioElement.value = newAudio
-
-          // Set up same event listeners for new audio
-          newAudio.addEventListener('loadedmetadata', () => {
-            console.log('Alternative audio metadata loaded')
-            // Check if currentExcerptVerse has valid timing data
-            if (!currentExcerptVerse.value || 
-                typeof currentExcerptVerse.value.begin !== 'number' || 
-                typeof currentExcerptVerse.value.end !== 'number' ||
-                isNaN(currentExcerptVerse.value.begin) || 
-                isNaN(currentExcerptVerse.value.end)) {
-              console.error('Invalid verse timing data for alternative audio:', currentExcerptVerse.value)
-              stopPlaying()
-              return
-            }
-
-            newAudio.currentTime = currentExcerptVerse.value.begin
-            currentTime.value = 0
-            duration.value = currentExcerptVerse.value.end - currentExcerptVerse.value.begin
-            showPlayer.value = true
-            isPlaying.value = true
-
-            // If quick check mode is enabled, handle special playback
-            if (quickCheckMode.value) {
-              handleQuickCheckPlayback(newAudio)
-            }
-          })
-
-          newAudio.addEventListener('timeupdate', () => {
-            // Check if currentExcerptVerse has valid timing data
-            if (!currentExcerptVerse.value || 
-                typeof currentExcerptVerse.value.begin !== 'number' || 
-                typeof currentExcerptVerse.value.end !== 'number' ||
-                isNaN(currentExcerptVerse.value.begin) || 
-                isNaN(currentExcerptVerse.value.end)) {
-              return // Skip this update if data is invalid
-            }
-
-            const verseCurrentTime = newAudio.currentTime - currentExcerptVerse.value.begin
-            currentTime.value = Math.max(0, verseCurrentTime)
-            // Stop when reaching verse end (skip if in quick check mode, handled separately)
-            if (!isQuickCheckActive.value && newAudio.currentTime >= currentExcerptVerse.value.end) {
-              onAudioComplete()
-            }
-          })
-
-          newAudio.addEventListener('ended', () => {
-            onAudioComplete()
-          })
-
-          newAudio.addEventListener('error', (altE) => {
-            const failedAltAudio = altE.target as HTMLAudioElement
-            console.error('Alternative audio playback error:', {
-              error: failedAltAudio.error,
-              src: failedAltAudio.src
-            })
-            
-            // If alternative URL also fails, show error
-            console.error('Both original and alternative audio URLs failed')
-            toast.add({
-              severity: 'error',
-              summary: 'Audio Error',
-              detail: 'Audio file not available. Please try again later.',
-              life: 5000
-            })
-            stopPlaying()
-          })
-
-          // Try to play alternative audio
-          await newAudio.play()
-          return // Success with alternative URL
-        } catch (altError) {
-          console.error('Error with alternative audio:', altError)
-        }
-      } else {
-        console.log('No alternative URL found')
-      }
-
-      // If no alternative URL or alternative failed, show original error
-      console.error('Audio playback error:', e)
-      let errorMessage = 'Failed to load audio file. Please try again.'
-
-      // More specific error messages based on error type
-      if (failedAudio && failedAudio.error) {
-        switch (failedAudio.error.code) {
-          case failedAudio.error.MEDIA_ERR_ABORTED:
-            errorMessage = 'Audio playback was aborted.'
-            break
-          case failedAudio.error.MEDIA_ERR_NETWORK:
-            errorMessage = 'Network error occurred while loading audio.'
-            break
-          case failedAudio.error.MEDIA_ERR_DECODE:
-            errorMessage = 'Audio file is corrupted or in unsupported format.'
-            break
-          case failedAudio.error.MEDIA_ERR_SRC_NOT_SUPPORTED:
-            errorMessage = 'Audio file not found or format not supported.'
-            break
-          default:
-            errorMessage = 'Unknown audio error occurred.'
-        }
-      }
-
-      toast.add({
-        severity: 'error',
-        summary: 'Audio Error',
-        detail: errorMessage,
-        life: 5000
-      })
-      stopPlaying()
-    })
-
-    // Start playback
-    try {
-      await audio.play()
-    } catch (playError) {
-      if (errorHandled) return // Prevent duplicate error messages
-      errorHandled = true
-
-      console.error('Error starting audio playback:', playError)
-      toast.add({
-        severity: 'error',
-        summary: 'Playback Error',
-        detail: 'Unable to start audio playback. Please click the play button to try again.',
-        life: 5000
-      })
-      stopPlaying()
-      return
+      // Start interval for updating currentTime display
+      startTimeUpdateInterval(verseBegin, verseDuration)
     }
 
     // Auto-open correction interface for confirmed and corrected anomalies
@@ -1966,12 +1964,7 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
       initializeCorrectionInterface()
     }
 
-    // Progress is updated by timeupdate event, no need for interval
-
   } catch (error: any) {
-    if (errorHandled) return // Prevent duplicate error messages
-    errorHandled = true
-
     console.error('Error playing verse:', error)
 
     // Extract detailed error message from API response
@@ -1996,8 +1989,8 @@ const playVerse = async (anomaly: VoiceAnomalyModel) => {
 }
 
 const togglePlayPause = () => {
-  // If audio completed and no audio element, restart playback from beginning
-  if (!audioElement.value && currentVerse.value) {
+  // If audio completed and no source node, restart playback from beginning
+  if (!sourceNode.value && !audioElement.value && currentVerse.value) {
     showButtonAnimation.value = false
     // Reset timeline before restarting
     currentTime.value = 0
@@ -2005,25 +1998,55 @@ const togglePlayPause = () => {
     return
   }
 
-  if (!audioElement.value) return
-
+  // Web Audio API doesn't support pause/resume on the same source node
+  // We need to stop and recreate for resume functionality
   if (isPlaying.value) {
     // Interrupt quick check playback if active
     if (isQuickCheckActive.value) {
       shouldStopQuickCheck.value = true
       isQuickCheckActive.value = false
     }
-    audioElement.value.pause()
+
+    // Store current position before stopping
+    if (sourceNode.value && audioContext.value) {
+      const elapsed = audioContext.value.currentTime - audioStartTime.value
+      audioOffset.value = audioOffset.value + elapsed
+    }
+
+    // Stop playback
+    stopAudioPlayback()
+
+    // Also stop HTMLAudioElement if exists (backward compatibility)
+    if (audioElement.value) {
+      audioElement.value.pause()
+    }
+
     isPlaying.value = false
   } else {
-    audioElement.value.play()
-    isPlaying.value = true
+    // Resume playback from stored position
+    if (audioBuffer.value && currentExcerptVerse.value) {
+      const verseBegin = currentExcerptVerse.value.begin
+      const verseEnd = currentExcerptVerse.value.end
+      const verseDuration = verseEnd - verseBegin
+
+      // Resume from audioOffset (which is absolute position in audio file)
+      playAudioSegment(audioBuffer.value, audioOffset.value, verseEnd, () => {
+        onAudioComplete()
+      })
+      startTimeUpdateInterval(verseBegin, verseDuration)
+      isPlaying.value = true
+    } else if (audioElement.value) {
+      // Fallback to HTMLAudioElement if exists
+      audioElement.value.play()
+      isPlaying.value = true
+    }
   }
 }
 
 // Function to seek to position when clicking on timeline
 const seekToPosition = (event: MouseEvent) => {
-  if (!audioElement.value || !currentExcerptVerse.value || duration.value <= 0) return
+  if (!currentExcerptVerse.value || duration.value <= 0) return
+  if (!audioBuffer.value && !audioElement.value) return
 
   const progressBar = event.currentTarget as HTMLElement
   const rect = progressBar.getBoundingClientRect()
@@ -2033,32 +2056,58 @@ const seekToPosition = (event: MouseEvent) => {
   // Calculate the percentage of where the user clicked
   const clickPercentage = Math.max(0, Math.min(1, clickX / progressBarWidth))
 
-  // Calculate the new time position
+  // Calculate the new time position within the verse
   const newTime = clickPercentage * duration.value
 
   // For verse segments using excerpt data
   const verseStartTime = currentExcerptVerse.value.begin
-  const actualNewTime = verseStartTime + newTime
-
-  // Make sure we don't go beyond the verse end time
-  const maxTime = currentExcerptVerse.value.end
-  audioElement.value.currentTime = Math.min(actualNewTime, maxTime)
+  const verseEndTime = currentExcerptVerse.value.end
+  const actualNewTime = Math.min(verseStartTime + newTime, verseEndTime)
 
   // Update the current time display immediately
   currentTime.value = newTime
+
+  // Web Audio API: need to stop and restart from new position
+  if (audioBuffer.value) {
+    const wasPlaying = isPlaying.value
+
+    // Stop current playback
+    stopAudioPlayback()
+
+    // Update offset to new position
+    audioOffset.value = actualNewTime
+
+    // If was playing, restart from new position
+    if (wasPlaying) {
+      playAudioSegment(audioBuffer.value, actualNewTime, verseEndTime, () => {
+        onAudioComplete()
+      })
+      startTimeUpdateInterval(verseStartTime, duration.value)
+    }
+  } else if (audioElement.value) {
+    // Fallback to HTMLAudioElement
+    audioElement.value.currentTime = actualNewTime
+  }
 }
 
 // Function to handle quick check playback: first 2s, pause 0.5s, last 2s
-const handleQuickCheckPlayback = async (audio: HTMLAudioElement) => {
-  if (!currentExcerptVerse.value) return
+// Uses Web Audio API for precise timing
+const handleQuickCheckPlayback = async () => {
+  if (!currentExcerptVerse.value || !audioBuffer.value) return
 
+  const buffer = audioBuffer.value
   const verseBegin = currentExcerptVerse.value.begin
   const verseEnd = currentExcerptVerse.value.end
   const verseDuration = verseEnd - verseBegin
 
-  // If verse is shorter than 6 seconds, play normally
+  // If verse is shorter than 6 seconds, play normally (this check is redundant but kept for safety)
   if (verseDuration < 6) {
     isQuickCheckActive.value = false
+    // Play normally
+    playAudioSegment(buffer, verseBegin, verseEnd, () => {
+      onAudioComplete()
+    })
+    startTimeUpdateInterval(verseBegin, verseDuration)
     return
   }
 
@@ -2067,42 +2116,39 @@ const handleQuickCheckPlayback = async (audio: HTMLAudioElement) => {
   shouldStopQuickCheck.value = false
 
   try {
-    // Play first 2 seconds
-    audio.currentTime = verseBegin
-    await audio.play()
+    // Play first 2 seconds using Web Audio API with precise timing
+    const firstSegmentEnd = verseBegin + 2
 
-    // Wait for 2 seconds
     await new Promise<void>((resolve, reject) => {
-      const checkTime = () => {
-        if (shouldStopQuickCheck.value) {
-          audio.removeEventListener('timeupdate', checkTime)
-          reject(new Error('Quick check interrupted'))
-          return
-        }
-        if (audio.currentTime >= verseBegin + 2) {
-          audio.removeEventListener('timeupdate', checkTime)
-          resolve()
-        }
+      if (shouldStopQuickCheck.value) {
+        reject(new Error('Quick check interrupted'))
+        return
       }
-      audio.addEventListener('timeupdate', checkTime)
+
+      playAudioSegment(buffer, verseBegin, firstSegmentEnd, () => {
+        // This fires exactly when 2 seconds have elapsed
+        resolve()
+      })
+
+      // Update UI during first segment
+      startTimeUpdateInterval(verseBegin, verseDuration)
     })
 
     // Check if we should stop
     if (shouldStopQuickCheck.value) {
       isQuickCheckActive.value = false
+      stopAudioPlayback()
       return
     }
 
-    // Pause audio
-    audio.pause()
-
-    // Wait 0.5 seconds
-    await new Promise((resolve, reject) => {
-      const timeoutId = setTimeout(() => {
+    // Pause for 0.5 seconds
+    stopAudioPlayback()
+    await new Promise<void>((resolve, reject) => {
+      setTimeout(() => {
         if (shouldStopQuickCheck.value) {
           reject(new Error('Quick check interrupted'))
         } else {
-          resolve(undefined)
+          resolve()
         }
       }, 500)
     })
@@ -2115,24 +2161,34 @@ const handleQuickCheckPlayback = async (audio: HTMLAudioElement) => {
 
     // Play last 2 seconds
     const lastSegmentStart = Math.max(verseBegin, verseEnd - 2)
-    audio.currentTime = lastSegmentStart
 
-    await audio.play()
-
-    // Wait until the end
     await new Promise<void>((resolve, reject) => {
-      const checkEnd = () => {
-        if (shouldStopQuickCheck.value) {
-          audio.removeEventListener('timeupdate', checkEnd)
-          reject(new Error('Quick check interrupted'))
+      if (shouldStopQuickCheck.value) {
+        reject(new Error('Quick check interrupted'))
+        return
+      }
+
+      playAudioSegment(buffer, lastSegmentStart, verseEnd, () => {
+        // This fires exactly when playback ends
+        resolve()
+      })
+
+      // Update UI - show progress from last segment start using requestAnimationFrame
+      const ctx = getAudioContext()
+      if (animationFrameId.value) {
+        cancelAnimationFrame(animationFrameId.value)
+      }
+      const updateQuickCheckTime = () => {
+        if (!sourceNode.value || !isPlaying.value) {
+          animationFrameId.value = null
           return
         }
-        if (audio.currentTime >= verseEnd) {
-          audio.removeEventListener('timeupdate', checkEnd)
-          resolve()
-        }
+        const elapsed = ctx.currentTime - audioStartTime.value
+        const currentPosition = lastSegmentStart - verseBegin + elapsed
+        currentTime.value = Math.max(0, Math.min(currentPosition, verseDuration))
+        animationFrameId.value = requestAnimationFrame(updateQuickCheckTime)
       }
-      audio.addEventListener('timeupdate', checkEnd)
+      animationFrameId.value = requestAnimationFrame(updateQuickCheckTime)
     })
 
     // Complete playback
@@ -2143,6 +2199,7 @@ const handleQuickCheckPlayback = async (audio: HTMLAudioElement) => {
   } catch (error) {
     console.error('Error in quick check playback:', error)
     isQuickCheckActive.value = false
+    stopAudioPlayback()
     // Only call onAudioComplete if it wasn't interrupted by user action
     if (!shouldStopQuickCheck.value) {
       onAudioComplete()
@@ -2152,10 +2209,17 @@ const handleQuickCheckPlayback = async (audio: HTMLAudioElement) => {
 
 // Function to handle audio completion without closing player
 const onAudioComplete = () => {
+  // Stop Web Audio API playback
+  stopAudioPlayback()
+
+  // Also stop HTMLAudioElement if exists (backward compatibility)
   if (audioElement.value) {
     audioElement.value.pause()
     audioElement.value = null
   }
+
+  // Clear source node but keep buffer for potential replay
+  sourceNode.value = null
 
   isPlaying.value = false
   // Set currentTime to duration to ensure 100% progress
@@ -2165,7 +2229,7 @@ const onAudioComplete = () => {
 
   // Start button animation to prompt user action
   showButtonAnimation.value = true
-  
+
   // Start auto-accept timer if enabled
   startAutoAcceptTimer()
 }
@@ -2176,7 +2240,11 @@ const stopPlaying = () => {
     shouldStopQuickCheck.value = true
     isQuickCheckActive.value = false
   }
-  
+
+  // Stop Web Audio API playback
+  stopAudioPlayback()
+
+  // Also stop HTMLAudioElement if exists (backward compatibility)
   if (audioElement.value) {
     audioElement.value.pause()
     audioElement.value = null
@@ -2186,7 +2254,7 @@ const stopPlaying = () => {
     clearInterval(progressUpdateInterval.value)
     progressUpdateInterval.value = null
   }
-  
+
   // Clear auto-accept timer
   clearAutoAcceptTimer()
 
@@ -2200,6 +2268,11 @@ const stopPlaying = () => {
   shouldStopQuickCheck.value = false
   currentVerseType.value = 'original' // Reset to original verse type
   originalVerseNumber.value = null // Clear original verse number
+
+  // Clear Web Audio API state
+  audioBuffer.value = null
+  sourceNode.value = null
+  audioOffset.value = 0
 
   // Clear excerpt data
   currentExcerpt.value = null
@@ -2442,8 +2515,11 @@ const confirmAnomaly = async () => {
       shouldStopQuickCheck.value = true
       isQuickCheckActive.value = false
     }
-    
-    // Stop audio playback if it's currently playing
+
+    // Stop Web Audio API playback
+    stopAudioPlayback()
+
+    // Also stop HTMLAudioElement if exists (backward compatibility)
     if (audioElement.value) {
       audioElement.value.pause()
       audioElement.value = null
@@ -2455,7 +2531,7 @@ const confirmAnomaly = async () => {
     if (isPlaying.value) {
       isPlaying.value = false
     }
-    
+
     console.log('Before handleStatusChange - currentVerse.status:', currentVerse.value.status)
     await handleGroupStatusChange(currentVerse.value, 'confirmed', !autoAdvanceToNext.value)
     console.log('After handleStatusChange - currentVerse.status:', currentVerse.value.status)
@@ -2480,8 +2556,11 @@ const disproveAnomaly = async () => {
       shouldStopQuickCheck.value = true
       isQuickCheckActive.value = false
     }
-    
-    // Stop audio playback immediately before advancing
+
+    // Stop Web Audio API playback
+    stopAudioPlayback()
+
+    // Also stop HTMLAudioElement if exists (backward compatibility)
     if (audioElement.value) {
       audioElement.value.pause()
       audioElement.value = null
@@ -2493,7 +2572,7 @@ const disproveAnomaly = async () => {
     if (isPlaying.value) {
       isPlaying.value = false
     }
-    
+
     await handleGroupStatusChange(currentVerse.value, 'disproved', !autoAdvanceToNext.value)
     await advanceToNextVerse()
   }
@@ -2637,37 +2716,34 @@ const resetCorrectionChanges = () => {
   correctionEndTime.value = originalEndTime.value
 }
 
-// Preview functions for timing corrections
+// Preview functions for timing corrections using Web Audio API for precise timing
 const previewStartTime = async () => {
-  console.log('=== START TIME PREVIEW ===')
-  console.log('audioElement.value:', !!audioElement.value)
-  console.log('currentExcerptVerse.value:', !!currentExcerptVerse.value)
-  console.log('currentExcerpt.value:', !!currentExcerpt.value)
-  console.log('correctionStartTime.value:', correctionStartTime.value)
-  console.log('correctionEndTime.value:', correctionEndTime.value)
+  console.log('=== START TIME PREVIEW (Web Audio API) ===')
 
   if (!currentExcerptVerse.value || !currentExcerpt.value) {
     console.log('Early return: missing currentExcerptVerse or currentExcerpt')
     return
   }
 
-  // Create audio element if it doesn't exist
-  if (!audioElement.value) {
-    console.log('Creating audio element for preview')
+  // Load audio buffer if not already loaded
+  if (!audioBuffer.value) {
+    console.log('Loading audio buffer for preview')
     const audioUrl = currentExcerpt.value.parts[0]?.audio_link
     if (!audioUrl) {
       console.log('No audio URL available')
       return
     }
-    audioElement.value = new Audio(createAudioUrlWithAuth(audioUrl))
-    audioElement.value.preload = 'metadata'
-    console.log('Audio element created with URL:', audioUrl)
+    try {
+      audioBuffer.value = await loadAudioBuffer(audioUrl)
+    } catch (error) {
+      console.error('Failed to load audio buffer:', error)
+      return
+    }
   }
 
   try {
     // Stop current playback
-    console.log('Stopping current playback...')
-    audioElement.value.pause()
+    stopAudioPlayback()
     isPlaying.value = false
 
     // For start time correction: play from corrected start for 2 seconds
@@ -2675,26 +2751,12 @@ const previewStartTime = async () => {
     const endTime = Math.min(correctionStartTime.value + 2, correctionEndTime.value)
     console.log(`Preview start time: ${startTime}s to ${endTime}s (duration: ${endTime - startTime}s)`)
 
-    // Set audio position to start time
-    console.log('Setting audio currentTime to:', startTime)
-    audioElement.value.currentTime = startTime
-
-    // Start playback
-    console.log('Starting playback...')
-    await audioElement.value.play()
+    // Play segment with precise timing - stops exactly at endTime
     isPlaying.value = true
-    console.log('Playback started successfully')
-
-    // Schedule stop after 2 seconds or at end time
-    const playDuration = (endTime - startTime) * 1000 // Convert to milliseconds
-    console.log('Scheduling stop in', playDuration, 'ms')
-    setTimeout(() => {
-      if (audioElement.value) {
-        console.log('Stopping preview playback')
-        audioElement.value.pause()
-        isPlaying.value = false
-      }
-    }, playDuration)
+    playAudioSegment(audioBuffer.value, startTime, endTime, () => {
+      console.log('Preview playback ended precisely')
+      isPlaying.value = false
+    })
 
   } catch (error) {
     console.error('Error during start time preview:', error)
@@ -2702,35 +2764,32 @@ const previewStartTime = async () => {
 }
 
 const previewEndTime = async () => {
-  console.log('=== END TIME PREVIEW ===')
-  console.log('audioElement.value:', !!audioElement.value)
-  console.log('currentExcerptVerse.value:', !!currentExcerptVerse.value)
-  console.log('currentExcerpt.value:', !!currentExcerpt.value)
-  console.log('correctionStartTime.value:', correctionStartTime.value)
-  console.log('correctionEndTime.value:', correctionEndTime.value)
+  console.log('=== END TIME PREVIEW (Web Audio API) ===')
 
   if (!currentExcerptVerse.value || !currentExcerpt.value) {
     console.log('Early return: missing currentExcerptVerse or currentExcerpt')
     return
   }
 
-  // Create audio element if it doesn't exist
-  if (!audioElement.value) {
-    console.log('Creating audio element for preview')
+  // Load audio buffer if not already loaded
+  if (!audioBuffer.value) {
+    console.log('Loading audio buffer for preview')
     const audioUrl = currentExcerpt.value.parts[0]?.audio_link
     if (!audioUrl) {
       console.log('No audio URL available')
       return
     }
-    audioElement.value = new Audio(createAudioUrlWithAuth(audioUrl))
-    audioElement.value.preload = 'metadata'
-    console.log('Audio element created with URL:', audioUrl)
+    try {
+      audioBuffer.value = await loadAudioBuffer(audioUrl)
+    } catch (error) {
+      console.error('Failed to load audio buffer:', error)
+      return
+    }
   }
 
   try {
     // Stop current playback
-    console.log('Stopping current playback...')
-    audioElement.value.pause()
+    stopAudioPlayback()
     isPlaying.value = false
 
     // For end time correction: play 2 seconds before corrected end until end
@@ -2738,26 +2797,12 @@ const previewEndTime = async () => {
     const endTime = correctionEndTime.value
     console.log(`Preview end time: ${startTime}s to ${endTime}s (duration: ${endTime - startTime}s)`)
 
-    // Set audio position to start time
-    console.log('Setting audio currentTime to:', startTime)
-    audioElement.value.currentTime = startTime
-
-    // Start playback
-    console.log('Starting playback...')
-    await audioElement.value.play()
+    // Play segment with precise timing - stops exactly at endTime
     isPlaying.value = true
-    console.log('Playback started successfully')
-
-    // Schedule stop at end time
-    const playDuration = (endTime - startTime) * 1000 // Convert to milliseconds
-    console.log('Scheduling stop in', playDuration, 'ms')
-    setTimeout(() => {
-      if (audioElement.value) {
-        console.log('Stopping preview playback')
-        audioElement.value.pause()
-        isPlaying.value = false
-      }
-    }, playDuration)
+    playAudioSegment(audioBuffer.value, startTime, endTime, () => {
+      console.log('Preview playback ended precisely')
+      isPlaying.value = false
+    })
 
   } catch (error) {
     console.error('Error during end time preview:', error)
@@ -2829,7 +2874,17 @@ onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown)
   document.removeEventListener('click', handleClickOutside)
 
-  // Clean up audio resources
+  // Clean up Web Audio API resources
+  stopAudioPlayback()
+
+  // Close AudioContext to free resources
+  if (audioContext.value) {
+    audioContext.value.close()
+    audioContext.value = null
+  }
+  audioBuffer.value = null
+
+  // Clean up HTMLAudioElement if exists (backward compatibility)
   if (audioElement.value) {
     audioElement.value.pause()
     audioElement.value = null
@@ -2839,7 +2894,7 @@ onUnmounted(() => {
     clearInterval(progressUpdateInterval.value)
     progressUpdateInterval.value = null
   }
-  
+
   // Clear auto-accept timer
   clearAutoAcceptTimer()
 })
@@ -2862,7 +2917,10 @@ const addAnomalyToPreviousVerse = async () => {
     isQuickCheckActive.value = false
   }
 
-  // Stop audio playback
+  // Stop Web Audio API playback
+  stopAudioPlayback()
+
+  // Also stop HTMLAudioElement if exists (backward compatibility)
   if (audioElement.value) {
     audioElement.value.pause()
     audioElement.value = null
@@ -2944,7 +3002,10 @@ const addAnomalyToNextVerse = async () => {
     isQuickCheckActive.value = false
   }
 
-  // Stop audio playback
+  // Stop Web Audio API playback
+  stopAudioPlayback()
+
+  // Also stop HTMLAudioElement if exists (backward compatibility)
   if (audioElement.value) {
     audioElement.value.pause()
     audioElement.value = null
