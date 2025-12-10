@@ -2963,6 +2963,17 @@ const addAnomalyToPreviousVerse = async () => {
         detail: `Anomaly added to verse (${currentVerse.value.book_number}:${currentVerse.value.chapter_number}:${targetVerseNumber})`,
         life: 3000
       })
+
+      // Close the player to ensure fresh state
+      stopPlaying()
+      
+      // Refresh the anomalies list to include the new one
+      await refreshAnomalies()
+      
+      // Re-open player with the new anomaly after a short delay to allow state to reset
+      setTimeout(() => {
+        playVerse(result)
+      }, 300)
     }
   } catch (error: any) {
     console.error('Error adding anomaly to previous verse:', error)
@@ -3048,6 +3059,17 @@ const addAnomalyToNextVerse = async () => {
         detail: `Anomaly added to verse (${currentVerse.value.book_number}:${currentVerse.value.chapter_number}:${targetVerseNumber})`,
         life: 3000
       })
+
+      // Close the player to ensure fresh state
+      stopPlaying()
+      
+      // Refresh the anomalies list to include the new one
+      await refreshAnomalies()
+      
+      // Re-open player with the new anomaly after a short delay to allow state to reset
+      setTimeout(() => {
+        playVerse(result)
+      }, 300)
     }
   } catch (error: any) {
     console.error('Error adding anomaly to next verse:', error)
