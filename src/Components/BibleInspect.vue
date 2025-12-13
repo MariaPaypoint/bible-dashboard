@@ -168,57 +168,30 @@
     </DataTable>
 
     <!-- Mini Audio Player Popup -->
-    <div v-if="showPlayer"
-      class="fixed top-4 right-4 w-[420px] bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-2xl shadow-lg p-7 z-50 transition-all duration-500 ease-in-out">
-      <div class="flex flex-col gap-3">
-        <div class="flex items-start justify-between">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-primary-50 dark:bg-primary-400/20 flex items-center justify-center">
-              <SpeakerIcon class="w-5 h-5 text-primary-600 dark:text-primary-400" />
-            </div>
-            <div>
-              <div class="text-base font-semibold text-surface-900 dark:text-surface-0 leading-normal">
-                Playing Verse
-              </div>
-              <div class="text-xs text-surface-500 dark:text-surface-300 leading-tight">
-                Book {{ selectedBookNumber }} Chapter {{ selectedChapter }}:{{ currentVerse?.number }}
-              </div>
-            </div>
-          </div>
-          <!-- Play/Pause and Stop buttons in top right corner -->
-          <div class="flex gap-2 -mt-1 -mr-1">
-            <Button severity="primary" class="w-10 h-10 !p-2" @click="togglePlayPause">
-              <component :is="isPlaying ? PauseIcon : PlayIcon" class="w-5 h-5" />
-            </Button>
-            <Button severity="secondary" class="w-10 h-10 !p-2" @click="stopPlaying(false)" v-tooltip.top="'Stop'">
-              <CloseIcon class="w-5 h-5" />
-            </Button>
-          </div>
-        </div>
-        <div class="text-sm text-surface-700 dark:text-surface-200 leading-relaxed" v-if="currentVerse?.html"
-          v-html="currentVerse.html">
-        </div>
-        
-        <div class="flex flex-col gap-2">
-          <div
-            class="relative h-1.5 rounded-lg overflow-hidden cursor-pointer hover:h-2 transition-all duration-200 bg-surface-200 dark:bg-surface-700"
-            @click="seekToPosition">
-            <div class="absolute top-0 left-0 bg-primary h-full rounded-lg transition-all duration-500 ease-in-out"
-              :style="{ width: progressPercentage + '%' }" />
-          </div>
-          <div class="text-right text-xs text-surface-900 dark:text-surface-0 leading-tight">
-            {{ formatTime(currentTime) }} / {{ formatTime(duration) }}
-          </div>
-        </div>
-        
-        <!-- Correction button at the bottom -->
+    <BaseAudioPlayer
+      :visible="showPlayer"
+      title="Playing Verse"
+      :subtitle="`Book ${selectedBookNumber} Chapter ${selectedChapter}:${currentVerse?.number}`"
+      :contentHtml="currentVerse?.html"
+      :isPlaying="isPlaying"
+      :currentTime="currentTime"
+      :duration="duration"
+      :progressPercentage="progressPercentage"
+      :zIndex="50"
+      @toggle-play-pause="togglePlayPause"
+      @close="stopPlaying(false)"
+      @seek="seekTo"
+    >
+      <!-- Settings slot: Auto-advance -->
+      <template #settings>
+        <!-- Correction button -->
         <div v-if="!showCorrectionInterface" class="pt-3 border-t border-surface-200 dark:border-surface-700">
           <Button @click="openCorrectionFromPlayer" severity="info" size="small" class="w-full text-xs">
             <InfoIcon class="w-3 h-3 mr-1" />
             Perform correction
           </Button>
         </div>
-        
+
         <!-- Auto-advance settings -->
         <div class="pt-4 mt-2 border-t border-surface-200 dark:border-surface-700">
           <div class="flex items-center gap-2 mb-3">
@@ -227,135 +200,35 @@
               Automatically advance to next verse
             </label>
           </div>
-          
+
           <div v-if="autoAdvanceToNext" class="flex items-center gap-2">
             <span class="text-sm text-surface-700 dark:text-surface-200">Pause:</span>
-            <InputNumber v-model="autoAdvancePause" :min="0.5" :max="10" :step="0.5" 
-              :minFractionDigits="1" :maxFractionDigits="1" 
+            <InputNumber v-model="autoAdvancePause" :min="0.5" :max="10" :step="0.5"
+              :minFractionDigits="1" :maxFractionDigits="1"
               class="w-20" size="small" />
             <span class="text-sm text-surface-700 dark:text-surface-200">sec</span>
           </div>
         </div>
+      </template>
 
-        <!-- Verse Correction Interface -->
-        <div v-if="showCorrectionInterface"
-          class="pt-4 mt-2 border-t border-surface-200 dark:border-surface-700 space-y-3">
-          <div class="text-sm font-medium text-surface-900 dark:text-surface-0 mb-3">
-            Adjust Verse Timing
-          </div>
-
-          <!-- Start Time Controls -->
-          <div class="flex items-center justify-between">
-            <span class="text-sm text-surface-700 dark:text-surface-200">Start Time:</span>
-            <div class="flex items-center gap-2">
-              <div class="flex items-center gap-1">
-                <!-- Very fast decrease -->
-                <Button @click="adjustStartTime(-1.0)" severity="secondary" size="small"
-                  class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'-1.0s'">
-                  <span class="text-2xl font-bold leading-none" style="margin-top: -2px;">-</span>
-                </Button>
-                <!-- Fast decrease -->
-                <Button @click="adjustStartTime(-0.1)" severity="secondary" size="small"
-                  class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'-0.1s'">
-                  <span class="text-lg font-bold leading-none" style="margin-top: -1px;">-</span>
-                </Button>
-                <!-- Fine decrease -->
-                <Button @click="adjustStartTime(-0.01)" severity="secondary" size="small"
-                  class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'-0.01s'">
-                  <span class="text-xs font-bold leading-none">-</span>
-                </Button>
-                <!-- Time display -->
-                <span
-                  class="text-sm font-mono min-w-[80px] text-center bg-surface-100 dark:bg-surface-800 px-2 py-1 rounded mx-1">{{
-                    formatTimeWithMs(correctionStartTime) }}</span>
-                <!-- Fine increase -->
-                <Button @click="adjustStartTime(0.01)" severity="secondary" size="small"
-                  class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'+0.01s'">
-                  <span class="text-xs font-bold leading-none">+</span>
-                </Button>
-                <!-- Fast increase -->
-                <Button @click="adjustStartTime(0.1)" severity="secondary" size="small"
-                  class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'+0.1s'">
-                  <span class="text-lg font-bold leading-none" style="margin-top: -1px;">+</span>
-                </Button>
-                <!-- Very fast increase -->
-                <Button @click="adjustStartTime(1.0)" severity="secondary" size="small"
-                  class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'+1.0s'">
-                  <span class="text-2xl font-bold leading-none" style="margin-top: -2px;">+</span>
-                </Button>
-              </div>
-              <!-- Preview button for Start Time -->
-              <Button @click="previewStartTime" severity="info" size="small" class="px-2 py-1"
-                v-tooltip.top="'Preview start time'">
-                <PlayIcon class="w-3 h-3" />
-              </Button>
-            </div>
-          </div>
-
-          <!-- End Time Controls -->
-          <div class="flex items-center justify-between">
-            <span class="text-sm text-surface-700 dark:text-surface-200">End Time:</span>
-            <div class="flex items-center gap-2">
-              <div class="flex items-center gap-1">
-                <!-- Very fast decrease -->
-                <Button @click="adjustEndTime(-1.0)" severity="secondary" size="small"
-                  class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'-1.0s'">
-                  <span class="text-2xl font-bold leading-none" style="margin-top: -2px;">-</span>
-                </Button>
-                <!-- Fast decrease -->
-                <Button @click="adjustEndTime(-0.1)" severity="secondary" size="small"
-                  class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'-0.1s'">
-                  <span class="text-lg font-bold leading-none" style="margin-top: -1px;">-</span>
-                </Button>
-                <!-- Fine decrease -->
-                <Button @click="adjustEndTime(-0.01)" severity="secondary" size="small"
-                  class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'-0.01s'">
-                  <span class="text-xs font-bold leading-none">-</span>
-                </Button>
-                <!-- Time display -->
-                <span
-                  class="text-sm font-mono min-w-[80px] text-center bg-surface-100 dark:bg-surface-800 px-2 py-1 rounded mx-1">{{
-                    formatTimeWithMs(correctionEndTime) }}</span>
-                <!-- Fine increase -->
-                <Button @click="adjustEndTime(0.01)" severity="secondary" size="small"
-                  class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'+0.01s'">
-                  <span class="text-xs font-bold leading-none">+</span>
-                </Button>
-                <!-- Fast increase -->
-                <Button @click="adjustEndTime(0.1)" severity="secondary" size="small"
-                  class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'+0.1s'">
-                  <span class="text-lg font-bold leading-none" style="margin-top: -1px;">+</span>
-                </Button>
-                <!-- Very fast increase -->
-                <Button @click="adjustEndTime(1.0)" severity="secondary" size="small"
-                  class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'+1.0s'">
-                  <span class="text-2xl font-bold leading-none" style="margin-top: -2px;">+</span>
-                </Button>
-              </div>
-              <!-- Preview button for End Time -->
-              <Button @click="previewEndTime" severity="info" size="small" class="px-2 py-1"
-                v-tooltip.top="'Preview end time'">
-                <PlayIcon class="w-3 h-3" />
-              </Button>
-            </div>
-          </div>
-
-          <!-- Action Buttons -->
-          <div class="flex gap-2 pt-2">
-            <Button @click="applyCorrectionChanges" severity="success" size="small" class="flex-1"
-              :disabled="!hasTimingChanges">
-              Apply Corrections
-            </Button>
-            <Button @click="resetCorrectionChanges" severity="secondary" size="small" class="flex-1">
-              Reset
-            </Button>
-            <Button @click="closeCorrectionInterface" severity="secondary" size="small" class="flex-1">
-              Close
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
+      <!-- Correction slot -->
+      <template #correction>
+        <TimingCorrection
+          v-if="showCorrectionInterface"
+          :startTime="correctionStartTime"
+          :endTime="correctionEndTime"
+          :originalStartTime="originalStartTime"
+          :originalEndTime="originalEndTime"
+          @update:startTime="correctionStartTime = $event"
+          @update:endTime="correctionEndTime = $event"
+          @preview-start="previewStartTime"
+          @preview-end="previewEndTime"
+          @apply="applyCorrectionChanges"
+          @reset="resetCorrectionChanges"
+          @close="closeCorrectionInterface"
+        />
+      </template>
+    </BaseAudioPlayer>
 
     <!-- Toast notifications -->
     <Toast />
@@ -375,17 +248,18 @@ import Checkbox from 'primevue/checkbox'
 import Toast from 'primevue/toast'
 import type { ExcerptResponse, ExcerptVerseModel, BookModel } from '../types/api'
 import { useTranslations, useBooks, type VoiceWithTranslation } from '../composables/useApi'
+import { useAudioPlayback } from '../composables/useAudioPlayback'
 import { bibleApiService } from '../services/api'
 import { useToast } from 'primevue/usetoast'
 import { createAudioUrlWithAuth } from '../utils/audio'
+import BaseAudioPlayer from './BaseAudioPlayer.vue'
+import TimingCorrection from './TimingCorrection.vue'
 // Lucide imports
 import {
   RotateCcw as RefreshIcon,
   Info as InfoIcon,
   Play as PlayIcon,
-  Pause as PauseIcon,
-  X as CloseIcon,
-  Volume2 as SpeakerIcon
+  Pause as PauseIcon
 } from 'lucide-vue-next'
 
 // Composables
@@ -421,15 +295,29 @@ const excerptVerses = ref<ExcerptVerseModel[]>([])
 let lastErrorTime = 0
 const ERROR_DEBOUNCE_TIME = 1000 // 1 second
 
+// Audio playback composable
+const {
+  isPlaying,
+  currentTime,
+  duration,
+  progressPercentage,
+  loadAudio,
+  playSegment,
+  togglePlayPause,
+  stop: stopAudio,
+  seekTo,
+  formatTime
+} = useAudioPlayback({
+  onPlaybackEnd: () => handlePlaybackEnd(),
+  onError: (err) => showError('Audio Error', err.message)
+})
+
 // Audio player state
 const showPlayer = ref(false)
-const isPlaying = ref(false)
 const currentVerse = ref<ExcerptVerseModel | null>(null)
 const currentPlayingId = ref<number | null>(null)
-const audioElement = ref<HTMLAudioElement | null>(null)
-const currentTime = ref(0)
-const duration = ref(0)
-const progressUpdateInterval = ref<number | null>(null)
+const currentAudioUrl = ref<string | null>(null)
+const closePlayerTimerId = ref<number | null>(null) // Timer for delayed player close
 
 // Auto-advance settings
 const autoAdvanceToNext = ref(false)
@@ -474,13 +362,6 @@ const canLoadData = computed(() => {
   return selectedVoice.value && selectedBookNumber.value && selectedChapter.value
 })
 
-const progressPercentage = computed(() => {
-  if (!currentVerse.value || duration.value === 0) return 0
-  // Calculate progress within the verse bounds
-  const verseDuration = currentVerse.value.end - currentVerse.value.begin
-  return (currentTime.value / verseDuration) * 100
-})
-
 const hasTimingChanges = computed(() => {
   return correctionStartTime.value !== originalStartTime.value ||
     correctionEndTime.value !== originalEndTime.value
@@ -511,13 +392,6 @@ const getVoiceName = (voiceCode: number) => {
   return voice ? `${voice.name} (${voice.translation.name} - ${voice.translation.language})` : ''
 }
 
-const formatTime = (seconds: number) => {
-  const mins = Math.floor(seconds / 60)
-  const wholeSecs = Math.floor(seconds % 60)
-  const fractionalPart = Math.round((seconds % 1) * 100)
-  return `${mins}:${wholeSecs.toString().padStart(2, '0')}.${fractionalPart.toString().padStart(2, '0')}`
-}
-
 const formatTimeWithFraction = (seconds: number) => {
   const mins = Math.floor(seconds / 60)
   const wholeSecs = Math.floor(seconds % 60)
@@ -532,13 +406,6 @@ const formatPauseTime = (seconds: number) => {
   const mainPart = seconds.toFixed(0)
   const fractionPart = `.${fractionalPart.toString().padStart(2, '0')}`
   return { mainPart, fractionPart }
-}
-
-const formatTimeWithMs = (seconds: number) => {
-  const mins = Math.floor(seconds / 60)
-  const secs = Math.floor(seconds % 60)
-  const ms = Math.round((seconds % 1) * 1000)
-  return `${mins}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`
 }
 
 const getRowClass = (data: ExcerptVerseModel) => {
@@ -599,20 +466,6 @@ const initializeCorrectionInterface = (verse: ExcerptVerseModel) => {
   showCorrectionInterface.value = true
 }
 
-const adjustStartTime = (delta: number) => {
-  const newValue = correctionStartTime.value + delta
-  if (newValue >= 0 && newValue < correctionEndTime.value) {
-    correctionStartTime.value = newValue
-  }
-}
-
-const adjustEndTime = (delta: number) => {
-  const newValue = correctionEndTime.value + delta
-  if (newValue > correctionStartTime.value) {
-    correctionEndTime.value = newValue
-  }
-}
-
 const resetCorrectionChanges = () => {
   correctionStartTime.value = originalStartTime.value
   correctionEndTime.value = originalEndTime.value
@@ -620,38 +473,21 @@ const resetCorrectionChanges = () => {
 
 const previewStartTime = async () => {
   if (!currentExcerpt.value || !currentVerse.value) return
-  
+
   // Find the part containing this verse
-  const part = currentExcerpt.value.parts.find(p => 
+  const part = currentExcerpt.value.parts.find(p =>
     p.verses.some(v => v.code === currentVerse.value!.code)
   )
   if (!part) return
 
   try {
     // Stop current playback
-    if (audioElement.value) {
-      audioElement.value.pause()
-      audioElement.value = null
-    }
+    stopAudio()
 
-    // Create new audio element
-    audioElement.value = new Audio(createAudioUrlWithAuth(part.audio_link))
-    
-    audioElement.value.addEventListener('loadedmetadata', () => {
-      if (audioElement.value) {
-        // Play from corrected start for 2 seconds
-        const endTime = Math.min(correctionStartTime.value + 2, correctionEndTime.value)
-        audioElement.value.currentTime = correctionStartTime.value
-        audioElement.value.play()
-        
-        // Stop after preview duration
-        setTimeout(() => {
-          if (audioElement.value) {
-            audioElement.value.pause()
-          }
-        }, (endTime - correctionStartTime.value) * 1000)
-      }
-    })
+    // Load and play preview using Web Audio API
+    const buffer = await loadAudio(part.audio_link)
+    const endTime = Math.min(correctionStartTime.value + 2, correctionEndTime.value)
+    playSegment(buffer, correctionStartTime.value, endTime)
   } catch (error) {
     console.error('Error previewing start time:', error)
   }
@@ -659,38 +495,21 @@ const previewStartTime = async () => {
 
 const previewEndTime = async () => {
   if (!currentExcerpt.value || !currentVerse.value) return
-  
+
   // Find the part containing this verse
-  const part = currentExcerpt.value.parts.find(p => 
+  const part = currentExcerpt.value.parts.find(p =>
     p.verses.some(v => v.code === currentVerse.value!.code)
   )
   if (!part) return
 
   try {
     // Stop current playback
-    if (audioElement.value) {
-      audioElement.value.pause()
-      audioElement.value = null
-    }
+    stopAudio()
 
-    // Create new audio element
-    audioElement.value = new Audio(createAudioUrlWithAuth(part.audio_link))
-    
-    audioElement.value.addEventListener('loadedmetadata', () => {
-      if (audioElement.value) {
-        // Play 2 seconds before corrected end until end
-        const startTime = Math.max(correctionEndTime.value - 2, correctionStartTime.value)
-        audioElement.value.currentTime = startTime
-        audioElement.value.play()
-        
-        // Stop at corrected end time
-        setTimeout(() => {
-          if (audioElement.value) {
-            audioElement.value.pause()
-          }
-        }, (correctionEndTime.value - startTime) * 1000)
-      }
-    })
+    // Load and play preview using Web Audio API
+    const buffer = await loadAudio(part.audio_link)
+    const startTime = Math.max(correctionEndTime.value - 2, correctionStartTime.value)
+    playSegment(buffer, startTime, correctionEndTime.value)
   } catch (error) {
     console.error('Error previewing end time:', error)
   }
@@ -852,11 +671,17 @@ const playVerse = async (verse: ExcerptVerseModel) => {
   if (!currentExcerpt.value || !selectedVoice.value) return
 
   // Find the part containing this verse
-  const part = currentExcerpt.value.parts.find(p => 
+  const part = currentExcerpt.value.parts.find(p =>
     p.verses.some(v => v.code === verse.code)
   )
-  
+
   if (!part) return
+
+  // Cancel any pending close timer
+  if (closePlayerTimerId.value) {
+    clearTimeout(closePlayerTimerId.value)
+    closePlayerTimerId.value = null
+  }
 
   // Close correction interface if it's open
   if (showCorrectionInterface.value) {
@@ -865,130 +690,74 @@ const playVerse = async (verse: ExcerptVerseModel) => {
 
   currentVerse.value = verse
   currentPlayingId.value = verse.code
+  currentAudioUrl.value = part.audio_link
   showPlayer.value = true
 
   try {
     // Stop current audio if playing
-    if (audioElement.value) {
-      audioElement.value.pause()
-      audioElement.value = null
-    }
+    stopAudio()
 
-    // Create new audio element
-    audioElement.value = new Audio(createAudioUrlWithAuth(part.audio_link))
-    
-    audioElement.value.addEventListener('loadedmetadata', () => {
-      if (audioElement.value) {
-        // Set duration to verse length, not full audio duration
-        duration.value = verse.end - verse.begin
-        // Set start time to verse begin time
-        audioElement.value.currentTime = verse.begin
-        // Reset display time to 0 for verse duration
-        currentTime.value = 0
-      }
-    })
-
-    audioElement.value.addEventListener('timeupdate', () => {
-      if (audioElement.value) {
-        // Calculate current time relative to verse start
-        const verseCurrentTime = audioElement.value.currentTime - verse.begin
-        currentTime.value = Math.max(0, verseCurrentTime)
-        
-        // Stop at verse end time
-        if (audioElement.value.currentTime >= verse.end) {
-          stopPlaying(true) // verse completed
-        }
-      }
-    })
-
-    audioElement.value.addEventListener('ended', () => {
-      stopPlaying(true) // verse completed
-    })
-
-    audioElement.value.addEventListener('error', (e) => {
-      console.error('Audio error:', e)
-      showError('Audio Error', 'Failed to load audio')
-      stopPlaying(false) // error, not completed
-    })
-
-    await audioElement.value.play()
-    isPlaying.value = true
-
+    // Load and play using Web Audio API
+    const buffer = await loadAudio(part.audio_link)
+    playSegment(buffer, verse.begin, verse.end)
   } catch (error) {
     console.error('Error playing verse:', error)
     showError('Playback Error', 'Failed to play verse')
-    stopPlaying(false) // error, not completed
+    stopPlaying(false)
   }
 }
 
-const togglePlayPause = () => {
-  if (!audioElement.value) return
-
-  if (isPlaying.value) {
-    audioElement.value.pause()
-    isPlaying.value = false
-  } else {
-    audioElement.value.play()
-    isPlaying.value = true
-  }
-}
-
-const stopPlaying = (verseCompleted = false) => {
-  if (audioElement.value) {
-    audioElement.value.pause()
-    audioElement.value = null
-  }
-  
-  if (progressUpdateInterval.value) {
-    clearInterval(progressUpdateInterval.value)
-    progressUpdateInterval.value = null
-  }
-  
-  isPlaying.value = false
-  
-  // If verse completed and auto-advance is enabled, try to play next verse
-  // But don't auto-advance if correction interface is open
-  if (verseCompleted && autoAdvanceToNext.value && currentVerse.value && !showCorrectionInterface.value) {
+// Handle playback end callback from composable
+const handlePlaybackEnd = () => {
+  // If auto-advance is enabled, try to play next verse
+  if (autoAdvanceToNext.value && currentVerse.value && !showCorrectionInterface.value) {
     const nextVerse = findNextVerse(currentVerse.value.code)
     if (nextVerse) {
       // Wait for the specified pause duration, then play next verse
-      setTimeout(() => {
-        // Double-check that correction interface is still closed before advancing
+      closePlayerTimerId.value = window.setTimeout(() => {
+        closePlayerTimerId.value = null
         if (!showCorrectionInterface.value) {
           playVerse(nextVerse)
         }
       }, autoAdvancePause.value * 1000)
-      return // Don't close player immediately
+      return
     }
   }
-  
-  // Wait 2000ms before closing player (or close immediately if manually stopped)
-  const closeDelay = verseCompleted ? 2000 : 0
-  setTimeout(() => {
+
+  // Close player after delay
+  closePlayerTimerId.value = window.setTimeout(() => {
+    closePlayerTimerId.value = null
     showPlayer.value = false
     currentVerse.value = null
     currentPlayingId.value = null
-    currentTime.value = 0
-    duration.value = 0
-  }, closeDelay)
+  }, 2000)
+}
+
+const stopPlaying = (verseCompleted = false) => {
+  // Cancel any pending close timer
+  if (closePlayerTimerId.value) {
+    clearTimeout(closePlayerTimerId.value)
+    closePlayerTimerId.value = null
+  }
+
+  stopAudio()
+
+  if (verseCompleted) {
+    handlePlaybackEnd()
+  } else {
+    // Immediate close for manual stop
+    showPlayer.value = false
+    currentVerse.value = null
+    currentPlayingId.value = null
+  }
 }
 
 const openCorrectionFromPlayer = () => {
   if (!currentVerse.value) return
-  
+
   // Stop audio but keep player open
-  if (audioElement.value) {
-    audioElement.value.pause()
-    audioElement.value = null
-  }
-  
-  if (progressUpdateInterval.value) {
-    clearInterval(progressUpdateInterval.value)
-    progressUpdateInterval.value = null
-  }
-  
-  isPlaying.value = false
-  
+  stopAudio()
+
   // Initialize correction interface with current verse
   initializeCorrectionInterface(currentVerse.value)
 }
@@ -996,30 +765,10 @@ const openCorrectionFromPlayer = () => {
 const closeCorrectionInterface = () => {
   showCorrectionInterface.value = false
   // Also close the player when correction interface is closed
+  stopAudio()
   showPlayer.value = false
   currentVerse.value = null
   currentPlayingId.value = null
-  currentTime.value = 0
-  duration.value = 0
-}
-
-const seekToPosition = (event: MouseEvent) => {
-  if (!audioElement.value || !currentVerse.value) return
-
-  const rect = (event.target as HTMLElement).getBoundingClientRect()
-  const clickX = event.clientX - rect.left
-  const percentage = clickX / rect.width
-  
-  // Calculate time within verse bounds
-  const verseDuration = currentVerse.value.end - currentVerse.value.begin
-  const newTime = currentVerse.value.begin + (verseDuration * percentage)
-  
-  // Set audio to new position
-  audioElement.value.currentTime = Math.max(currentVerse.value.begin, Math.min(newTime, currentVerse.value.end))
-  
-  // Update display time relative to verse start
-  const verseCurrentTime = audioElement.value.currentTime - currentVerse.value.begin
-  currentTime.value = Math.max(0, verseCurrentTime)
 }
 
 // Watcher for chapter changes with debounce
@@ -1043,7 +792,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  stopPlaying(false) // manual stop
+  stopAudio() // cleanup audio
   if (chapterChangeTimeout) {
     clearTimeout(chapterChangeTimeout)
   }
