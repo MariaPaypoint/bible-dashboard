@@ -724,13 +724,7 @@ const handlePlaybackEnd = () => {
     }
   }
 
-  // Close player after delay
-  closePlayerTimerId.value = window.setTimeout(() => {
-    closePlayerTimerId.value = null
-    showPlayer.value = false
-    currentVerse.value = null
-    currentPlayingId.value = null
-  }, 2000)
+  // Player stays open after playback ends - user can replay or close manually
 }
 
 const stopPlaying = (verseCompleted = false) => {
