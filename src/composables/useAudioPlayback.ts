@@ -25,9 +25,6 @@ export function useAudioPlayback(options: AudioPlaybackOptions = {}) {
   const segmentStart = ref(0)
   const segmentEnd = ref(0)
 
-  // Flag to distinguish manual stop from natural playback end
-  const manualStop = ref(false)
-
   // === Computed ===
   const progressPercentage = computed(() => {
     if (duration.value <= 0) return 0
@@ -71,12 +68,8 @@ export function useAudioPlayback(options: AudioPlaybackOptions = {}) {
   /**
    * Stop current audio source node
    */
-  const stopSourceNode = (isManualStop = true) => {
+  const stopSourceNode = () => {
     if (sourceNode.value) {
-      // Set flag before stopping to distinguish from natural end
-      if (isManualStop) {
-        manualStop.value = true
-      }
       try {
         sourceNode.value.stop()
         sourceNode.value.disconnect()
@@ -141,11 +134,8 @@ export function useAudioPlayback(options: AudioPlaybackOptions = {}) {
   ): AudioBufferSourceNode => {
     const ctx = getAudioContext()
 
-    // Stop any existing source (manual stop, don't trigger onPlaybackEnd)
-    stopSourceNode(true)
-
-    // Reset manual stop flag for new playback
-    manualStop.value = false
+    // Stop any existing source
+    stopSourceNode()
 
     // Store segment bounds
     segmentStart.value = startTime
@@ -162,20 +152,21 @@ export function useAudioPlayback(options: AudioPlaybackOptions = {}) {
 
     // Set up onended callback - fires EXACTLY when playback ends
     source.onended = () => {
+      // Robust check: Ignore if this source is no longer the active one
+      // This handles manual stops, seeks, and race conditions
+      if (source !== sourceNode.value) {
+        return
+      }
+
       isPlaying.value = false
       cancelTimeUpdate()
 
-      // Only call callbacks if this was a natural end, not a manual stop
-      if (!manualStop.value) {
-        if (onEnded) {
-          onEnded()
-        }
-        if (options.onPlaybackEnd) {
-          options.onPlaybackEnd()
-        }
+      if (onEnded) {
+        onEnded()
       }
-      // Reset the flag
-      manualStop.value = false
+      if (options.onPlaybackEnd) {
+        options.onPlaybackEnd()
+      }
     }
 
     // Start playback: start(when, offset, duration)
@@ -237,6 +228,9 @@ export function useAudioPlayback(options: AudioPlaybackOptions = {}) {
 
     // Set up onended callback
     source.onended = () => {
+      // Robust check
+      if (source !== sourceNode.value) return
+
       isPlaying.value = false
       cancelTimeUpdate()
       if (options.onPlaybackEnd) {
@@ -303,6 +297,9 @@ export function useAudioPlayback(options: AudioPlaybackOptions = {}) {
       source.connect(ctx.destination)
 
       source.onended = () => {
+        // Robust check
+        if (source !== sourceNode.value) return
+
         isPlaying.value = false
         cancelTimeUpdate()
         if (options.onPlaybackEnd) {

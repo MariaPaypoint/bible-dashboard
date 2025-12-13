@@ -1733,6 +1733,11 @@ const playAudioSegment = (
 
   // Set up onended callback - this fires EXACTLY when playback ends
   source.onended = () => {
+    // Robust check: Ignore if this source is no longer the active one
+    if (source !== sourceNode.value) {
+      return
+    }
+
     if (onEnded) {
       onEnded()
     }
