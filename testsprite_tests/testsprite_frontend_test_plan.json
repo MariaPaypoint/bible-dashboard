@@ -1,0 +1,369 @@
+[
+  {
+    "id": "TC001",
+    "title": "Filter anomalies by Voice only",
+    "description": "Verify that selecting a Voice filter correctly restricts the anomaly list to show only anomalies matching the selected Voice.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the anomalies page."
+      },
+      {
+        "type": "action",
+        "description": "Select a Voice from the mandatory Voice filter dropdown."
+      },
+      {
+        "type": "assertion",
+        "description": "Check that the anomaly list refreshes and shows only anomalies associated with the selected Voice."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that anomalies of other Voices are not displayed."
+      }
+    ]
+  },
+  {
+    "id": "TC002",
+    "title": "Multi-criteria filtering of anomalies",
+    "description": "Verify that anomalies can be filtered correctly by multiple criteria including Voice, Book, Anomaly Type, and Status.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the anomalies page."
+      },
+      {
+        "type": "action",
+        "description": "Select a Voice from the Voice filter dropdown."
+      },
+      {
+        "type": "action",
+        "description": "Select a Book from the Book filter dropdown."
+      },
+      {
+        "type": "action",
+        "description": "Select an Anomaly Type from the Type filter dropdown."
+      },
+      {
+        "type": "action",
+        "description": "Select a Status from the Status filter dropdown."
+      },
+      {
+        "type": "assertion",
+        "description": "Check that the displayed anomalies match all selected filter criteria."
+      }
+    ]
+  },
+  {
+    "id": "TC003",
+    "title": "Anomalies table renders all columns and interactive elements",
+    "description": "Verify the anomalies table displays all required columns with correct data and the interactive elements function properly.",
+    "category": "ui",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Apply any filter to load anomalies in the list."
+      },
+      {
+        "type": "assertion",
+        "description": "Check anomalies table contains columns: code, scripture reference, problematic word, anomaly type, additional info, deviation ratio, status dropdown, and play buttons."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the status column contains a dropdown for quick editing."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify play buttons are clickable and respond by playing audio snippets for respective anomalies."
+      }
+    ]
+  },
+  {
+    "id": "TC004",
+    "title": "Play anomaly audio snippet with word highlighting",
+    "description": "Verify the mini audio player plays the audio snippet and highlights words in synchronization during playback.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Click the play button on an anomaly in the table."
+      },
+      {
+        "type": "assertion",
+        "description": "Check the floating mini audio player appears and starts playing the audio snippet."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify words in the transcript highlight in real-time synchronized with the audio playback."
+      }
+    ]
+  },
+  {
+    "id": "TC005",
+    "title": "Audio player verse navigation with auto-advance enabled",
+    "description": "Verify the audio player next/previous verse navigation works and auto-advance correctly moves to the next anomaly after actions.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Enable auto-advance in settings."
+      },
+      {
+        "type": "action",
+        "description": "Play an anomaly audio snippet."
+      },
+      {
+        "type": "action",
+        "description": "Perform a status update on the current anomaly."
+      },
+      {
+        "type": "assertion",
+        "description": "Check that the next anomaly is automatically loaded and ready for playback."
+      },
+      {
+        "type": "action",
+        "description": "Use next and previous buttons to navigate between anomalies manually."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify correct anomalies load and audio plays accordingly."
+      }
+    ]
+  },
+  {
+    "id": "TC006",
+    "title": "Manual verse timing correction with multiple step sizes",
+    "description": "Verify timing correction controls allow start/end time adjustments at steps of 1s, 0.1s, and 0.01s with preview playback reflecting changes.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open the timing correction dialog for an anomaly marked as timing error."
+      },
+      {
+        "type": "action",
+        "description": "Adjust the start time using 1-second increments."
+      },
+      {
+        "type": "assertion",
+        "description": "Check the audio preview plays with the updated start time."
+      },
+      {
+        "type": "action",
+        "description": "Adjust the end time using 0.1-second increments."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm audio preview updates reflect the new end time."
+      },
+      {
+        "type": "action",
+        "description": "Fine-tune start or end time using 0.01-second increments."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify precise changes are applied and preview is accurate."
+      }
+    ]
+  },
+  {
+    "id": "TC007",
+    "title": "Prevent overlap conflict during timing correction",
+    "description": "Verify that timing correction adjustments prevent overlapping with neighboring verses and show appropriate warnings.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Attempt to adjust start time to overlap with the previous verse timing."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that the UI prevents or warns user about overlap conflict."
+      },
+      {
+        "type": "action",
+        "description": "Attempt to adjust end time to overlap with the next verse timing."
+      },
+      {
+        "type": "assertion",
+        "description": "Check for appropriate warnings or block on saving conflicting time."
+      }
+    ]
+  },
+  {
+    "id": "TC008",
+    "title": "Persisting anomaly status updates",
+    "description": "Verify that updating anomaly status (e.g., to confirmed error or alignment correct) persists changes accurately in the backend.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Change the status of an anomaly via the dropdown."
+      },
+      {
+        "type": "action",
+        "description": "Save or let auto-save complete."
+      },
+      {
+        "type": "assertion",
+        "description": "Reload or refresh the page."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the status change persists for the anomaly."
+      }
+    ]
+  },
+  {
+    "id": "TC009",
+    "title": "Persisting timing corrections after adjustment",
+    "description": "Verify that manual timing corrections made are saved and reflected upon reloading the anomaly details.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Make timing adjustments in the correction dialog and save the changes."
+      },
+      {
+        "type": "action",
+        "description": "Close and reopen the anomaly details or reload the page."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the adjusted timing values persist and match saved inputs."
+      }
+    ]
+  },
+  {
+    "id": "TC010",
+    "title": "Manual anomaly creation dialog functionality",
+    "description": "Verify that the manual anomaly creation dialog appears on demand and successfully creates new anomaly records on submission.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Trigger the manual anomaly creation dialog via UI controls."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm the dialog loads with required input fields."
+      },
+      {
+        "type": "action",
+        "description": "Fill in required anomaly details including scripture reference, type, problematic word, and additional info."
+      },
+      {
+        "type": "action",
+        "description": "Submit the anomaly creation form."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a new anomaly record is created and listed according to filter criteria."
+      }
+    ]
+  },
+  {
+    "id": "TC011",
+    "title": "Error handling for invalid filter inputs",
+    "description": "Verify that the system handles invalid or incompatible filter inputs gracefully without crashing or displaying misleading results.",
+    "category": "error handling",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Enter invalid or unsupported values into filter fields if possible."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify system does not crash and displays either empty results or validation messages."
+      }
+    ]
+  },
+  {
+    "id": "TC012",
+    "title": "Quick check playback mode functionality",
+    "description": "Verify that the quick check playback mode in the audio player plays audio snippets rapidly for efficient anomaly review.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Activate quick check playback mode in the mini audio player."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify audio snippets play in quick succession without manual intervention."
+      },
+      {
+        "type": "action",
+        "description": "Confirm word highlighting remains synchronized during quick playback."
+      }
+    ]
+  },
+  {
+    "id": "TC013",
+    "title": "Status dropdown update reflects immediately in UI",
+    "description": "Verify that selecting a new status from the anomaly status dropdown updates the UI immediately before backend persistence.",
+    "category": "ui",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Select an anomaly status different from current in the dropdown."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the status field updates visually immediately."
+      },
+      {
+        "type": "action",
+        "description": "Trigger page refresh and verify the status persists."
+      }
+    ]
+  },
+  {
+    "id": "TC014",
+    "title": "Handling no anomalies for selected filters",
+    "description": "Verify system behavior when filters result in no anomalies being displayed.",
+    "category": "error handling",
+    "priority": "Low",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Select filter combinations unlikely to return any anomalies."
+      },
+      {
+        "type": "assertion",
+        "description": "Check that the anomalies list is empty and the UI shows an appropriate 'no anomalies found' message."
+      }
+    ]
+  },
+  {
+    "id": "TC015",
+    "title": "Voice filter mandatory enforcement",
+    "description": "Verify the Voice filter must be selected before anomalies are displayed and appropriate prompts are shown if not selected.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to anomalies page without selecting a Voice filter."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that anomalies list is not loaded and a prompt or validation message requests the user to select a Voice."
+      }
+    ]
+  }
+]

@@ -1,0 +1,43 @@
+{
+    "tech_stack": [
+        "TypeScript",
+        "Vue 3",
+        "Vite",
+        "PrimeVue",
+        "Tailwind CSS",
+        "Axios",
+        "Vue Router"
+    ],
+    "features": [
+        {
+            "name": "Auth",
+            "description": "User authentication, login and logout flows.",
+            "files": [
+                "src/Components/Login.vue"
+            ]
+        },
+        {
+            "name": "Anomalies",
+            "description": "Displaying and filtering audio alignment anomalies. Includes filtering by voice, book, type, and status.",
+            "files": [
+                "src/Components/BibleAnomalies.vue",
+                "src/services/api.ts"
+            ]
+        },
+        {
+            "name": "Audio Player",
+            "description": "Mini-player for listening to Bible verses and checking alignment.",
+            "files": [
+                "src/Components/BaseAudioPlayer.vue"
+            ]
+        },
+        {
+            "name": "Timing Correction",
+            "description": "Manual adjustment of verse start and end times to fix alignment errors.",
+            "files": [
+                "src/Components/AlignmentTaskDialog.vue",
+                "src/Components/TimingCorrection.vue"
+            ]
+        }
+    ]
+}
