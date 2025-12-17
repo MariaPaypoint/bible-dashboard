@@ -1,8 +1,0 @@
-{
-  "status": "commited",
-  "type": "frontend",
-  "scope": "codebase",
-  "localEndpoint": "http://localhost:5173/anomalies",
-  "loginUser": "admin",
-  "loginPassword": "admin123"
-}

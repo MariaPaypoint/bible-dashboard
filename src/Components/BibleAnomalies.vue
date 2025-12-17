@@ -7,7 +7,7 @@
         <div class="flex-1 min-w-0" style="flex: 2;">
           <Select id="voiceSelect" v-model="selectedVoice" :options="availableVoices" optionLabel="displayName"
             optionValue="code" :optionDisabled="isVoiceDisabled" placeholder="Select voice" class="w-full"
-            @change="onVoiceChange">
+            @change="onVoiceChange" data-testid="voice-filter">
             <template #option="slotProps">
               <div class="flex items-center justify-between w-full">
                 <span :class="{ 'opacity-50': slotProps.option.anomalies_count === 0 }"
@@ -44,7 +44,7 @@
         <div class="flex-1 min-w-0" style="flex: 2;">
           <Select id="bookFilter" v-model="selectedBookNumber" :options="bookOptions" optionLabel="label"
             optionValue="value" placeholder="All books" class="w-full" :disabled="!selectedVoice"
-            :loading="booksState.loading" @change="onBookChange" showClear>
+            :loading="booksState.loading" @change="onBookChange" showClear data-testid="book-filter">
             <template #option="slotProps">
               <div class="flex items-center justify-between w-full">
                 <span :class="{ 'opacity-50': slotProps.option.anomalies_count === 0 }">
@@ -83,12 +83,12 @@
         <div class="flex-1 min-w-0" style="flex: 1;">
           <Select id="anomalyTypeFilter" v-model="selectedAnomalyType" :options="anomalyTypeOptions" optionLabel="label"
             optionValue="value" placeholder="All types" class="w-full" :disabled="!selectedVoice"
-            @change="onAnomalyTypeChange" showClear />
+            @change="onAnomalyTypeChange" showClear data-testid="anomaly-type-filter" />
         </div>
         <div class="flex-1 min-w-0" style="flex: 1;">
           <Select id="statusFilter" v-model="selectedStatus" :options="statusFilterOptions" optionLabel="label"
             optionValue="value" placeholder="All statuses" class="w-full" :disabled="!selectedVoice"
-            @change="onStatusChange" showClear />
+            @change="onStatusChange" showClear data-testid="status-filter" />
         </div>
         <div class="flex gap-3">
           <Button @click="openCreateAnomalyDialog" :disabled="!selectedVoice" severity="help" title="Add New Anomaly" data-testid="add-anomaly-button">
