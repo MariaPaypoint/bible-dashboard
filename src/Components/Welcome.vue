@@ -37,7 +37,7 @@
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import { BookOpen as BookIcon, Volume2 as VoiceIcon, AlertTriangle as AnomalyIcon } from 'lucide-vue-next'
+import { BookOpen as BookOpenIcon, Volume2 as VoiceIcon, AlertTriangle as AnomalyIcon } from 'lucide-vue-next'
 const router = useRouter()
 
 const navigateToVoices = () => {
