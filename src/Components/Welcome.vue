@@ -36,19 +36,15 @@
 </template>
 
 <script setup lang="ts">
-import type { ActiveComponent } from '../types/components'
+import { useRouter } from 'vue-router'
 import { BookOpen as BookIcon, Volume2 as VoiceIcon, AlertTriangle as AnomalyIcon } from 'lucide-vue-next'
-
-// Define emit for component navigation
-const emit = defineEmits<{
-    navigate: [component: ActiveComponent]
-}>()
+const router = useRouter()
 
 const navigateToVoices = () => {
-    emit('navigate', 'bible_voices')
+    router.push('/voices')
 }
 
 const navigateToAnomalies = () => {
-    emit('navigate', 'bible_anomalies')
+    router.push('/anomalies')
 }
 </script>

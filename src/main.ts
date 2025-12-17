@@ -7,6 +7,7 @@ import ToastService from 'primevue/toastservice'
 import ConfirmationService from 'primevue/confirmationservice'
 import 'primeicons/primeicons.css'
 import App from './App.vue'
+import router from './router'
 import './assets/main.css'
 import { definePreset } from '@primevue/themes'
 
@@ -29,6 +30,7 @@ const MyPreset = definePreset(Aura, {
 })
 
 const app = createApp(App)
+app.use(router)
 app.use(PrimeVue, {
     theme: {
         preset: MyPreset,

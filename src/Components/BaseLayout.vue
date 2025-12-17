@@ -1,6 +1,6 @@
 <template>
     <div class="h-screen flex relative lg:static bg-surface-50 dark:bg-surface-950">
-        <div v-if="activeComponent !== 'login'" id="app-sidebar-13"
+        <div id="app-sidebar-13"
             class="w-[280px] bg-surface-50 dark:bg-surface-950 h-screen hidden lg:block flex-shrink-0 absolute lg:fixed left-0 top-0 z-10 select-none shadow-lg lg:shadow-none">
             <div class="flex flex-col h-full lg:py-8">
                 <div class="flex items-center justify-start px-4 py-4">
@@ -27,20 +27,22 @@
                             </div>
                             <ul class="list-none p-0 m-0 overflow-hidden flex flex-col gap-1">
                                 <li>
-                                    <a @click="setActiveComponent('alignment_tasks')" :class="[
-                                        'flex items-center cursor-pointer p-3 gap-2 rounded-lg transition-colors duration-150 border group',
-                                        activeComponent === 'alignment_tasks'
-                                            ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 border-primary-200 dark:border-primary-800'
-                                            : 'text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 hover:text-surface-900 dark:hover:text-surface-50 border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700'
-                                    ]" data-testid="nav-alignment-tasks">
-                                        <Clock :class="[
-                                            'w-5 h-5',
-                                            activeComponent === 'alignment_tasks'
-                                                ? 'text-primary-600 dark:text-primary-400'
-                                                : 'text-surface-500 dark:text-surface-400 group-hover:text-surface-900 dark:group-hover:text-surface-50'
-                                        ]" />
-                                        <span class="font-medium text-base leading-tight">Tasks</span>
-                                    </a>
+                                    <router-link to="/tasks" custom v-slot="{ href, navigate, isActive }">
+                                        <a :href="href" @click="navigate" :class="[
+                                            'flex items-center cursor-pointer p-3 gap-2 rounded-lg transition-colors duration-150 border group',
+                                            isActive
+                                                ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 border-primary-200 dark:border-primary-800'
+                                                : 'text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 hover:text-surface-900 dark:hover:text-surface-50 border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700'
+                                        ]" data-testid="nav-alignment-tasks">
+                                            <Clock :class="[
+                                                'w-5 h-5',
+                                                isActive
+                                                    ? 'text-primary-600 dark:text-primary-400'
+                                                    : 'text-surface-500 dark:text-surface-400 group-hover:text-surface-900 dark:group-hover:text-surface-50'
+                                            ]" />
+                                            <span class="font-medium text-base leading-tight">Tasks</span>
+                                        </a>
+                                    </router-link>
                                 </li>
                             </ul>
                         </li>
@@ -60,54 +62,60 @@
                             </div>
                             <ul class="list-none p-0 m-0 overflow-hidden flex flex-col gap-1">
                                 <li>
-                                    <a @click="setActiveComponent('bible_voices')" :class="[
-                                        'flex items-center cursor-pointer p-3 gap-2 rounded-lg transition-colors duration-150 border group',
-                                        activeComponent === 'bible_voices'
-                                            ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 border-primary-200 dark:border-primary-800'
-                                            : 'text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 hover:text-surface-900 dark:hover:text-surface-50 border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700'
-                                    ]" data-testid="nav-bible-voices">
-                                        <VoiceIcon :class="[
-                                            'w-5 h-5',
-                                            activeComponent === 'bible_voices'
-                                                ? 'text-primary-600 dark:text-primary-400'
-                                                : 'text-surface-500 dark:text-surface-400 group-hover:text-surface-900 dark:group-hover:text-surface-50'
-                                        ]" />
-                                        <span class="font-medium text-base leading-tight">Voices</span>
-                                    </a>
+                                    <router-link to="/voices" custom v-slot="{ href, navigate, isActive }">
+                                        <a :href="href" @click="navigate" :class="[
+                                            'flex items-center cursor-pointer p-3 gap-2 rounded-lg transition-colors duration-150 border group',
+                                            isActive
+                                                ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 border-primary-200 dark:border-primary-800'
+                                                : 'text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 hover:text-surface-900 dark:hover:text-surface-50 border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700'
+                                        ]" data-testid="nav-bible-voices">
+                                            <VoiceIcon :class="[
+                                                'w-5 h-5',
+                                                isActive
+                                                    ? 'text-primary-600 dark:text-primary-400'
+                                                    : 'text-surface-500 dark:text-surface-400 group-hover:text-surface-900 dark:group-hover:text-surface-50'
+                                            ]" />
+                                            <span class="font-medium text-base leading-tight">Voices</span>
+                                        </a>
+                                    </router-link>
                                 </li>
                                 <li>
-                                    <a @click="setActiveComponent('bible_anomalies')" :class="[
-                                        'flex items-center cursor-pointer p-3 gap-2 rounded-lg transition-colors duration-150 border group',
-                                        activeComponent === 'bible_anomalies'
-                                            ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 border-primary-200 dark:border-primary-800'
-                                            : 'text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 hover:text-surface-900 dark:hover:text-surface-50 border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700'
-                                    ]" data-testid="nav-bible-anomalies">
-                                        <AlertTriangle :class="[
-                                            'w-5 h-5',
-                                            activeComponent === 'bible_anomalies'
-                                                ? 'text-primary-600 dark:text-primary-400'
-                                                : 'text-surface-500 dark:text-surface-400 group-hover:text-surface-900 dark:group-hover:text-surface-50'
-                                        ]" />
-                                        <span class="font-medium text-base leading-tight">Anomalies</span>
-                                        <Badge value="2" severity="contrast"
-                                            class="ml-auto !h-5 !min-w-5 !text-xs !font-bold !leading-tight !rounded-xl" />
-                                    </a>
+                                    <router-link to="/anomalies" custom v-slot="{ href, navigate, isActive }">
+                                        <a :href="href" @click="navigate" :class="[
+                                            'flex items-center cursor-pointer p-3 gap-2 rounded-lg transition-colors duration-150 border group',
+                                            isActive
+                                                ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 border-primary-200 dark:border-primary-800'
+                                                : 'text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 hover:text-surface-900 dark:hover:text-surface-50 border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700'
+                                        ]" data-testid="nav-bible-anomalies">
+                                            <AlertTriangle :class="[
+                                                'w-5 h-5',
+                                                isActive
+                                                    ? 'text-primary-600 dark:text-primary-400'
+                                                    : 'text-surface-500 dark:text-surface-400 group-hover:text-surface-900 dark:group-hover:text-surface-50'
+                                            ]" />
+                                            <span class="font-medium text-base leading-tight">Anomalies</span>
+                                            <Badge value="2" severity="contrast"
+                                                class="ml-auto !h-5 !min-w-5 !text-xs !font-bold !leading-tight !rounded-xl" />
+                                        </a>
+                                    </router-link>
                                 </li>
                                 <li>
-                                    <a @click="setActiveComponent('bible_inspect')" :class="[
-                                        'flex items-center cursor-pointer p-3 gap-2 rounded-lg transition-colors duration-150 border group',
-                                        activeComponent === 'bible_inspect'
-                                            ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 border-primary-200 dark:border-primary-800'
-                                            : 'text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 hover:text-surface-900 dark:hover:text-surface-50 border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700'
-                                    ]" data-testid="nav-bible-inspect">
-                                        <Search :class="[
-                                            'w-5 h-5',
-                                            activeComponent === 'bible_inspect'
-                                                ? 'text-primary-600 dark:text-primary-400'
-                                                : 'text-surface-500 dark:text-surface-400 group-hover:text-surface-900 dark:group-hover:text-surface-50'
-                                        ]" />
-                                        <span class="font-medium text-base leading-tight">Inspect</span>
-                                    </a>
+                                    <router-link to="/inspect" custom v-slot="{ href, navigate, isActive }">
+                                        <a :href="href" @click="navigate" :class="[
+                                            'flex items-center cursor-pointer p-3 gap-2 rounded-lg transition-colors duration-150 border group',
+                                            isActive
+                                                ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 border-primary-200 dark:border-primary-800'
+                                                : 'text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 hover:text-surface-900 dark:hover:text-surface-50 border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700'
+                                        ]" data-testid="nav-bible-inspect">
+                                            <Search :class="[
+                                                'w-5 h-5',
+                                                isActive
+                                                    ? 'text-primary-600 dark:text-primary-400'
+                                                    : 'text-surface-500 dark:text-surface-400 group-hover:text-surface-900 dark:group-hover:text-surface-50'
+                                            ]" />
+                                            <span class="font-medium text-base leading-tight">Inspect</span>
+                                        </a>
+                                    </router-link>
                                 </li>
                             </ul>
                         </li>
@@ -173,22 +181,13 @@
                                         </a>
                                     </li>
                                     <li class="h-px bg-surface-200 dark:bg-surface-700 my-1" />
-                                    <li v-if="isAuthenticated">
+                                    <li>
                                         <a @click="handleLogout"
                                             class="flex items-center cursor-pointer p-2 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-150 group"
                                             data-testid="settings-logout-button">
                                             <Lock
                                                 class="w-4 h-4" />
                                             <span class="ml-2 font-medium text-sm">Logout</span>
-                                        </a>
-                                    </li>
-                                    <li v-else>
-                                        <a @click="activeComponent = 'login'; showSettingsMenu = false"
-                                            class="flex items-center cursor-pointer p-2 rounded-lg text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors duration-150 group"
-                                            data-testid="settings-login-button">
-                                            <Lock
-                                                class="w-4 h-4" />
-                                            <span class="ml-2 font-medium text-sm">Login</span>
                                         </a>
                                     </li>
                                 </ul>
@@ -200,17 +199,10 @@
         </div>
 
         <div
-            :class="[
-                'h-screen flex flex-col flex-auto bg-surface-50 dark:bg-surface-950 overflow-hidden',
-                activeComponent !== 'login' ? 'p-5 md:p-8 lg:pl-2 lg:ml-[280px]' : ''
-            ]">
-            <!-- Login Page - Full Screen -->
-            <Login v-if="activeComponent === 'login'" 
-                @login-success="handleLoginSuccess" 
-                @skip-login="handleSkipLogin" />
+            class="h-screen flex flex-col flex-auto bg-surface-50 dark:bg-surface-950 overflow-hidden p-5 md:p-8 lg:pl-2 lg:ml-[280px]">
             
             <!-- Main App Content -->
-            <div v-else
+            <div
                 class="bg-surface-0 dark:bg-surface-900 flex flex-col flex-auto rounded-xl shadow-md border border-surface-200 dark:border-surface-700 overflow-hidden">
                 <!-- Main Content Area - full height scrollable -->
                 <div class="flex-auto overflow-y-auto p-5 md:p-8">
@@ -250,11 +242,7 @@
                         </button>
                     </div>
 
-                    <Welcome v-if="activeComponent === 'welcome'" @navigate="setActiveComponent" />
-                    <BibleVoices v-else-if="activeComponent === 'bible_voices'" />
-                    <BibleAnomalies v-else-if="activeComponent === 'bible_anomalies'" />
-                    <BibleInspect v-else-if="activeComponent === 'bible_inspect'" />
-                    <AlignmentTasks v-else-if="activeComponent === 'alignment_tasks'" />
+                    <router-view />
                 </div>
             </div>
         </div>
@@ -264,22 +252,11 @@
 
 <script setup lang="ts">
 import Badge from 'primevue/badge'
-import IconField from 'primevue/iconfield'
-import InputIcon from 'primevue/inputicon'
-import InputText from 'primevue/inputtext'
 import Toast from 'primevue/toast'
 import { ref, onMounted, onUnmounted, computed } from 'vue'
-import type { ActiveComponent } from '../types/components'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 import { useToast } from 'primevue/usetoast'
-
-// Import components
-import Login from './Login.vue'
-import Welcome from './Welcome.vue'
-import BibleVoices from './BibleVoices.vue'
-import BibleAnomalies from './BibleAnomalies.vue'
-import BibleInspect from './BibleInspect.vue'
-import AlignmentTasks from './AlignmentTasks.vue'
 
 // Lucide imports
 import {
@@ -288,41 +265,33 @@ import {
     Volume2 as VoiceIcon,
     AlertTriangle,
     Search,
-    Calendar,
-    MessageSquare,
-    Shield,
-    Lock,
-    Users,
     Clock,
-    Bell,
-    Globe,
-    Smartphone,
-    BarChart3,
-    Cloud,
     Settings,
     Sun,
     Moon,
     Check,
-    Menu
+    Menu,
+    Lock
 } from 'lucide-vue-next'
 
 const isDarkMode = ref<boolean>(false)
-const activeComponent = ref<ActiveComponent>('welcome')
 const showSettingsMenu = ref<boolean>(false)
 
-const { isAuthenticated, logout } = useAuth()
+const { logout } = useAuth()
+const router = useRouter()
+const route = useRoute()
 const toast = useToast()
 
-// Dynamic page title based on active component
+// Dynamic page title based on active route
 const pageTitle = computed(() => {
-    switch (activeComponent.value) {
-        case 'welcome':
+    switch (route.name) {
+        case 'home':
             return { icon: '👋', title: 'Welcome!' }
-        case 'bible_voices':
+        case 'voices':
             return { icon: '🎧', title: 'Voices' }
-        case 'bible_anomalies':
+        case 'anomalies':
             return { icon: '⚠️', title: 'Anomalies' }
-        case 'bible_inspect':
+        case 'inspect':
             return { icon: '🔍', title: 'Bible Inspect' }
         case 'alignment_tasks':
             return { icon: '⏱️', title: 'Alignment Tasks' }
@@ -373,7 +342,7 @@ onMounted(() => {
             detail: 'Please log in again',
             life: 5000
         })
-        activeComponent.value = 'login'
+        router.push('/login')
     })
 });
 
@@ -385,10 +354,6 @@ function toggleDarkMode(): void {
     document.documentElement.classList.toggle('dark')
     // Update state for icon
     isDarkMode.value = document.documentElement.classList.contains('dark')
-}
-
-function setActiveComponent(component: ActiveComponent): void {
-    activeComponent.value = component
 }
 
 function toggleSettingsMenu(): void {
@@ -405,20 +370,6 @@ function setTheme(theme: 'light' | 'dark'): void {
     showSettingsMenu.value = false // Close menu after selection
 }
 
-function handleLoginSuccess(): void {
-    toast.add({
-        severity: 'success',
-        summary: 'Login successful',
-        detail: 'You have successfully logged in',
-        life: 3000
-    })
-    activeComponent.value = 'welcome'
-}
-
-function handleSkipLogin(): void {
-    activeComponent.value = 'welcome'
-}
-
 function handleLogout(): void {
     logout()
     toast.add({
@@ -427,7 +378,7 @@ function handleLogout(): void {
         detail: 'You have logged out',
         life: 3000
     })
-    activeComponent.value = 'login'
+    router.push('/login')
 }
 
 </script>

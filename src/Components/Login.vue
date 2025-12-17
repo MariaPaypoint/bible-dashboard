@@ -115,10 +115,9 @@ import Message from 'primevue/message'
 import { Sun, Moon } from 'lucide-vue-next'
 import { useAuth } from '../composables/useAuth'
 
-const emit = defineEmits<{
-  (e: 'login-success'): void
-  (e: 'skip-login'): void
-}>()
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const { login, isLoading, error } = useAuth()
 
@@ -137,12 +136,13 @@ const handleLogin = async () => {
   })
 
   if (success) {
-    emit('login-success')
+    router.push('/')
   }
 }
 
 const handleSkip = () => {
-  emit('skip-login')
+  localStorage.setItem('guest_mode', 'true')
+  router.push('/')
 }
 
 const toggleTheme = () => {

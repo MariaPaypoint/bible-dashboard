@@ -34,7 +34,6 @@
             @click="refreshTasks" 
             severity="info" 
             class="h-8"
-            class="h-8"
             :loading="loading"
             data-testid="refresh-tasks-button"
           >
