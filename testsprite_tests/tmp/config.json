@@ -4,15 +4,5 @@
   "scope": "codebase",
   "localEndpoint": "http://localhost:5173/anomalies",
   "loginUser": "admin",
-  "loginPassword": "admin123",
-  "executionArgs": {
-    "projectName": "dashboard",
-    "projectPath": "/Users/mac/Desktop/Dev/cep/dashboard",
-    "testIds": [],
-    "additionalInstruction": "",
-    "envs": {
-      "API_KEY": "sk-user-wUinJJf7sw2-ELnHnjYLohkFucJIC-_qJddlQExy8z_FYbgfr8iENwU22VeC-4u-V-csLs0NPfsXjVgy0vuS0ldM-xHDUA3rly9_olEeOM4BHLjezUj-c3dEBAq74inPFlQ"
-    }
-  },
-  "proxy": "http://2366f60e-9c35-497f-96a3-2728f6d6507f:wiB36cRExznuz0wyd7Ym76yJNSoOyfUK@tun.testsprite.com:8080"
+  "loginPassword": "admin123"
 }

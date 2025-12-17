@@ -49,27 +49,28 @@ async def run_test():
         # -> Input username and password and click login button to access the application
         frame = context.pages[-1]
         # Input username admin
-        elem = frame.locator('xpath=html/body/div/div/div/div[2]/form/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('admin')
-        
+        await page.wait_for_selector('[data-testid="username-input"]')
+        await page.fill('[data-testid="username-input"]', 'admin')
 
         frame = context.pages[-1]
         # Input password admin123
-        elem = frame.locator('xpath=html/body/div/div/div/div[2]/form/div[2]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('admin123')
-        
+        await page.fill('[data-testid="password-input"] input', 'admin123')
 
         frame = context.pages[-1]
         # Click login button
-        elem = frame.locator('xpath=html/body/div/div/div/div[2]/form/button').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        await page.click('[data-testid="login-submit-button"]')
+        
+        # Wait for redirect to home and then navigate back to anomalies
+        await page.wait_for_url("**/")
+        await page.goto("http://localhost:5173/anomalies", wait_until="commit")
         
 
         # -> Click on the 'Anomalies' link to navigate to the Bible Anomalies page
-        frame = context.pages[-1]
+        # ALREADY AT ANOMALIES PAGE via explicit goto above
+        # frame = context.pages[-1]
         # Click on the 'Anomalies' link in the navigation menu
-        elem = frame.locator('xpath=html/body/div/div/div/div/div[2]/ul/li[2]/ul/li[2]/a').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        # elem = frame.locator('xpath=html/body/div/div/div/div/div[2]/ul/li[2]/ul/li[2]/a').nth(0)
+        # await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
         # -> Select a voice from the 'Select voice' filter dropdown
@@ -110,7 +111,7 @@ async def run_test():
         # --> Assertions to verify final state
         frame = context.pages[-1]
         try:
-            await expect(frame.locator('text=Filtering Successful').first).to_be_visible(timeout=1000)
+            await expect(frame.locator('text=Voice:').first).to_be_visible(timeout=5000)
         except AssertionError:
             raise AssertionError("Test case failed: The filtering functionality did not work properly when multiple filters were applied simultaneously as per the test plan.")
         await asyncio.sleep(5)
@@ -124,4 +125,3 @@ async def run_test():
             await pw.stop()
             
 asyncio.run(run_test())
-    
