@@ -25,7 +25,6 @@ export function useAuth() {
 
   const logout = () => {
     authService.logout()
-    localStorage.removeItem('guest_mode')
     isAuthenticated.value = false
   }
 

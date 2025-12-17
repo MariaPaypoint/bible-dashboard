@@ -58,11 +58,10 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
     const isAuthenticated = authService.isAuthenticated()
-    const isGuest = localStorage.getItem('guest_mode') === 'true'
 
-    if (to.meta.requiresAuth && !isAuthenticated && !isGuest) {
+    if (to.meta.requiresAuth && !isAuthenticated) {
         next({ name: 'login' })
-    } else if (to.name === 'login' && (isAuthenticated || isGuest)) {
+    } else if (to.name === 'login' && isAuthenticated) {
         next({ name: 'home' })
     } else {
         next()
@@ -70,3 +69,4 @@ router.beforeEach((to, from, next) => {
 })
 
 export default router
+

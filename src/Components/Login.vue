@@ -74,19 +74,6 @@
           />
         </form>
 
-        <!-- Skip Login Link -->
-        <div class="mt-6 text-center">
-          <a
-            @click="handleSkip"
-            class="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 cursor-pointer transition-colors"
-            data-testid="skip-login-link"
-          >
-            Continue without authorization
-          </a>
-          <p class="text-xs text-surface-500 dark:text-surface-400 mt-2">
-            Only viewing functions available
-          </p>
-        </div>
       </div>
 
       <!-- Theme Toggle -->
@@ -140,10 +127,6 @@ const handleLogin = async () => {
   }
 }
 
-const handleSkip = () => {
-  localStorage.setItem('guest_mode', 'true')
-  router.push('/')
-}
 
 const toggleTheme = () => {
   document.documentElement.classList.toggle('dark')
