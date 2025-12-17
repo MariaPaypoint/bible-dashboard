@@ -91,10 +91,10 @@
             @change="onStatusChange" showClear />
         </div>
         <div class="flex gap-3">
-          <Button @click="openCreateAnomalyDialog" :disabled="!selectedVoice" severity="help" title="Add New Anomaly">
+          <Button @click="openCreateAnomalyDialog" :disabled="!selectedVoice" severity="help" title="Add New Anomaly" data-testid="add-anomaly-button">
             <PlusIcon class="w-5 h-5" />
           </Button>
-          <Button @click="refreshData" :disabled="!selectedVoice" :loading="anomaliesState.loading" title="Refresh">
+          <Button @click="refreshData" :disabled="!selectedVoice" :loading="anomaliesState.loading" title="Refresh" data-testid="refresh-button">
             <RefreshIcon class="w-5 h-5" />
           </Button>
         </div>
@@ -235,7 +235,7 @@
           </div>
           <!-- Play/Pause, Navigation and Stop buttons in top right corner -->
           <div class="flex gap-2 -mt-1 -mr-1">
-            <Button severity="primary" class="w-10 h-10 !p-2" @click="togglePlayPause">
+            <Button severity="primary" class="w-10 h-10 !p-2" @click="togglePlayPause" data-testid="audio-player-play-pause-button">
               <component :is="isPlaying ? PauseIcon : PlayIcon" class="w-5 h-5" />
             </Button>
             <!-- Navigation menu button -->
@@ -262,7 +262,7 @@
                 </button>
               </div>
             </div>
-            <Button severity="secondary" class="w-10 h-10 !p-2" @click="stopPlaying" v-tooltip.top="'Stop'">
+            <Button severity="secondary" class="w-10 h-10 !p-2" @click="stopPlaying" v-tooltip.top="'Stop'" data-testid="audio-player-stop-button">
               <CloseIcon class="w-5 h-5" />
             </Button>
           </div>
@@ -312,11 +312,11 @@
           <!-- Original verse buttons -->
           <template v-if="currentVerseType === 'original'">
             <Button severity="danger" :class="['flex-1', { 'animate-pulse-glow': showButtonAnimation && canChangeStatus }]"
-              @click="confirmAnomaly" :disabled="!currentVerse || !canChangeStatus">
+              @click="confirmAnomaly" :disabled="!currentVerse || !canChangeStatus" data-testid="confirm-error-button">
               <span class="font-semibold text-sm">Confirm Error</span>
             </Button>
             <Button severity="success" :class="['flex-1', { 'animate-pulse-glow': showButtonAnimation && canChangeStatus }]"
-              @click="disproveAnomaly" :disabled="!currentVerse || !canChangeStatus">
+              @click="disproveAnomaly" :disabled="!currentVerse || !canChangeStatus" data-testid="alignment-correct-button">
               <span class="font-semibold text-sm">Alignment Correct</span>
             </Button>
           </template>
@@ -638,8 +638,8 @@
       
       <template #footer>
         <div class="flex justify-end gap-2">
-          <Button label="Cancel" severity="secondary" @click="showCreateAnomalyDialog = false" />
-          <Button label="Create" severity="help" @click="createNewAnomaly" :loading="creatingAnomaly" />
+          <Button label="Cancel" severity="secondary" @click="showCreateAnomalyDialog = false" data-testid="create-dialog-cancel-button" />
+          <Button label="Create" severity="help" @click="createNewAnomaly" :loading="creatingAnomaly" data-testid="create-dialog-submit-button" />
         </div>
       </template>
     </Dialog>

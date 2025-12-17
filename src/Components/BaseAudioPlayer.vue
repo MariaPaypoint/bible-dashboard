@@ -21,7 +21,7 @@
 
         <!-- Control buttons -->
         <div class="flex gap-2 -mt-1 -mr-1">
-          <Button severity="primary" class="w-10 h-10 !p-2" @click="$emit('toggle-play-pause')">
+          <Button severity="primary" class="w-10 h-10 !p-2" @click="$emit('toggle-play-pause')" data-testid="player-play-pause-button">
             <!-- Pause icon -->
             <svg v-if="isPlaying" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="6" y="4" width="4" height="16"></rect>
@@ -36,7 +36,7 @@
           <!-- Slot for extra header buttons (e.g., Navigation menu) -->
           <slot name="header-extra" />
 
-          <Button severity="secondary" class="w-10 h-10 !p-2" @click="$emit('close')" v-tooltip.top="'Stop'">
+          <Button severity="secondary" class="w-10 h-10 !p-2" @click="$emit('close')" v-tooltip.top="'Stop'" data-testid="player-stop-button">
             <CloseIcon class="w-5 h-5" />
           </Button>
         </div>
@@ -54,7 +54,8 @@
       <div class="flex flex-col gap-2">
         <div
           class="relative h-1.5 rounded-lg overflow-hidden cursor-pointer hover:h-2 transition-all duration-200 bg-surface-200 dark:bg-surface-700"
-          @click="handleProgressClick">
+          @click="handleProgressClick"
+          data-testid="player-progress-bar">
           <div class="absolute top-0 left-0 bg-primary h-full rounded-lg"
             :style="{ width: progressPercentage + '%' }" />
         </div>

@@ -6,9 +6,10 @@
                 <div class="flex items-center gap-2">
                     <SelectButton v-model="onlyActive" @change="loadVoices"
                         :options="[{ label: 'Only Active', value: true }, { label: 'All', value: false }]"
-                        optionLabel="label" optionValue="value" />
+                        optionLabel="label" optionValue="value"
+                        data-testid="only-active-toggle" />
                 </div>
-                <Button @click="loadVoices">
+                <Button @click="loadVoices" data-testid="refresh-voices-button">
                     <RefreshIcon class="w-5 h-5" />
                 </Button>
             </div>
@@ -95,7 +96,8 @@
                     <div class="flex items-center justify-center">
                         <ToggleSwitch :model-value="slotProps.data.active"
                             @update:model-value="() => toggleVoiceActive(slotProps.data)" :disabled="state.loading"
-                            class="scale-75" />
+                            class="scale-75"
+                            data-testid="voice-active-toggle" />
                     </div>
                 </template>
             </Column>

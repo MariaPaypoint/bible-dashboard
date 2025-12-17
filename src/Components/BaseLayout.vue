@@ -32,7 +32,7 @@
                                         activeComponent === 'alignment_tasks'
                                             ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 border-primary-200 dark:border-primary-800'
                                             : 'text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 hover:text-surface-900 dark:hover:text-surface-50 border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700'
-                                    ]">
+                                    ]" data-testid="nav-alignment-tasks">
                                         <Clock :class="[
                                             'w-5 h-5',
                                             activeComponent === 'alignment_tasks'
@@ -65,7 +65,7 @@
                                         activeComponent === 'bible_voices'
                                             ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 border-primary-200 dark:border-primary-800'
                                             : 'text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 hover:text-surface-900 dark:hover:text-surface-50 border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700'
-                                    ]">
+                                    ]" data-testid="nav-bible-voices">
                                         <VoiceIcon :class="[
                                             'w-5 h-5',
                                             activeComponent === 'bible_voices'
@@ -81,7 +81,7 @@
                                         activeComponent === 'bible_anomalies'
                                             ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 border-primary-200 dark:border-primary-800'
                                             : 'text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 hover:text-surface-900 dark:hover:text-surface-50 border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700'
-                                    ]">
+                                    ]" data-testid="nav-bible-anomalies">
                                         <AlertTriangle :class="[
                                             'w-5 h-5',
                                             activeComponent === 'bible_anomalies'
@@ -99,7 +99,7 @@
                                         activeComponent === 'bible_inspect'
                                             ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 border-primary-200 dark:border-primary-800'
                                             : 'text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 hover:text-surface-900 dark:hover:text-surface-50 border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700'
-                                    ]">
+                                    ]" data-testid="nav-bible-inspect">
                                         <Search :class="[
                                             'w-5 h-5',
                                             activeComponent === 'bible_inspect'
@@ -119,7 +119,8 @@
                     <ul class="list-none p-0 m-0 flex flex-col gap-1 lg:hidden">
                         <li>
                             <a @click="toggleDarkMode()"
-                                class="flex items-center cursor-pointer p-3 gap-2 rounded-lg text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors duration-150 hover:text-surface-900 dark:hover:text-surface-50 border border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700 group">
+                                class="flex items-center cursor-pointer p-3 gap-2 rounded-lg text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors duration-150 hover:text-surface-900 dark:hover:text-surface-50 border border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700 group"
+                                data-testid="mobile-theme-toggle">
                                 <i :class="[
                                     'pi !text-base !leading-none',
                                     isDarkMode ? 'pi-sun' : 'pi-moon',
@@ -137,7 +138,8 @@
                     <ul class="list-none p-0 m-0 flex flex-col gap-1">
                         <li class="relative settings-menu-container">
                             <a @click="toggleSettingsMenu"
-                                class="flex items-center cursor-pointer p-3 gap-2 rounded-lg text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors duration-150 hover:text-surface-900 dark:hover:text-surface-50 border border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700 group">
+                                class="flex items-center cursor-pointer p-3 gap-2 rounded-lg text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors duration-150 hover:text-surface-900 dark:hover:text-surface-50 border border-transparent hover:border hover:border-surface-200 dark:hover:border-surface-700 group"
+                                data-testid="settings-menu-toggle">
                                 <Settings
                                     class="w-5 h-5 text-surface-500 dark:text-surface-400 group-hover:text-surface-900 dark:group-hover:text-surface-50" />
                                 <span class="font-medium text-base leading-tight">Settings</span>
@@ -173,7 +175,8 @@
                                     <li class="h-px bg-surface-200 dark:bg-surface-700 my-1" />
                                     <li v-if="isAuthenticated">
                                         <a @click="handleLogout"
-                                            class="flex items-center cursor-pointer p-2 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-150 group">
+                                            class="flex items-center cursor-pointer p-2 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-150 group"
+                                            data-testid="settings-logout-button">
                                             <Lock
                                                 class="w-4 h-4" />
                                             <span class="ml-2 font-medium text-sm">Logout</span>
@@ -181,7 +184,8 @@
                                     </li>
                                     <li v-else>
                                         <a @click="activeComponent = 'login'; showSettingsMenu = false"
-                                            class="flex items-center cursor-pointer p-2 rounded-lg text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors duration-150 group">
+                                            class="flex items-center cursor-pointer p-2 rounded-lg text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors duration-150 group"
+                                            data-testid="settings-login-button">
                                             <Lock
                                                 class="w-4 h-4" />
                                             <span class="ml-2 font-medium text-sm">Login</span>
@@ -239,7 +243,8 @@
                             </h1>
                         </div>
                         <button @click="toggleDarkMode()"
-                            class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors duration-200">
+                            class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors duration-200"
+                            data-testid="desktop-theme-toggle">
                             <component :is="isDarkMode ? Sun : Moon"
                                 class="w-6 h-6 text-surface-700 dark:text-surface-300" />
                         </button>

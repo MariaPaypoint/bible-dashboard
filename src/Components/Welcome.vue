@@ -13,7 +13,8 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl">
             <div @click="navigateToVoices"
-                class="bg-surface-100 dark:bg-surface-800 p-6 rounded-xl cursor-pointer transition-all duration-200 hover:bg-surface-200 dark:hover:bg-surface-700 hover:shadow-lg">
+                class="bg-surface-100 dark:bg-surface-800 p-6 rounded-xl cursor-pointer transition-all duration-200 hover:bg-surface-200 dark:hover:bg-surface-700 hover:shadow-lg"
+                data-testid="welcome-voices-card">
                 <VoiceIcon class="w-8 h-8 text-cyan-500 mb-3 mx-auto" />
                 <h3 class="text-xl font-semibold mb-2 text-surface-900 dark:text-surface-0">Voices</h3>
                 <p class="text-surface-600 dark:text-surface-400">
@@ -22,7 +23,8 @@
             </div>
 
             <div @click="navigateToAnomalies"
-                class="bg-surface-100 dark:bg-surface-800 p-6 rounded-xl cursor-pointer transition-all duration-200 hover:bg-surface-200 dark:hover:bg-surface-700 hover:shadow-lg">
+                class="bg-surface-100 dark:bg-surface-800 p-6 rounded-xl cursor-pointer transition-all duration-200 hover:bg-surface-200 dark:hover:bg-surface-700 hover:shadow-lg"
+                data-testid="welcome-anomalies-card">
                 <AnomalyIcon class="w-8 h-8 text-orange-500 mb-3 mx-auto" />
                 <h3 class="text-xl font-semibold mb-2 text-surface-900 dark:text-surface-0">Anomalies</h3>
                 <p class="text-surface-600 dark:text-surface-400">

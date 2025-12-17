@@ -29,6 +29,7 @@
             @select="onAudioFileSelect"
             @clear="formData.audio_file = null"
             :class="{ 'p-invalid': errors.audio_file }"
+            data-testid="audio-file-upload"
           />
           <small v-if="errors.audio_file" class="text-red-500">{{ errors.audio_file }}</small>
           <small class="text-surface-500">Supported formats: MP3, WAV (max. 100MB)</small>
@@ -51,6 +52,7 @@
             @select="onTextFileSelect"
             @clear="formData.text_file = null"
             :class="{ 'p-invalid': errors.text_file }"
+            data-testid="text-file-upload"
           />
           <small v-if="errors.text_file" class="text-red-500">{{ errors.text_file }}</small>
           <small class="text-surface-500">Supported formats: TXT (max. 10MB)</small>
@@ -73,6 +75,7 @@
           :class="{ 'p-invalid': errors.language }"
           filter
           filterPlaceholder="Search language..."
+          data-testid="language-select"
         />
         <small v-if="errors.language" class="text-red-500">{{ errors.language }}</small>
       </div>
@@ -92,6 +95,7 @@
             :loading="loadingModels"
             :disabled="!selectedLanguage"
             :class="{ 'p-invalid': errors.acoustic_model }"
+            data-testid="acoustic-model-select"
           >
             <template #option="slotProps">
               <div class="flex flex-col">
@@ -118,6 +122,7 @@
             :loading="loadingModels"
             :disabled="!selectedLanguage"
             :class="{ 'p-invalid': errors.dictionary_model }"
+            data-testid="dictionary-model-select"
           >
             <template #option="slotProps">
               <div class="flex flex-col">
@@ -145,6 +150,7 @@
           :loading="loadingModels"
           :disabled="!selectedLanguage"
           showClear
+          data-testid="g2p-model-select"
         >
           <template #option="slotProps">
             <div class="flex flex-col">
@@ -166,12 +172,14 @@
           severity="secondary" 
           @click="handleCancel"
           :disabled="loading"
+          data-testid="cancel-create-task-button"
         />
         <Button 
           label="Create task" 
           @click="handleSubmit"
           :loading="loading"
           :disabled="!isFormValid"
+          data-testid="submit-create-task-button"
         />
       </div>
     </template>

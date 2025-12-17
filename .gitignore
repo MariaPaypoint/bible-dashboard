@@ -29,3 +29,4 @@ coverage
 *.sw?
 
 *.tsbuildinfo
+__testsprite_tests__

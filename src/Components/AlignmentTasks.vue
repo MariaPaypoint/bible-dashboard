@@ -15,6 +15,7 @@
             class="w-full sm:w-48"
             showClear
             @change="refreshTasks"
+            data-testid="status-filter"
           />
         </div>
         
@@ -24,6 +25,7 @@
             @click="showCreateDialog = true" 
             severity="success" 
             class="h-8"
+            data-testid="create-task-button"
           >
             <PlusIcon class="w-4 h-4 mr-1" />
             Create Task
@@ -32,7 +34,9 @@
             @click="refreshTasks" 
             severity="info" 
             class="h-8"
+            class="h-8"
             :loading="loading"
+            data-testid="refresh-tasks-button"
           >
             <RefreshCwIcon class="w-4 h-4 mr-1" />
             Refresh
@@ -125,6 +129,7 @@
                 severity="success"
                 class="w-9 h-9"
                 v-tooltip.top="'Download Result'"
+                data-testid="download-result-button"
               >
                 <DownloadIcon class="-m-1" />
               </Button>
@@ -135,6 +140,7 @@
                 severity="info"
                 class="w-9 h-9"
                 v-tooltip.top="'View Details'"
+                data-testid="view-task-details-button"
               >
                 <EyeIcon class="-m-1" />
               </Button>
@@ -146,6 +152,7 @@
                 class="w-9 h-9"
                 v-tooltip.top="'Delete Task'"
                 :disabled="slotProps.data.status === 'processing'"
+                data-testid="delete-task-button"
               >
                 <TrashIcon class="-m-1" />
               </Button>

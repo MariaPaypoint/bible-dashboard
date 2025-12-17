@@ -51,7 +51,7 @@
           <InputGroup>
             <InputGroupAddon>
               <Button @click="decrementChapter" :disabled="!selectedBookNumber || (!selectedChapter && selectedChapter !== 0) || selectedChapter <= 1" 
-                severity="secondary" size="small" class="!border-0 !bg-transparent" v-tooltip.top="'Previous Chapter'">
+                severity="secondary" size="small" class="!border-0 !bg-transparent" v-tooltip.top="'Previous Chapter'" data-testid="prev-chapter-button">
                 <span class="text-lg font-bold leading-none">-</span>
               </Button>
             </InputGroupAddon>
@@ -61,14 +61,14 @@
               class="text-center" />
             <InputGroupAddon>
               <Button @click="incrementChapter" :disabled="!selectedBookNumber" 
-                severity="secondary" size="small" class="!border-0 !bg-transparent" v-tooltip.top="'Next Chapter'">
+                severity="secondary" size="small" class="!border-0 !bg-transparent" v-tooltip.top="'Next Chapter'" data-testid="next-chapter-button">
                 <span class="text-lg font-bold leading-none">+</span>
               </Button>
             </InputGroupAddon>
           </InputGroup>
         </div>
         <div class="flex gap-3">
-          <Button @click="refreshData" :disabled="!canLoadData" :loading="excerptState.loading" title="Refresh">
+          <Button @click="refreshData" :disabled="!canLoadData" :loading="excerptState.loading" title="Refresh" data-testid="refresh-button">
             <RefreshIcon class="w-5 h-5" />
           </Button>
         </div>
@@ -133,15 +133,15 @@
           <div class="flex gap-1">
             <!-- Dynamic Play/Pause button -->
             <Button v-if="currentPlayingId === slotProps.data.code && isPlaying" severity="primary" class="w-9 h-9"
-              v-tooltip.top="'Pause'" @click="togglePlayPause()">
+              v-tooltip.top="'Pause'" @click="togglePlayPause()" data-testid="pause-verse-button">
               <PauseIcon class="-m-1" />
             </Button>
             <Button v-else severity="info" class="w-9 h-9" v-tooltip.top="'Play Verse'"
-              @click="playVerse(slotProps.data)">
+              @click="playVerse(slotProps.data)" data-testid="play-verse-button">
               <PlayIcon class="-m-1" />
             </Button>
             <Button severity="secondary" class="w-9 h-9" v-tooltip.top="'Adjust Timing'"
-              @click="initializeCorrectionInterface(slotProps.data)">
+              @click="initializeCorrectionInterface(slotProps.data)" data-testid="adjust-timing-button">
               <InfoIcon class="-m-1" />
             </Button>
           </div>

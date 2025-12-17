@@ -32,6 +32,7 @@
               :disabled="isLoading"
               autocomplete="username"
               required
+              data-testid="username-input"
             />
           </div>
 
@@ -52,6 +53,7 @@
               :disabled="isLoading"
               autocomplete="current-password"
               required
+              data-testid="password-input"
             />
           </div>
 
@@ -68,6 +70,7 @@
             class="w-full"
             :loading="isLoading"
             :disabled="!username || !password"
+            data-testid="login-submit-button"
           />
         </form>
 
@@ -76,6 +79,7 @@
           <a
             @click="handleSkip"
             class="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 cursor-pointer transition-colors"
+            data-testid="skip-login-link"
           >
             Continue without authorization
           </a>

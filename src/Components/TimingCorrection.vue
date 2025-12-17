@@ -21,7 +21,8 @@
           </Button>
           <!-- Fine decrease -->
           <Button @click="adjustStart(-0.01)" severity="secondary" size="small"
-            class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'-0.01s'">
+            class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'-0.01s'"
+            data-testid="start-decrease-fine">
             <span class="text-xs font-bold leading-none">-</span>
           </Button>
           <!-- Time display -->
@@ -31,7 +32,8 @@
           </span>
           <!-- Fine increase -->
           <Button @click="adjustStart(0.01)" severity="secondary" size="small"
-            class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'+0.01s'">
+            class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'+0.01s'"
+            data-testid="start-increase-fine">
             <span class="text-xs font-bold leading-none">+</span>
           </Button>
           <!-- Fast increase -->
@@ -47,7 +49,8 @@
         </div>
         <!-- Preview button for Start Time -->
         <Button @click="$emit('preview-start')" severity="info" size="small" class="px-2 py-1"
-          v-tooltip.top="'Preview start time'">
+          v-tooltip.top="'Preview start time'"
+          data-testid="preview-start-button">
           <PlayIcon class="w-3 h-3" />
         </Button>
       </div>
@@ -70,7 +73,8 @@
           </Button>
           <!-- Fine decrease -->
           <Button @click="adjustEnd(-0.01)" severity="secondary" size="small"
-            class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'-0.01s'">
+            class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'-0.01s'"
+            data-testid="end-decrease-fine">
             <span class="text-xs font-bold leading-none">-</span>
           </Button>
           <!-- Time display -->
@@ -80,7 +84,8 @@
           </span>
           <!-- Fine increase -->
           <Button @click="adjustEnd(0.01)" severity="secondary" size="small"
-            class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'+0.01s'">
+            class="w-7 h-7 !p-0 inline-flex items-center justify-center" v-tooltip.top="'+0.01s'"
+            data-testid="end-increase-fine">
             <span class="text-xs font-bold leading-none">+</span>
           </Button>
           <!-- Fast increase -->
@@ -96,7 +101,8 @@
         </div>
         <!-- Preview button for End Time -->
         <Button @click="$emit('preview-end')" severity="info" size="small" class="px-2 py-1"
-          v-tooltip.top="'Preview end time'">
+          v-tooltip.top="'Preview end time'"
+          data-testid="preview-end-button">
           <PlayIcon class="w-3 h-3" />
         </Button>
       </div>
@@ -108,13 +114,16 @@
     <!-- Action Buttons -->
     <div class="flex gap-2 pt-2">
       <Button @click="$emit('apply')" severity="success" size="small" class="flex-1"
-        :disabled="!hasChanges">
+        :disabled="!hasChanges"
+        data-testid="apply-correction-button">
         Apply Corrections
       </Button>
-      <Button @click="$emit('reset')" severity="secondary" size="small" class="flex-1">
+      <Button @click="$emit('reset')" severity="secondary" size="small" class="flex-1"
+        data-testid="reset-correction-button">
         Reset
       </Button>
-      <Button @click="$emit('close')" severity="secondary" size="small" class="flex-1">
+      <Button @click="$emit('close')" severity="secondary" size="small" class="flex-1"
+        data-testid="close-correction-button">
         Close
       </Button>
     </div>
