@@ -1,5 +1,5 @@
 import axios, { type AxiosInstance, type AxiosResponse } from 'axios'
-import type { 
+import type {
   TranslationModel,
   LanguageModel,
   BookModel,
@@ -7,8 +7,8 @@ import type {
   VoiceAnomalyModel,
   VoiceAnomalyListParams,
   VoiceAnomaliesResponse,
-  BibleError, 
-  ErrorListParams, 
+  BibleError,
+  ErrorListParams,
   PaginatedResponse,
   AnomalyStatus,
   ExcerptResponse,
@@ -34,10 +34,10 @@ export class ApiService {
 
   constructor(baseURL: string = '/alignment-api') {
     this.isBibleApi = baseURL.includes('bible-api')
-    
+
     this.api = axios.create({
       baseURL,
-      timeout: 10000,
+      timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -49,14 +49,14 @@ export class ApiService {
         // Add authorization headers only for Bible API
         if (this.isBibleApi) {
           const url = config.url || ''
-          
+
           // Add API key for public endpoints
           if (isPublicEndpoint(url)) {
             if (API_CONFIG.API_KEY) {
               config.headers['X-API-Key'] = API_CONFIG.API_KEY
             }
           }
-          
+
           // Add JWT token for administrative endpoints
           if (isAdminEndpoint(url)) {
             const authHeader = authService.getAuthHeader()
@@ -65,7 +65,7 @@ export class ApiService {
             }
           }
         }
-        
+
         return config
       },
       (error) => {
@@ -82,7 +82,7 @@ export class ApiService {
       },
       (error) => {
         console.error('API Response Error:', error.response?.data || error.message)
-        
+
         // Handle authorization errors
         if (error.response?.status === 401) {
           // Token expired or missing
@@ -103,7 +103,7 @@ export class ApiService {
             }
           })
         }
-        
+
         return Promise.reject(error)
       }
     )
@@ -142,19 +142,19 @@ export class ApiService {
 
   // Update anomaly status endpoint
   async updateAnomalyStatus(
-    anomalyCode: number, 
-    status: AnomalyStatus, 
-    begin?: number, 
+    anomalyCode: number,
+    status: AnomalyStatus,
+    begin?: number,
     end?: number
   ): Promise<VoiceAnomalyModel> {
     const payload: { status: AnomalyStatus; begin?: number; end?: number } = { status }
-    
+
     // Add begin and end parameters for corrected status
     if (status === 'corrected' && begin !== undefined && end !== undefined) {
       payload.begin = begin
       payload.end = end
     }
-    
+
     const response = await this.api.patch<VoiceAnomalyModel>(`/voices/anomalies/${anomalyCode}/status`, payload)
     return response.data
   }
@@ -221,7 +221,7 @@ export class ApiService {
     formData.append('acoustic_model_version', taskData.acoustic_model_version)
     formData.append('dictionary_model_name', taskData.dictionary_model_name)
     formData.append('dictionary_model_version', taskData.dictionary_model_version)
-    
+
     if (taskData.g2p_model_name) {
       formData.append('g2p_model_name', taskData.g2p_model_name)
     }

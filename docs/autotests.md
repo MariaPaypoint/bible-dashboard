@@ -9,7 +9,7 @@
 
 ## Доступные data-testid для фильтров
 
-- `voice-filter` - фильтр выбора голоса
-- `book-filter` - фильтр выбора книги
+- `voice-filter` - фильтр выбора голоса. Опции имеют атрибут `data-testid="voice-option-{VOICE_CODE}"` (например, `voice-option-RU_SYNODAL`).
+- `book-filter` - фильтр выбора книги. Опции имеют атрибут `data-testid="book-option-{BOOK_NUMBER}"`.
 - `anomaly-type-filter` - фильтр типа аномалии
-- `status-filter` - фильтр статуса
+- `status-filter` - фильтр статуса. Опции имеют `data-testid="status-option-{STATUS}"`.

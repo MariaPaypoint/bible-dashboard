@@ -9,7 +9,7 @@
             optionValue="code" :optionDisabled="isVoiceDisabled" placeholder="Select voice" class="w-full"
             @change="onVoiceChange" data-testid="voice-filter">
             <template #option="slotProps">
-              <div class="flex items-center justify-between w-full">
+              <div class="flex items-center justify-between w-full" :data-testid="`voice-option-${slotProps.option.code}`">
                 <span :class="{ 'opacity-50': slotProps.option.anomalies_count === 0 }"
                   :title="slotProps.option.displayName">
                   {{ truncateText(slotProps.option.displayName) }}
@@ -46,7 +46,7 @@
             optionValue="value" placeholder="All books" class="w-full" :disabled="!selectedVoice"
             :loading="booksState.loading" @change="onBookChange" showClear data-testid="book-filter">
             <template #option="slotProps">
-              <div class="flex items-center justify-between w-full">
+              <div class="flex items-center justify-between w-full" :data-testid="`book-option-${slotProps.option.value}`">
                 <span :class="{ 'opacity-50': slotProps.option.anomalies_count === 0 }">
                   {{ slotProps.option.label }}
                 </span>
@@ -167,7 +167,7 @@
                 <li v-for="option in selectableStatusOptions" :key="option.value" :class="[
                   'flex flex-col gap-1 px-3 py-2 hover:bg-emphasis cursor-pointer rounded-border',
                   { 'bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-700': option.value === slotProps.data.status }
-                ]" @click="selectStatus(slotProps.data, option.value)">
+                ]" @click="selectStatus(slotProps.data, option.value)" :data-testid="`status-option-${option.value}`">
                   <div class="flex items-center gap-2">
                     <Tag :value="option.label" :severity="getStatusSeverity(option.value)" class="text-xs" />
                   </div>
