@@ -948,7 +948,8 @@ const statusFilterOptions = [
   { label: 'Confirmed', value: 'confirmed' as AnomalyStatus, description: 'Error confirmed during verification' },
   { label: 'Disproved', value: 'disproved' as AnomalyStatus, description: 'Error disproved, not confirmed by verification' },
   { label: 'Corrected', value: 'corrected' as AnomalyStatus, description: 'Manual correction performed' },
-  { label: 'Already Resolved', value: 'already_resolved' as AnomalyStatus, description: 'Verse marked as completely correct previously' }
+  { label: 'Already Resolved', value: 'already_resolved' as AnomalyStatus, description: 'Verse marked as completely correct previously' },
+  { label: 'Disproved (Whisper)', value: 'disproved_whisper' as AnomalyStatus, description: 'Auto-disproved by Whisper analysis' }
 ]
 
 // Status options for manual selection (excludes already_resolved)
@@ -1205,7 +1206,8 @@ const getStatusLabel = (status: AnomalyStatus): string => {
     'confirmed': 'Confirmed',
     'disproved': 'Disproved',
     'corrected': 'Corrected',
-    'already_resolved': 'Already Resolved'
+    'already_resolved': 'Already Resolved',
+    'disproved_whisper': 'Disproved (Whisper)'
   }
   return statusMap[status] || status
 }
@@ -1216,7 +1218,8 @@ const getStatusSeverity = (status: AnomalyStatus): 'success' | 'info' | 'warn' |
     'confirmed': 'danger' as const,  // red
     'disproved': 'success' as const, // green
     'corrected': 'success' as const, // green
-    'already_resolved': 'success' as const // green
+    'already_resolved': 'success' as const, // green
+    'disproved_whisper': 'success' as const  // green
   }
   return severityMap[status] || 'secondary'
 }
