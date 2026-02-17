@@ -882,7 +882,11 @@ const anomalyTypeOptions = ref([
   { label: 'Slow Middle', value: 'slow_middle' },
   { label: 'Slow Next Verse', value: 'slow_next_verse' },
   { label: 'Slow Previous Verse', value: 'slow_previous_verse' },
-  { label: 'Manual', value: 'manual' }
+  { label: 'Manual', value: 'manual' },
+  { label: 'AI: Likely False Positive', value: 'ai_likely_false_positive' },
+  { label: 'AI: Review Recommended', value: 'ai_review_recommended' },
+  { label: 'AI: Likely Problem', value: 'ai_likely_problem' },
+  { label: 'AI: Problem', value: 'ai_problem' }
 ])
 
 // Computed properties
@@ -1095,6 +1099,14 @@ const getAnomalyTypeLabel = (type: AnomalyType): string => {
       return 'Slow Previous Verse'
     case 'manual':
       return 'Manual'
+    case 'ai_likely_false_positive':
+      return 'AI: Likely FP'
+    case 'ai_review_recommended':
+      return 'AI: Review'
+    case 'ai_likely_problem':
+      return 'AI: Likely Problem'
+    case 'ai_problem':
+      return 'AI: Problem'
     default:
       return type
   }
@@ -1129,7 +1141,17 @@ const getAnomalySeverity = (type: AnomalyType): 'success' | 'info' | 'warn' | 'd
     // Manual anomalies - Teal/Cyan
     case 'manual':
       return 'info' // Teal/Cyan color
-    
+
+    // AI Whisper anomalies - severity-based colors
+    case 'ai_likely_false_positive':
+      return 'success' // Green - low concern
+    case 'ai_review_recommended':
+      return 'warn' // Orange - needs attention
+    case 'ai_likely_problem':
+      return 'danger' // Red - likely real issue
+    case 'ai_problem':
+      return 'danger' // Red - confirmed issue
+
     default:
       return 'secondary'
   }
@@ -1159,6 +1181,14 @@ const getAnomalyTypeClass = (type: AnomalyType): string => {
       return 'slow-previous'
     case 'manual':
       return 'manual'
+    case 'ai_likely_false_positive':
+      return 'ai-lfp'
+    case 'ai_review_recommended':
+      return 'ai-review'
+    case 'ai_likely_problem':
+      return 'ai-likely-problem'
+    case 'ai_problem':
+      return 'ai-problem'
     default:
       return ''
   }

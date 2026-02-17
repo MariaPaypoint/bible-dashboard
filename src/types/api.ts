@@ -43,7 +43,7 @@ export interface BookModel {
 export type AnomalyStatus = 'detected' | 'confirmed' | 'disproved' | 'corrected' | 'already_resolved' | 'disproved_whisper'
 
 // Voice anomaly types
-export type AnomalyType = 'fast_first' | 'fast_last' | 'fast_middle' | 'fast_next_verse' | 'fast_previous_verse' | 'manual' | 'slow_first' | 'slow_last' | 'slow_middle' | 'slow_next_verse' | 'slow_previous_verse'
+export type AnomalyType = 'fast_first' | 'fast_last' | 'fast_middle' | 'fast_next_verse' | 'fast_previous_verse' | 'manual' | 'slow_first' | 'slow_last' | 'slow_middle' | 'slow_next_verse' | 'slow_previous_verse' | 'ai_likely_false_positive' | 'ai_review_recommended' | 'ai_likely_problem' | 'ai_problem'
 
 // Voice anomaly model from API
 export interface VoiceAnomalyModel {
